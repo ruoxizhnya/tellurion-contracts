@@ -1,39 +1,71 @@
-# 本仓边界与依赖方向 — tellurion-contracts
+---
+status: active
+last-verified: 2026-10-20
+verified-by: 功能边界固化（三份契约：db / api / dataflow）
+---
 
-## 定位
+# 架构 — tellurion-contracts
 
-跨仓唯一缝隙：**port 接口 · DTO/值对象（含 domain）· 四个引擎契约 · 哨兵错误 · abi 常量**。所有跨边界的东西只能住这里。
+## 1. 定位
 
-状态：**S1 落代码（QT-05）／S2 打 tag（QT-07）——当前为占位仓，尚无实现**
+跨仓唯一缝隙：**port 接口 · DTO/值对象（含 `domain`）· 四个引擎契约 · 哨兵错误 · abi 常量**。
 
-## 依赖方向（编译器强制）
+它的存在意义是让"改契约"成为一次**显式发布**，而不是某天某人顺手改了 core 里的一个 struct。
+
+## 2. 分层
 
 ```
-github.com/ruoxizhnya/tellurion-kit
+（被所有仓依赖；自己只依赖 tellurion-kit 的 decimal / errors）
+
+  domain/     值对象：OHLCV / Trade / BacktestResult / Factor* / Direction
+  engine/     四契约：RunSpec / SignalSpec / ResultSpec / EngineRunner + MarketRouter
+  fees/       费率 / 滑点 / 成本模型的**定义**（计算留在 core）
+  errors/     三类哨兵
+  abi/        host 函数版本、内存区、枚举上限
+```
+
+## 3. 组件职责
+
+| 包 | 职责 | 不该做什么 |
+|---|---|---|
+| `domain/` | 跨边界值对象 | 不做计算、不读配置 |
+| `engine/` | 回测四契约 + 路由接口 | 不含引擎实现 |
+| `fees/` | 成本模型的形状 | 不算钱（算法在 core） |
+| `errors/` | 三类哨兵 + 包装约定 | 不做日志 |
+
+## 4. 三份契约（功能的边界就在这三份文件里）
+
+| 维度 | 文件 | 回答什么问题 |
+|---|---|---|
+| 数据形状 | [`db-schema.md`](db-schema.md) | 本仓拥有哪些表？谁能写？ |
+| 接口形状 | [`api-schema.md`](api-schema.md) | 对外暴露什么？错误码与幂等怎么做？ |
+| 流向与顺序 | [`dataflow.md`](dataflow.md) | 数据怎么流？哪里 fail-closed？ |
+
+## 5. 依赖方向
+
+```
+tellurion-kit（decimal / errors）
         ↑
-github.com/ruoxizhnya/tellurion-contracts
-        ↑                    ↑
-   tellurion (core)   tellurion-agent / 各服务
+tellurion-contracts
+        ↑            ↑            ↑
+      core        agent        各服务
 ```
 
-- 箭头 = import 方向。**不允许反向**，也不允许成环 —— 反向 import 应当**编译失败**，这是判据不是口号。
-- 跨仓只认版本号：`github.com/ruoxizhnya/tellurion-contracts` 以需要的版本出现在下游 `go.mod`。
+## 6. 关键决策
 
-## 边界表
+- [`adr/0001-契约只增不破且零实现.md`](adr/0001-契约只增不破且零实现.md)
 
-| | 内容 |
-|---|---|
-| 允许 | 被 core / agent / 各服务 `require`；只放**被 ≥2 个仓使用**的跨边界类型与接口 |
-| 禁止 | 任何实现、业务规则、DB 访问；`Config` / `Options` / `Impl` 命名（契约泄漏实现细节的形状）；只有单个仓使用的类型（那条属于泄漏，应留在使用方） |
+## 7. 非目标（明确不做）
 
-## 关键约束
+- 不做实现、不做默认实现
+- 不做 HTTP / gRPC 服务（跨进程协议是 OpenAPI，归 core；本仓只管进程内形状）
+- 不持有任何表
+- 不做策略执行（那是 core 的 WASM host）
 
-1. **单仓可构建**：`go build ./...` / `go vet ./...` / `go test ./...` 不依赖任何兄弟目录。
-2. **无 `replace`**：指向仓外的 `replace` 一律不接受（CI 会查）。
-3. **无 `go.work` 入库**：本地联调可以建，提交即错。
-4. **契约只增不破**：0.x 期间允许 breaking，但必须 bump MINOR + 写 CHANGELOG（版本规则见 QT-19）。
+## 8. 分期与状态
 
-## 未决 / 待定
-
-- 包名策略：`engine/` 内保持 `package contracts`、`domain/` 内 `package domain`（QT-05 ⑧）。
-- 版本规则表与兼容矩阵：QT-19（未落地前不要凭印象发版）。
+| 阶段 | 内容 | 状态 |
+|---|---|---|
+| S1（QT-05） | `pkg/domain` + `pkg/backtest/contracts` 搬入本仓，core/agent 改 `require` 伪版本 | ⬜ |
+| S2（QT-07） | 打 `v0.1.0`，下游换 tag | ⬜ |
+| QT-19 | 版本规则表 + 兼容矩阵 + CHANGELOG | ⬜ |
