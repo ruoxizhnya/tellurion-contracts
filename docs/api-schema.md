@@ -14,17 +14,35 @@ verified-by: 功能边界固化（三份契约：db / api / dataflow）
 
 ### 1.1 port（能力边界）
 
-| 接口 | 语义 | 实现方 |
-|---|---|---|
-| `EngineRunner` | 跑一次回测（ADR-031 四契约之一） | core |
-| `SignalProvider` | 逐 bar 出信号（v1 per-symbol / v2 混合 scope） | core / strategy 运行时 |
-| `ExecutionPort` | 撮合与成交回传 | core |
-| `BrokerPort` | 券商通道（下单 / 撤单 / 查单 / 持仓 / 成交） | `tellurion-broker` |
-| `DataPort` | 数据集解析与取数 | `tellurion-data` |
+> **"状态"这一列是必须的**：`EngineRunner` / `SignalProvider` 今天在 core 里是**真实 interface**；
+> 而 `DataPort` / `BrokerGateway` / `ExecutionPort` 只是**设计中的名字**，源码里 0 命中——不能当成已存在的接口去 import。
+
+| 接口 | 语义 | 实现方 | 状态 |
+|---|---|---|---|
+| `EngineRunner` | 跑一次回测 | core（`pkg/backtest/contracts/contracts.go:366`） | ✅ **已存在** |
+| `SignalProvider` | 逐 bar 出信号（v1 per-symbol / v2 混合 scope） | core（`pkg/strategy/signal_provider.go:41`） | ✅ **已存在** |
+| `BrokerGateway` | 券商通道：下单 / 撤单 / 查单 / 持仓 / 成交 | `tellurion-broker` | ⬜ 设计中（S1 落 port；形态见 `broker-gateway-design.md` §3） |
+| `DataPort` | 数据集解析与取数 | `tellurion-data` | ⬜ 设计中（S1 落 port） |
+| `ExecutionPort` | 撮合与成交回传 | core | ⬜ 设计中（S1 落 port） |
+
+> **命名冲突已统一**：D29 §3.2 把券商通道写成 `BrokerPort`，而 `broker-gateway-design.md` 用 `BrokerGateway`。
+> **以 `BrokerGateway` 为准**——设计文档里出现 `BrokerPort` 时按同一物的旧写法理解。
 
 ### 1.2 四契约（ADR-031）
 
-`RunSpec` · `SignalSpec` · `ResultSpec` · `EngineRunner` —— 回测的输入 / 信号 / 输出 / 执行者，四个都在本仓。
+`RunSpec` · `SignalSpec` · `ResultSpec` · `EngineRunner` —— 回测的**输入 / 信号 / 输出 / 执行者**。
+
+> ⚠️ **这四个是设计术语，不是四个同名 Go 类型。** 今天 core 里的承载物是：
+>
+> | 契约术语 | 今天的承载 | 依据 |
+> |---|---|---|
+> | `RunSpec` | `contracts.BacktestRequest`（含 `ValidateRunSpec()`；未知名拒绝） | `pkg/backtest/contracts/contracts.go:171` |
+> | `ResultSpec` | `contracts.BacktestResponse`（`status` 三值冻结） | 同上 `:202` + `resultspec_test.go` |
+> | `SignalSpec` | 信号形状（`SignalWeight` 等）+ 信号提供者契约 | `contracts.go:160` |
+> | `EngineRunner` | `contracts.EngineRunner`（interface） | `contracts.go:366` |
+>
+> **S1 只搬不改名**：是否把承载类型改名为 `RunSpec` / `ResultSpec`，是 **W0（QT-01~04）** 的决定。
+> 看到本仓里没有 `type RunSpec struct` 不是缺漏——这是当前刻意的状态。
 
 ### 1.3 哨兵错误（QT-10 的三分法）
 
