@@ -4,6 +4,12 @@
 
 <!-- surface:begin -->
 
+### `.` — 根包 `contracts`
+
+| 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
+|---|---|---|---|
+| `RootValue` | var | stable | — |
+
 ### `engine/` — 包 `contracts`
 
 | 符号 | 类别 | 稳定性 | 错误语义 / 判据 |

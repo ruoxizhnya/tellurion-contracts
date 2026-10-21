@@ -1,7 +1,7 @@
 ---
 status: active
-last-verified: 2026-10-20
-verified-by: 功能边界固化（三份契约：db / api / dataflow）
+last-verified: 2026-10-21
+verified-by: CT-01 自审（§1.3 哨兵现状标注 + §1.4 的 13→12 订正，逐条回源码核对）
 ---
 
 # API Schema — tellurion-contracts
@@ -52,9 +52,20 @@ verified-by: 功能边界固化（三份契约：db / api / dataflow）
 | `ErrStrategyFault` | 策略故障（trap / 非法信号 / 预算超限） | **终止 run**，`status=failed` |
 | `ErrContractBreach` | 契约违规（前视 / 未知参数 / abi 不符） | **终止 run**，`status=failed` |
 
+> ⬜ **这三条哨兵今天源码里不存在**：core 全仓 `*.go` 里三个名字合计 **1 处命中**（`pkg/backtest/contracts/abi.go:646`
+> 的一条注释，且不含 `ErrDataGap`），**定义 0 处**。由 `tellurion:docs/TASKS.md` QT-10 ③-① 在契约层落。
+> 别当已存在的符号去 import；符号级现状与迁入落点在 `API.md` §5.4。
+
 ### 1.4 abi 常量
 
-host API 的 abi 版本、内存区所有权、枚举上限（abi v2 = 13 个 host 函数，见 QT-01 与 `adr-029-amendment-host-api-v2.md`）。
+host API 的 abi 版本、内存区所有权、枚举上限。冻结集合是 **12 个 host 函数名**（v1 家族 8 个原样保留 + v2 新增 4 个：
+`get_bar2` / `get_series_len2` / `get_date2` / `emit_target2`），逐条见 `API.md` §7。
+
+> ⚠️ **本节原写「abi v2 = 13 个 host 函数」，是滞后于 core 的错数**：那个 13 来自设计文档的一处笔误，
+> core 在 2026-10-21（QT-01 落代码时）已订正为 12，并写明代码侧判据是 `contracts.HostFnCount()`
+> （返回枚举结果，不返回文档字面数），由 `abi_contract_table_test.go` 钉住。
+> 依据：`tellurion:docs/design/qt-decoupling/adr-029-amendment-host-api-v2.md` §2.1 的 2026-10-21 订正条。
+> 真要补第 13 个（如那条可选的 `is_tradable`）：先改那张表、走一次 abi 冻结，数字才跟着变。
 
 ## 2. 错误码与 fail-closed 语义
 

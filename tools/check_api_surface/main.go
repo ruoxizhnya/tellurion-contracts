@@ -272,8 +272,9 @@ func receiverTypeName(expr ast.Expr) string {
 }
 
 var (
-	headingRe  = regexp.MustCompile(`^#{2,4}\s+(.*)$`)
-	dirInTick  = regexp.MustCompile("\x60([^\x60]+/)\x60")
+	headingRe = regexp.MustCompile(`^#{2,4}\s+(.*)$`)
+	// 小节标题里用反引号写包目录：`engine/`；根包写 `.`（不认它的话，根包新增导出符号就无路可登记）。
+	dirInTick  = regexp.MustCompile("\x60([^\x60]+/|\\.)\x60")
 	cellSymbol = regexp.MustCompile("^\x60([^\x60]+)\x60$")
 )
 

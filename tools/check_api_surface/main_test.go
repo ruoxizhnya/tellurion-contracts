@@ -171,8 +171,43 @@ func TestHeadingWithoutPackageDirRegistersNothing(t *testing.T) {
 	if _, ok := doc["NotRegistered"]; ok {
 		t.Error("标记区之外的表行不该被登记")
 	}
-	if got := len(doc); got != 2 {
-		t.Errorf("夹具登记了 2 个包，got %d（%v）", got, doc)
+	if got := len(doc); got != 3 {
+		t.Errorf("夹具登记了 3 个包（根包 + engine + domain），got %d（%v）", got, doc)
+	}
+}
+
+// TestRootPackageIsRegistrable 钉住护栏对根包也有效：小节标题写 `.` 就能登记，
+// 去掉那一节它立刻变成「未登记」。不认根包的检查器会让根包一新增导出符号就永久红
+// ——那是不可满足的护栏，和假护栏一样糟。
+func TestRootPackageIsRegistrable(t *testing.T) {
+	doc, err := parseRegister(filepath.Join(fixtureRoot, "API.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasSym(doc["."], "RootValue") {
+		t.Fatalf("`.` 小节没有登记 RootValue，got %v", doc)
+	}
+
+	root := copyFixture(t)
+	api := filepath.Join(root, "API.md")
+	raw, err := os.ReadFile(api)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dotted := strings.ReplaceAll(string(raw), "### `.` — 根包 `contracts`", "### 根包（标题里没有反引号目录）")
+	if dotted == string(raw) {
+		t.Fatal("夹具 API.md 没有根包小节，改不动")
+	}
+	writeFile(t, api, dotted)
+
+	unregistered, stale := runCompare(t, root)
+	if want := []string{"./RootValue"}; !reflect.DeepEqual(unregistered, want) {
+		t.Fatalf("根包符号应报成未登记 %v，got %v", want, unregistered)
+	}
+	// 标题不带目录 ⇒ 那一节的表行根本不算登记（不是「登记了但失效」），
+	// 写错标题的人会被「未登记」正面挡住，而不是悄悄登记到一个不存在的包上。
+	if len(stale) != 0 {
+		t.Errorf("非包标题下的行不该被当成登记，got %v", stale)
 	}
 }
 

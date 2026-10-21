@@ -6,12 +6,13 @@ verified-by: CT-01（建本文件 + tools/check_api_surface 护栏）
 
 # API — 导出面规格（本仓有哪些符号、各自稳不稳定、错了怎么判）
 
-> **与本仓另两份文档的分工**：[`api-schema.md`](api-schema.md) 定**规则**（错误分类、幂等、版本兼容、不提供什么）；
+> **与 [`api-schema.md`](api-schema.md) 的分工**：那份定**规则**（错误分类、幂等、版本兼容、不提供什么）；
 > 本文件定**清单**（导出符号逐个回答「它在不在、稳不稳定、失败时是什么」）。
 > 符号级冲突以本文件为准（它由 CI 核对，`api-schema.md` 不核对符号名）；规则级冲突以 `api-schema.md` 为准。
 >
-> **现状口径（开工前必读）**：本仓**今天只有一个占位包**（根 `doc.go`，零导出符号）。下面 §5~§7 全部是
-> **目标面快照**——2026-10-21 用 §1 的命令从 core 实测抓出来的，S1（QT-05）落码时逐包迁入 §4 的登记表并接受 CI 核对。
+> **现状口径（开工前必读）**：本仓**今天没有库**——唯一的库代码是根包 `doc.go` 占位（零导出符号），
+> `tools/` 下的命令是 `package main`，不计入导出面。下面 §5~§7 全部是**目标面快照**——
+> 2026-10-21 用 §1 的命令从 core 实测抓出来的，S1（QT-05）落码时逐包迁入 §4 的登记表并接受 CI 核对。
 > 把它们当"现在已经能 import 的东西"就错了。
 
 ---
@@ -31,6 +32,7 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 | 红向 ② | **已失效**：§4 登记了、代码里没有 ⇒ 红（改名/搬走没同步登记表，比缺登记更危险，因为它让下游按不存在的符号编码） |
 | 红向 ③ | **结构红**：`docs/API.md` 找不到 `<!-- surface:begin/end -->` 标记对 ⇒ 红。登记表整段删不掉，护栏不能靠「删掉检查对象」变绿 |
 | 红向 ④ | 解析失败（语法错误）与一个目录里多个包 ⇒ 红。否则解析失败的包会「凭空消失」，护栏静默空过 |
+| 登记表形状 | 包小节标题必须带反引号包目录（形状见下面的示例）；**根包写 `.`**——不认根包就会让「根包新增导出符号」无路可登记，那是不可满足的护栏。标题不带目录时，那一节的表行**不算登记**：写错标题的人被「未登记」正面挡住，而不是悄悄登记进一个不存在的包 |
 
 > ⚠️ **覆盖面限制（如实登记，别把它当全知护栏）**：内嵌接口（`type P interface { Base; Extra() }`）的**继承来的**方法名不在扫描粒度内——
 > 那些方法本来就属于已登记的 `Base`，不是新符号。真要新增方法，新增的那个会被扫到。
@@ -39,6 +41,12 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 **登记表的形状**（§4 区内，一个包一个小节，小节标题里的反引号目录名就是包路径）：
 
 ```markdown
+### `.` — 根包（今天只有占位的 doc.go）
+
+| 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
+|---|---|---|---|
+| `SomeRootSymbol` | var | stable | — |
+
 ### `engine/` — 包 `contracts`
 
 | 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
@@ -55,7 +63,7 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 
 | 标注 | 含义 | 变更代价 |
 |---|---|---|
-| **frozen** | 冻结面：字段集 / 取值集 / 语义本身就是契约。改前必须先**破坏 core 的护栏测试**（`resultspec_test.go`、`registry_test.go` 等），再走 core `docs/TASKS.md`「维护本文件」节的**冻结 schema 变更评审（硬规则）** | 最贵：契约变更 = 一次显式发布 + 下游同步 |
+| **frozen** | 冻结面：字段集 / 取值集 / 语义本身就是契约。改前必须先**破坏 core 的护栏测试**（`resultspec_test.go`、`registry_test.go` 等），再走 `tellurion:docs/TASKS.md`「维护本文件」节的**冻结 schema 变更评审（硬规则）** | 最贵：契约变更 = 一次显式发布 + 下游同步 |
 | **stable** | 已发布、承诺兼容。加字段/加方法可以，破坏性改名要按 CT-02 的版本规则（0.x：bump MINOR + CHANGELOG） | 中：走版本，不走「顺手改一下」 |
 | **experimental** | 形状未定，允许随时破坏。下游用之前应在自己仓里包一层适配 | 低：但**不许**被当成已冻结面引用 |
 | 未标注 | 不存在——§4 的表要求逐行填写；空标注在评审里按「未登记」处理 | — |
@@ -74,14 +82,18 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 5. **`status` 三值不是错误**：`completed` / `invalid` / `failed` 是**结果属性**，走响应字段不走 error。调用方唯一判据是 `status`——**禁止**用 `id` 是否存在、HTTP 200 之类间接信号推断成功（这条在 core 的 SPEC 冻结节里，本节只指路）。
 6. **`invalid_reasons` 的取值是稳定 Code**（见 §5.3）：`Code` 给机器判读、`Detail` 给人读且可改。按 `Detail` 判断 = 违反第 1 条。
 
+> 第 3、4 条说的三类（`ErrDataGap` / `ErrStrategyFault` / `ErrContractBreach`）**今天还不存在**（§5.4 标 ⬜，QT-10 ③-① 才落）。
+> 落码前 provider 侧返回的是未分类 error——所以这两条现在是**验收标准**，不是现状描述。
+
 ---
 
 ## 4. 机器核对的导出面登记表（CI 读这一区）
 
 <!-- surface:begin -->
 
-> **本区今天没有条目，这是事实而不是缺漏。** 本仓唯一的 Go 文件是根包 `doc.go`（占位，零导出符号），
-> 所以 `go run ./tools/check_api_surface` 现在绿——它核对的是「零个包对零行登记」。
+> **本区今天没有条目，这是事实而不是缺漏。** 库代码只有根包 `doc.go` 一个占位文件（零导出符号），
+> `tools/` 是 `package main` 不参与核对，所以 `go run ./tools/check_api_surface` 现在绿——
+> 它核对的是「0 个库导出符号对 0 行登记」。
 >
 > **S1（QT-05）落码时必须做的事**：对每个落地的包跑
 > `go run ./tools/check_api_surface -root <core 里的旧包目录> -list`，把输出逐行登记成 §1 的表格形状，
@@ -94,14 +106,14 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 ## 5. 冻结面逐符号规格（S1 迁入 §4 时的权威口径）
 
 > 每个冻结面只**指回** `tellurion:docs/SPEC.md` 的节标题（SPEC.md 用命名节，不用数字编号），不复制正文——
-> 复制的那一份一定会漂移。改这些节本身走 core `docs/TASKS.md`「维护本文件」的**冻结 schema 变更评审（硬规则）**。
+> 复制的那一份一定会漂移。改这些节本身走 `tellurion:docs/TASKS.md`「维护本文件」的**冻结 schema 变更评审（硬规则）**。
 
-### 5.1 四契约（ADR-031 D1）
+### 5.1 四契约（ADR-031 D1 —— `tellurion-docs:docs/adr/adr-031-kernel-pluggable-nt-ready.md`）
 
 | 契约术语 | 承载符号（今天住 core，S1 → `engine/`） | 稳定性 | 冻结文本指回 |
 |---|---|---|---|
 | `RunSpec` | `BacktestRequest` + `BacktestRequest.ValidateRunSpec` / `EffectiveKernel` / `EffectiveFillTiming`；伴生：`SignalWeight`、`TradingConfig` + `TradingConfig.WithDefaults`、`PriceLimitConfig`、`FillTiming` | **frozen** | `tellurion:docs/SPEC.md` §「RunSpec 内核路由（K10，2026-10-12）：EngineRunner 可插拔」 |
-| `SignalSpec` | `SignalWeight`（K15 目标权重流）；信号本体 `domain.Signal` 随 `domain/` 迁入；供给契约 `SignalProvider`（今天 `pkg/strategy`，见 §5.2） | stable（**SPEC.md 无 SignalSpec 节**） | `tellurion-contracts:docs/api-schema.md` §1.2 + `tellurion:docs/design/qt-decoupling/kernel-interface-map.md` §一.4 |
+| `SignalSpec` | `SignalWeight`（K15 目标权重流）；信号本体 `domain.Signal` 随 `domain/` 迁入；供给契约 `SignalProvider`（今天 `tellurion:pkg/strategy`，见 §5.2） | stable（**SPEC.md 无 SignalSpec 节**） | `tellurion-contracts:docs/api-schema.md` §1.2 + `tellurion:docs/design/qt-decoupling/kernel-interface-map.md` §一.4 |
 | `ResultSpec` | `BacktestResponse` + `StatusCompleted` / `StatusInvalid` / `StatusFailed`；`InvalidReason` + `CheckValidity` + `InvalidReasonCodes` | **frozen** | `tellurion:docs/SPEC.md` §「ResultSpec 冻结（K9，2026-10-12）：BacktestResponse canonical schema」→ 子节「status 三值语义」「字段集（27 项，冻结）」「指标口径」 |
 | `EngineRunner` | `EngineRunner` interface（+ `EngineRegistry` / `NewEngineRegistry`、`MarketRouter` / `ResolveRunTarget`） | **frozen**（签名与 fail-closed 语义） | 同 RunSpec 行：§「RunSpec 内核路由（K10）」的「接口边界」与「fail-closed（零静默回退）」两条 |
 
@@ -117,8 +129,8 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 | `EngineRegistry` | `Register` / `Resolve` / `Names` | core（装配期） | stable | 未注册内核 → `ErrKernelNotRegistered`，**绝不静默回退 go**；`Resolve` 可并发，`Register` 仅装配期 |
 | `MarketRouter` | `ResolveKernel` / `Markets` | core | stable | 未登记市场 → `ErrMarketNotRegistered`；路由表未装配 → 创建即拒绝、job 不落库 |
 | `BacktestRunner` | `RunBacktest(ctx, strategyName, stockPool, startDate, endDate) (*domain.BacktestResult, error)` | core / agent 适配器 | stable | 与 `EngineRunner` **刻意分离**（五参 + 返回 domain 结果，AI 管线端口）；签名不动是 K10 明文约束 |
-| `SignalProvider` | `Signals(ctx, Scope, asOf) ([]Signal, error)` | core（`pkg/strategy`） | stable（S1 落点待 QT-05） | 返回 `as_of > asOf` 的信号即违约：`RejectFutureSignals` fail-loud，不静默跳过 |
-| `Provider`（`domain/market`，别名 `MarketDataProvider`） | `GetOHLCV` / `GetFundamental` / `GetStocks` / `GetLatestPrice` / `GetIndexConstituents` | core | stable | 缺数据 → 归 `ErrDataGap`（跳过当天 + 写 `invalid_reasons`），不是 fault |
+| `SignalProvider` | `Signals(ctx, Scope, asOf) ([]Signal, error)` | core（`tellurion:pkg/strategy`） | stable（S1 落点待 QT-05） | 返回 `as_of > asOf` 的信号即违约：`RejectFutureSignals` fail-loud，不静默跳过 |
+| `Provider`（`domain/market`，别名 `MarketDataProvider`） | `GetOHLCV` / `GetFundamental` / `GetStocks` / `GetLatestPrice` / `GetIndexConstituents` | core | stable | **今天返回未分类 error**；QT-10 ③-② 落地后缺数据须包成 `ErrDataGap`（跳过当天 + 写 `invalid_reasons`），不是 fault —— 见 §5.4 的「⬜ 目标」行 |
 | `RiskManager`（`domain/`） | `CheckStopLoss` / `CalculatePosition` / `DetectRegime` | core | stable | 裁决失败必须可归因；禁止把拒绝伪装成空信号 |
 | `CorporateAction`（`domain/`） | `Type` / `Symbol` / `ExDate` / `RecordDate` / `PayDate` / `Description` / `Apply` | core | stable | 公司行为按 ex-date 生效；`Apply` 的现金变动走返回值，不静默改持仓 |
 | `BrokerGateway` | **未定形**（形态见 `tellurion:docs/design/qt-decoupling/broker-gateway-design.md`） | `tellurion-broker` | ⬜ 设计中，S1 不落 | 见 `api-schema.md` §1.1「状态」列——今天源码 0 命中，**别当已存在接口去 import** |
@@ -143,7 +155,7 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 | 三分法（**QT-10 待落，源码里今天没有**） | `ErrDataGap` | ⬜ 目标 | 跳过当天 + 写 `invalid_reasons`（`data_gap_skipped`），run 继续 |
 | 三分法 | `ErrStrategyFault` | ⬜ 目标 | **终止 run** → `status=failed` + `error`；不得当可重试的成功 |
 | 三分法 | `ErrContractBreach` | ⬜ 目标 | **终止 run** → `status=failed`；同时是「无法归类」的兜底类（§3.4） |
-| 内核路由 | `ErrKernelNotRegistered`、`ErrMarketNotRegistered` | stable（今天在 `pkg/backtest/contracts`，S1 → `engine/`） | 请求期 400；异步 job 终态 `failed`。**零静默回退** |
+| 内核路由 | `ErrKernelNotRegistered`、`ErrMarketNotRegistered` | stable（今天在 `tellurion:pkg/backtest/contracts`，S1 → `engine/`） | 请求期 400；异步 job 终态 `failed`。**零静默回退** |
 | 成交口径 | `ErrFillTimingMissing`、`ErrFillTimingUnknown`、`ErrFillTimingMismatch` | stable | 引擎永远不猜口径；口径不符是错误不是结果差异 |
 | abi / artifact 校验 | `ErrAbiVersionUnknown`、`ErrAbiVersionMismatch`、`ErrAbiFamilyMissing`、`ErrAbiFamilyMixed`、`ErrImportNotWhitelisted`、`ErrImportSignatureMismatch`、`ErrHostRegionMissing`、`ErrHostRegionInvalid`、`ErrParamsTooLarge`、`ErrScopeUnknown`、`ErrScopeMarketV1` | stable（S1 → `engine/`；`errors/` 是否独立成包见 §8 待裁决） | 归 `ErrContractBreach` 语义：装载期拦下，不进 run |
 | 信号校验 | `ErrActionIllegal`、`ErrStrengthOutOfRange`、`ErrTargetWeightOutOfRange`、`ErrEmitSourcesMixed`、`ErrEmitSourceUnknown`、`ErrSignalBudgetExceeded`、`ErrStateBudgetExceeded` | stable | 归 `ErrStrategyFault`（非法信号 / 预算超限 = 策略故障，终止 run） |
@@ -160,12 +172,12 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 |---|---|---|---|
 | 回测输入输出 | `BacktestResult`、`BacktestParams`、`PortfolioValue`、`Trade`、`RiskMetrics`、`WalkForward*` | stable（`BacktestResult` 的**指标口径**受 SPEC 冻结节约束） | `BacktestResult` **没有也不该有 `Status`**——三值属响应层，见 `tellurion-agent:docs/TASKS.md` OBS-01-R2-A 的 core 裁决 (b) |
 | 仪器域行情 | `OHLCV`、`Stock`、`Fundamental(Data)`、`IndexDaily`、`IndexConstituent`、`Dividend`、`Split`（多为 `market/` 的类型别名） | stable | 别名不是重复真相：实体在 `domain/market`，根包别名保兼容 |
-| 时间/频率语义 | `Frequency`、`FrequencySpec`、`TimeSemantics`、`AsiaShanghai`、`Visible*`、`DailyVisibleAt` | **frozen**（PIT 红线） | 可见性语义是防前视的地基，改它=契约变更 |
+| 时间/频率语义 | `Frequency`、`FrequencySpec`、`TimeSemantics`、`AsiaShanghai`、`Visible*`、`DailyVisibleAt` | **frozen** | PIT 红线：`tellurion:docs/SPEC.md` §「时间语义（PIT 红线）」。⚠️ 说清来源——core「冻结 schema 变更评审」点名的名单是三契约（RunSpec/ResultSpec/SignalSpec），这一行的 frozen 是**本文件按 §2 定义给的标注**，依据是它已有注册期闸门（D2）与逐源钉子（`tellurion:pkg/data/source/registry_rev05_test.go` 等把每个 connector 的 `TimeSemantics` 钉死）；改语义同样要先让那些测试红 |
 | 信号与订单 | `Signal`、`Direction`、`Order`、`OrderType`、`Position(Size)`、`Portfolio`、`TargetPosition`、`StopLossEvent`、`MarketRegime` | stable | — |
 | 因子族 | `FactorDefinition`、`FactorHypothesis`、`FactorType`、`FactorKernel`、`FactorCaliber`、`FactorRegistration`、`FactorMiningRecord`、`FactorOutput`、`ICEntry`、`FactorValue` + 内置定义/假设种子变量 | stable（`VersionHash` 语义受「版本哈希纪律」节约束） | 封闭词表扩展 = 加名 + 加实现 + 同步 SPEC 对应节 |
 | 公司行为 | `CorporateAction`、`CashDividend`、`BonusShare`、`CorporateActionSplit`、`RightsIssue`、`Placement`、`ActionEngine`、`ApplyResult`/`ApplyOutcome` | stable | — |
 | 配置形状 | `Config`、`ServiceConfig`、`DatabaseConfig`、`RedisConfig`、`TushareConfig`、`StrategyConfig`、`ExecutionConfig` | ⚠️ **experimental，且命名待评审** | 全部命中本仓 [`adr/0001`](adr/0001-契约只增不破且零实现.md) ③ 的 `Config` 命名禁令（`Config` 是精确同名，其余是同一种形状：契约位上写的是实现细节）。**S1 整包迁会把它们带进来**——落码前定「改名 / 留 core / 立 ADR 豁免」，见 §8 待裁决 #2，别默默收下 |
-| core-only（agent 侧 0 命中） | QT-05 ③-⑨ 点名的 5 族：`Screen*`、`Sector`/`StockSector`/`SWIndustryNode`、`SupplyChainEdge`、`MacroSeries`、`mining` 族（`FactorMiningRecord`）；实测另含 `IndustryVitality`、`MarketActivity`、`Factor*`（定义/登记/输出）、`CorporateAction` 族、`RiskManager`、`Order`/`Signal`/`Stock` 等 | **experimental + 待回收** | QT-05 ③-⑨ 与 ADR-0001 的代价条款：S1 仍整包迁，S2 后按清单回收。**下游不要依赖这一组**。<br>实测口径（2026-10-21）：`pkg/domain` 根包 124 个导出符号里 **86 个在 agent 侧 0 命中**（`grep -rl "domain[.]<名>\b" --include='*.go'` 逐名数文件）。「0 命中」≠「该删」——agent 走 HTTP/JSON 消费的那几族（`Signal`/`Stock`）本来就不摸 Go 类型。完整清单是 **QT-05 ③-⑨ 的产出物**，本文件只登记判据与命令，不替它下结论 |
+| core-only（agent 侧 0 命中） | QT-05 ③-⑨ 点名的 5 族：`Screen*`、`Sector`/`StockSector`/`SWIndustryNode`、`SupplyChainEdge`、`MacroSeries`、`mining` 族（`FactorMiningRecord`）；实测另含 `IndustryVitality`、`MarketActivity`、`Factor*`（定义/登记/输出）、`CorporateAction` 族、`RiskManager`、`Order`/`Signal`/`Stock` 等 | **experimental + 待回收** | QT-05 ③-⑨ 与 ADR-0001 的代价条款：S1 仍整包迁，S2 后按清单回收。**下游不要依赖这一组**。<br>实测口径（2026-10-21）：`tellurion:pkg/domain` 根包 124 个导出符号里 **86 个在 agent 侧 0 命中**（`grep -rl "domain[.]<名>\b" --include='*.go'` 逐名数文件）。「0 命中」≠「该删」——agent 走 HTTP/JSON 消费的那几族（`Signal`/`Stock`）本来就不摸 Go 类型。完整清单是 **QT-05 ③-⑨ 的产出物**，本文件只登记判据与命令，不替它下结论 |
 
 ---
 
@@ -175,11 +187,11 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 
 | 组 | 符号 | 稳定性 | 判据 |
 |---|---|---|---|
-| host 函数名 | `HostFnGetBar` / `HostFnGetBar2` / `HostFnGetDate2` / `HostFnGetSeriesLen` / `HostFnGetSeriesLen2` / `HostFnGetCrossSection` / `HostFnGetSymbolCount` / `HostFnEmitSignal` / `HostFnEmitTarget2` / `HostFnGetState` / `HostFnSetState` / `HostFnLog` | **frozen** | 名字与签名成对冻结；`HostABIContract`/`HostABIContracts` 是唯一名单源。artifact 导入表不符 ⇒ `ErrImportSignatureMismatch` |
-| abi 版本 | `HostAbiV1` / `HostAbiV2` / `HostAbiVersion` / `HostAbiVersionFromName` / `HostFnCount` | **frozen** | 声明与导入段矛盾 ⇒ `ErrAbiVersionMismatch`；两族混用 ⇒ `ErrAbiFamilyMixed` |
+| host 函数名 | **v1 家族 8 个**：`HostFnGetBar` / `HostFnGetSeriesLen` / `HostFnGetSymbolCount` / `HostFnGetCrossSection` / `HostFnGetState` / `HostFnSetState` / `HostFnEmitSignal` / `HostFnLog`<br>**v2 家族 4 个**：`HostFnGetBar2` / `HostFnGetSeriesLen2` / `HostFnGetDate2` / `HostFnEmitTarget2`<br>合计 **12**（`HostFnCount()` = `len(hostFnContracts)`，返回枚举结果而非文档里的字面数） | **frozen** | 名字与签名成对冻结，`HostABIContract` / `HostABIContracts` 是唯一名单源（每条带 `Since: HostAbiV1/V2`）。artifact 导入表不符 ⇒ `ErrImportSignatureMismatch`；两族都不导 ⇒ `ErrAbiFamilyMissing`；混用 ⇒ `ErrAbiFamilyMixed`。<br>⚠️ 旧文档的「13 个」是**已被 core 订正的错数**（2026-10-21，QT-01 落代码时实测枚举为 12；见 `tellurion:docs/design/qt-decoupling/adr-029-amendment-host-api-v2.md` §2.1 的订正条）。真要加第 13 个：先改那张表、走一次 abi 冻结 |
+| abi 版本 | `HostAbiV1` / `HostAbiV2` / `HostAbiVersion` / `HostAbiVersionFromName` / `HostFnCount` | **frozen** | `HostAbiVersion.Valid()` 只认 1/2；`HostAbiVersionFromName` 解析 `on_bar/N` 失败 ⇒ `ErrAbiVersionUnknown`；声明与导入段矛盾 ⇒ `ErrAbiVersionMismatch`；两族混用 ⇒ `ErrAbiFamilyMixed` |
 | 内存区所有权 | `ExportHostParamsPtr` / `ExportHostScratchPtr` / `ExportHostScratchSize` / `MinHostParamsPtr` / `MinHostScratchSize` / `HostRegionExports` / `HostRegionAlignment` / `HostRegionDeclaration` / `ValidateParamsWrite` | **frozen** | 所有权写死在常量里；缺失 ⇒ `ErrHostRegionMissing`，非法 ⇒ `ErrHostRegionInvalid` |
 | 预算上限 | `MaxParamsBytes` / `MaxScratchPerBar` / `MaxSignalsPerBar` / `MaxStateKeys` / `MaxStateValueBytes` / `MaxInstanceStateBytes` | **frozen** | 超限是 `Err*BudgetExceeded` / `ErrParamsTooLarge`，不是静默截断 |
-| 值类型 / 字段号 | `HostI32` / `HostI64` / `HostF64` / `HostValueType` / `FieldOpen`…`FieldVolume` / `FieldID` | **frozen** | 枚举上限同属 abi；未知 ⇒ `ErrAbiVersionUnknown` 类 |
+| 值类型 / 字段号 | `HostI32` / `HostI64` / `HostF64` / `HostValueType` / `FieldClose`…`FieldVolume` / `FieldID` / `Action`…`ActionClose` / `Actions` / `FieldIDs` | **frozen** | **数字位就是线上协议**：错一位是「把 volume 当 close 用」——不报错、结果还看着合理（`abi.go` 里 FieldID 注释的原话）。非法值判据分三种，别混：`FieldID.Valid()` / `Action.Valid()` 只返回 **bool**（无哨兵）；`Action` 经 `String()` / `Direction()` 越界才给 `ErrActionIllegal`；`HostValueType` **没有** `Valid()`，它越不越界由导入签名比对拦（`ErrImportSignatureMismatch`） |
 | scope | `ScopeMarket` / `ScopeSymbol` / `StrategyScope` / `ResolveScope` | **frozen** | v1 给 market scope ⇒ `ErrScopeMarketV1`（**目标** D25「M0 市场级先行」要解开这一约束，但今天代码是拒的） |
 
 ---
@@ -205,7 +217,7 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 
 | 文档 | 关系 |
 |---|---|
-| `api-schema.md` | 规则源（错误分类 / 幂等 / 兼容 / 不提供什么）；§1.1 的 port「状态」列与本文件 §5.2 必须一致 |
+| `api-schema.md` | 规则源（错误分类 / 幂等 / 兼容 / 不提供什么）；§1.1 的 port「状态」列与本文件 §5.2 一致，§1.3 的三分法与 §1.4 的 abi 计数都由本文件 §5.4/§7 逐条回源码核对（2026-10-21 自审时改掉过那两处的「写得像事实」：哨兵零定义、host 函数 13→12） |
 | `ARCHITECTURE.md` §2 | 包布局与本文件 §8 待裁决 #1 有关 |
 | `tellurion:docs/SPEC.md` | **冻结文本的唯一源**；本文件只指节标题。改冻结面 = 先破坏 core 合规测试 → 更新 SPEC → 变更评审 → 才动代码（`tellurion:docs/TASKS.md`「维护本文件」硬规则） |
 | `tellurion:docs/design/qt-decoupling/kernel-interface-map.md` | 现状接口面清单的来源（M6 的「散在几处」即指它）；本文件不是它的替代，是**随仓可核对**的那一份 |
