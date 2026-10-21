@@ -1,7 +1,7 @@
 ---
 status: active
-last-verified: 2026-10-20
-verified-by: 功能边界固化（三份契约：db / api / dataflow）
+last-verified: 2026-10-22
+verified-by: CT-02 结案（版本纪律三件套进导航与变更触发表）
 ---
 
 # 文档导航 — tellurion-contracts
@@ -19,6 +19,7 @@ verified-by: 功能边界固化（三份契约：db / api / dataflow）
 | 改表 / 加列 | [`db-schema.md`](db-schema.md) |
 | 加 / 改接口 | [`api-schema.md`](api-schema.md) |
 | 加 / 改导出符号 | [`API.md`](API.md)（**CI 核对，不登记即红**） |
+| 发版 / 改版本纪律 | [`../README.md`](../README.md) 的「版本规则 / 兼容矩阵 / 发版流程」+ [`../CHANGELOG.md`](../CHANGELOG.md)（**CI 核对，矩阵与账对不上即红**） |
 | 改数据流向或顺序 | [`dataflow.md`](dataflow.md) |
 | 想知道"为什么这样设计" | [`adr/`](adr/README.md) |
 | 要做删档 / 迁移 / 流程变更 | [`odr/`](odr/README.md) |
@@ -32,6 +33,7 @@ verified-by: 功能边界固化（三份契约：db / api / dataflow）
 | [`db-schema.md`](db-schema.md) | **表结构唯一真相源** + 所有权声明 | 改表的人 |
 | [`api-schema.md`](api-schema.md) | **对外接口唯一真相源** + 错误码 / 幂等 / 兼容 | 改接口的人 |
 | [`API.md`](API.md) | **导出面清单**：逐个符号的稳定性与错误语义；§4 的登记区由 `tools/check_api_surface` 在 CI 核对 | 加/改导出符号的人 |
+| [`../README.md`](../README.md) §版本规则/兼容矩阵 + [`../CHANGELOG.md`](../CHANGELOG.md) | **版本纪律三件套**：三行 bump 表、按 `vX.Y` 序列建行的矩阵、每个发版一节的账本；由 `tools/check_release_matrix` 在 CI 与 tag 三方对拍 | 发版的人 |
 | [`dataflow.md`](dataflow.md) | 数据流向、时序、fail-closed 点、不变量 | 改链路的人 |
 | [`TASKS.md`](TASKS.md) | 可执行任务（六字段） | 每个人 |
 | [`adr/`](adr/README.md) | 架构决策（只增不删） | 提变更的人 |
@@ -45,6 +47,7 @@ verified-by: 功能边界固化（三份契约：db / api / dataflow）
 | 建表 / 加列 / 加索引 / 改主键 | `db-schema.md`（+ 结构级变更立 ADR） |
 | 新增 / 修改 / 废弃接口 | `api-schema.md`（错误码与幂等两节要一起看） |
 | 新增 / 改名 / 删除**导出符号** | `API.md` §4 登记区（`go run ./tools/check_api_surface` 当场红，不是提醒） |
+| **发版**（打 tag） | `README.md` 兼容矩阵那一行 + `CHANGELOG.md` 那一节（`go run ./tools/check_release_matrix` 当场红；口径源头在 `tellurion:docs/TASKS.md` QT-19 ③） |
 | 新增数据源、改聚合口径、改顺序 | `dataflow.md` |
 | 改分层、依赖方向、模块职责 | `ARCHITECTURE.md` + 一条 ADR |
 | 删档 / 迁移 / 换 CI / 换工具链 | 一条 ODR |

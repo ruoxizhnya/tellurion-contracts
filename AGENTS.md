@@ -14,12 +14,14 @@
 go build ./...
 go vet ./...
 go test ./...
-go run ./tools/check_api_surface   # 导出面与 docs/API.md 登记区一一对应（CI 同款，CT-01 护栏）
+go run ./tools/check_api_surface      # 导出面与 docs/API.md 登记区一一对应（CI 同款，CT-01 护栏）
+go run ./tools/check_release_matrix   # 版本规则表 + 兼容矩阵 ↔ CHANGELOG ↔ tag（CI 同款，CT-02 护栏）
 ```
 
-- 前三条是 R1/R2 的判据：**单独 checkout 就能绿**；第四条是本仓的导出面护栏（CT-01，CI 同款步骤）。
+- 前三条是 R1/R2 的判据：**单独 checkout 就能绿**；后两条是本仓的两条随仓护栏（CI 同款步骤）。
 - 若某一步需要别的仓的源码目录才过，那是**边界画错了**——停下来修边界，**不要**加 `replace ../xxx` 绕过。
 - 本机同时改多个仓时可用 `go.work` 联调，但**它不入库**（`.gitignore` 已挡）。
+- **私有化前提**：本仓一旦被设为 private，构建与全部 CI 环境必须配 `GOPRIVATE=github.com/ruoxizhnya/*` **加** git 凭证（PAT / SSH），否则 `go get` 走公共 proxy 必然拉不到（风险注见 `tellurion:docs/design/qt-decoupling/repo-inventory.md` §1.1/§5；现状 12 仓全 public）。细则与发版流程在 `README.md`「拉取前提」「发版流程」。
 
 ## 3. 边界（硬约束）
 
@@ -69,4 +71,7 @@ go run ./tools/check_api_surface   # 导出面与 docs/API.md 登记区一一对
 **本仓还有第四份**：`docs/API.md` —— 导出符号的清单（稳定性标注 + 错误语义 + 冻结面指回的 SPEC 节号）。
 它与别的仓的三份不同，因为它是**机器核对**的：新增导出符号没登记，`go run ./tools/check_api_surface` 当场红（CT-01）。
 
-**变更触发是硬约束**（完整表见 `docs/README.md` §3）：改表 → 改 `db-schema.md`；改接口 → 改 `api-schema.md`；加/改/删导出符号 → 改 `API.md` 登记区；改链路 → 改 `dataflow.md`；改分层 → 改 `ARCHITECTURE.md` + 一条 ADR；删档/迁移/换工具 → 一条 ODR。PR 里代码动了而对应文档没动，应被打回。
+**第五份是版本纪律三件套**：`README.md` 的「版本规则 / 兼容矩阵」+ `CHANGELOG.md` + `git tag`。
+同样是机器核对的：发版只写 CHANGELOG 不更新矩阵（或反过来、或 tag 打在没账的版本上），`go run ./tools/check_release_matrix` 当场红（CT-02）。
+
+**变更触发是硬约束**（完整表见 `docs/README.md` §3）：改表 → 改 `db-schema.md`；改接口 → 改 `api-schema.md`；加/改/删导出符号 → 改 `API.md` 登记区；发版 → 改兼容矩阵那一行 + `CHANGELOG.md` 那一节；改链路 → 改 `dataflow.md`；改分层 → 改 `ARCHITECTURE.md` + 一条 ADR；删档/迁移/换工具 → 一条 ODR。PR 里代码动了而对应文档没动，应被打回。
