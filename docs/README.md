@@ -18,6 +18,7 @@ verified-by: 功能边界固化（三份契约：db / api / dataflow）
 | 确认"这个功能到底归不归我" | [`ARCHITECTURE.md`](ARCHITECTURE.md) 的定位与「三份契约」 |
 | 改表 / 加列 | [`db-schema.md`](db-schema.md) |
 | 加 / 改接口 | [`api-schema.md`](api-schema.md) |
+| 加 / 改导出符号 | [`API.md`](API.md)（**CI 核对，不登记即红**） |
 | 改数据流向或顺序 | [`dataflow.md`](dataflow.md) |
 | 想知道"为什么这样设计" | [`adr/`](adr/README.md) |
 | 要做删档 / 迁移 / 流程变更 | [`odr/`](odr/README.md) |
@@ -30,6 +31,7 @@ verified-by: 功能边界固化（三份契约：db / api / dataflow）
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | 高层设计：分层、组件、依赖方向、非目标 | 改结构的人 |
 | [`db-schema.md`](db-schema.md) | **表结构唯一真相源** + 所有权声明 | 改表的人 |
 | [`api-schema.md`](api-schema.md) | **对外接口唯一真相源** + 错误码 / 幂等 / 兼容 | 改接口的人 |
+| [`API.md`](API.md) | **导出面清单**：逐个符号的稳定性与错误语义；§4 的登记区由 `tools/check_api_surface` 在 CI 核对 | 加/改导出符号的人 |
 | [`dataflow.md`](dataflow.md) | 数据流向、时序、fail-closed 点、不变量 | 改链路的人 |
 | [`TASKS.md`](TASKS.md) | 可执行任务（六字段） | 每个人 |
 | [`adr/`](adr/README.md) | 架构决策（只增不删） | 提变更的人 |
@@ -42,6 +44,7 @@ verified-by: 功能边界固化（三份契约：db / api / dataflow）
 |---|---|
 | 建表 / 加列 / 加索引 / 改主键 | `db-schema.md`（+ 结构级变更立 ADR） |
 | 新增 / 修改 / 废弃接口 | `api-schema.md`（错误码与幂等两节要一起看） |
+| 新增 / 改名 / 删除**导出符号** | `API.md` §4 登记区（`go run ./tools/check_api_surface` 当场红，不是提醒） |
 | 新增数据源、改聚合口径、改顺序 | `dataflow.md` |
 | 改分层、依赖方向、模块职责 | `ARCHITECTURE.md` + 一条 ADR |
 | 删档 / 迁移 / 换 CI / 换工具链 | 一条 ODR |

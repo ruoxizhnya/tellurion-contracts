@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-10-21
-verified-by: 任务台账批量重分布（QT-05 自 core 迁入主单；kit 腿拆 QT-05-B）
+verified-by: CT-01 结案归档（docs/API.md + tools/check_api_surface 进 CI）；QT-05 主单自 core 迁入
 ---
 
 # TASKS — tellurion-contracts 未完成项
@@ -17,6 +17,11 @@ verified-by: 任务台账批量重分布（QT-05 自 core 迁入主单；kit 腿
 
 > **占位仓**：实现落地前不写业务代码；CT-01/CT-02 两张是**随仓文档交付**（refactor-plan-review M6/L4/L5 修复传播，2026-10-20 登记），可与 S1 落码并行。**QT-05**（S1 落码主单，2026-10-21 自 core 迁入）在两单之后。
 >
+> ✅ **CT-01 已结案（2026-10-21）**：`docs/API.md` + `tools/check_api_surface`（CI 步骤「导出面核对」）落地，整条搬进
+> [`archive/TASKS-2026-10-21-archived.md`](archive/TASKS-2026-10-21-archived.md)（含验收逐条与实测偏差）。
+> **对 QT-05 的直接后果**：本仓落第一个符号那天起，`docs/API.md` §4 的登记区就必须同步填，否则
+> `go run ./tools/check_api_surface` 红——登记形状与生成命令都在那一节。
+>
 > 第一张单长什么样（照此写，别自造格式）：
 >
 > ### XX-01 · <一句话目标> [P?] ⬜
@@ -27,14 +32,10 @@ verified-by: 任务台账批量重分布（QT-05 自 core 迁入主单；kit 腿
 > - **⑤ 验收**：可复现的命令 + 期望输出；至少一条"破坏验证"（改坏它应当红）
 > - **⑥ 边界**：只做什么；相邻的什么归别的单
 
-### CT-01 · 随仓接口规格载体 `docs/API.md`（导出面清单 + 稳定性 + 错误语义）[P1] ⬜
+### CT-01 · 随仓接口规格载体 `docs/API.md` ✅ 完成（2026-10-21，已归档）
 
-- **① 目标**：本仓导出面有随仓、可自证的接口规格，下游（core/agent）不读 core 实现即可知调用形状与错误语义。
-- **② 上下文**：refactor-plan-review **M6**（报告：`tellurion:docs/design/qt-decoupling/refactor-plan-review-2026-10-20.md`）；上游编排单 `tellurion:docs/TASKS.md` QT-07 ③-S2-c；冻结面指回 `tellurion:docs/SPEC.md` 四契约节（改冻结面走 `tellurion:docs/TASKS.md`「维护本文件」的冻结 schema 变更评审硬规则）。现状导出面清单散在 `tellurion:docs/design/qt-decoupling/kernel-interface-map.md`，无随仓载体。
-- **③ 要求**：① 建 `docs/API.md`：逐项列导出符号——四契约（`engine/`）+ port + 值对象（`domain/`）+ 哨兵错误族，每项标**稳定性标注**（frozen / stable / experimental）与**错误语义**（`errors.Is` 判定、禁字符串匹配）；② 每个冻结面指回 `tellurion:docs/SPEC.md` 对应**节号**（只指节号，不复制正文）；③ 护栏进 CI（AST 扫描）：新增导出符号未登记进 `docs/API.md` → 红。
-- **④ 约束与非目标**：不写内部函数/实现细节；**不做手写 DTO**——跨进程 DTO 是 `tellurion:docs/openapi.yaml` 的生成物、归 core（见 `tellurion:docs/design/qt-decoupling/repo-inventory.md` §3），本仓 `dto/` 只收生成物且禁手改。
-- **⑤ 验收**：`go doc ./...` 导出面与 `docs/API.md` 清单一一对应（比对脚本跑通）；**破坏验证**：故意导出一个未登记符号 → CI 红（留证后撤回）。
-- **⑥ 边界**：只做接口规格载体与护栏；版本规则/兼容矩阵是 CT-02。
+> 六字段正文与结案记录（验收逐条、破坏验证的真退出码、五条实测偏差登记）在
+> [`archive/TASKS-2026-10-21-archived.md`](archive/TASKS-2026-10-21-archived.md)。本文件按规则只留未完成项，这里只留指针。
 
 ### CT-02 · README 版本规则表 + 兼容矩阵 + CHANGELOG + `GOPRIVATE` 前提 [P1] ⬜
 

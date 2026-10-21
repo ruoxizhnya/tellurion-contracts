@@ -14,9 +14,10 @@
 go build ./...
 go vet ./...
 go test ./...
+go run ./tools/check_api_surface   # 导出面与 docs/API.md 登记区一一对应（CI 同款，CT-01 护栏）
 ```
 
-- 这三条是 R1/R2 的判据：**单独 checkout 就能绿**。
+- 前三条是 R1/R2 的判据：**单独 checkout 就能绿**；第四条是本仓的导出面护栏（CT-01，CI 同款步骤）。
 - 若某一步需要别的仓的源码目录才过，那是**边界画错了**——停下来修边界，**不要**加 `replace ../xxx` 绕过。
 - 本机同时改多个仓时可用 `go.work` 联调，但**它不入库**（`.gitignore` 已挡）。
 
@@ -65,4 +66,7 @@ go test ./...
 | 接口形状（对外暴露什么、错误码、幂等） | `docs/api-schema.md` |
 | 流向与顺序（数据怎么走、哪里 fail-closed） | `docs/dataflow.md` |
 
-**变更触发是硬约束**（完整表见 `docs/README.md` §3）：改表 → 改 `db-schema.md`；改接口 → 改 `api-schema.md`；改链路 → 改 `dataflow.md`；改分层 → 改 `ARCHITECTURE.md` + 一条 ADR；删档/迁移/换工具 → 一条 ODR。PR 里代码动了而对应文档没动，应被打回。
+**本仓还有第四份**：`docs/API.md` —— 导出符号的清单（稳定性标注 + 错误语义 + 冻结面指回的 SPEC 节号）。
+它与别的仓的三份不同，因为它是**机器核对**的：新增导出符号没登记，`go run ./tools/check_api_surface` 当场红（CT-01）。
+
+**变更触发是硬约束**（完整表见 `docs/README.md` §3）：改表 → 改 `db-schema.md`；改接口 → 改 `api-schema.md`；加/改/删导出符号 → 改 `API.md` 登记区；改链路 → 改 `dataflow.md`；改分层 → 改 `ARCHITECTURE.md` + 一条 ADR；删档/迁移/换工具 → 一条 ODR。PR 里代码动了而对应文档没动，应被打回。
