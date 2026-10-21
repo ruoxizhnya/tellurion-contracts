@@ -35,7 +35,7 @@ go test ./...
 
 下面三条对所有仓都成立：
 
-- **禁止** `replace` 指向仓外路径（单仓就不可构建了）。
+- **禁止** `replace` 指向仓外路径（单仓就不可构建了）。**唯一过渡例外**：`tellurion-agent` 的 `replace tellurion => ../tellurion`（拆仓过渡态，S3 后收回），以 `tellurion-agent:docs/adr/0001-编译期依赖-core-是过渡态.md` 为准。
 - **禁止**提交 `go.work` / `go.work.sum`（本地产物；已在 `.gitignore`）。
 - 新增第三方依赖前，先在第 4 节登记，再改 `go.mod`；没登记就加依赖 = 绕过评审。
 

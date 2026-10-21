@@ -15,7 +15,7 @@ verified-by: 功能边界固化（三份契约：db / api / dataflow）
 ## 2. 分层
 
 ```
-（被所有仓依赖；自己只依赖 tellurion-kit 的 decimal / errors）
+（被所有 Go 仓依赖；自己只依赖 tellurion-kit 的 decimal / errors）
 
   domain/     值对象：OHLCV / Trade / BacktestResult / Factor* / Direction
   engine/     四契约：RunSpec / SignalSpec / ResultSpec / EngineRunner + MarketRouter

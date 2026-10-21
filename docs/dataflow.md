@@ -12,7 +12,7 @@ verified-by: 功能边界固化（三份契约：db / api / dataflow）
 
 ```
 core ──┐                        ┌── tellurion-data  (实现 DataPort)
-agent ─┼── require/版本 ──► contracts ◄── require/版本 ──┤   tellurion-broker (实现 BrokerPort)
+agent ─┼── require/版本 ──► contracts ◄── require/版本 ──┤   tellurion-broker (实现 BrokerGateway)
 服务 ──┘      (types/ports)         └── tellurion-strategy / risk / analytics / orchestration
                                      （都只依赖形状，不依赖彼此实现）
 ```

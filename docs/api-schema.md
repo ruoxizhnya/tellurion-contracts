@@ -25,7 +25,7 @@ verified-by: 功能边界固化（三份契约：db / api / dataflow）
 | `DataPort` | 数据集解析与取数 | `tellurion-data` | ⬜ 设计中（S1 落 port） |
 | `ExecutionPort` | 撮合与成交回传 | core | ⬜ 设计中（S1 落 port） |
 
-> **命名冲突已统一**：D29 §3.2 把券商通道写成 `BrokerPort`，而 `broker-gateway-design.md` 用 `BrokerGateway`。
+> **命名冲突已统一**：D29 §3.3 把券商通道写成 `BrokerPort`，而 `broker-gateway-design.md` 用 `BrokerGateway`。
 > **以 `BrokerGateway` 为准**——设计文档里出现 `BrokerPort` 时按同一物的旧写法理解。
 
 ### 1.2 四契约（ADR-031）

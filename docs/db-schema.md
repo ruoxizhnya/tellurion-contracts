@@ -19,10 +19,12 @@ verified-by: 功能边界固化（三份契约：db / api / dataflow）
 | 形状 | 落在哪个 schema | owner |
 |---|---|---|
 | `OHLCV` / `UnifiedDataPoint` / `FrequencySpec` / `TimeSemantics` | `market`、`ingest` | `tellurion-data` |
-| `BacktestResult` / `Trade` / `Factor*` / `Direction` | `run`（结果） | `tellurion-orchestration` / core |
+| `BacktestResult` / `Trade` / `Factor*` / `Direction` | `run`（结果） | **owner = core（2026-10-21 裁决，单一写者；orchestration 只读）** |
 | `RunSpec` / `SignalSpec` / `ResultSpec` | `run`（job 元数据） | `tellurion-orchestration` |
 | `strategy_ref`（`id@version_hash`） | `strategy` | `tellurion-strategy` |
 | `risk_rules_hash` / 规则快照 | `risk` | `tellurion-risk` |
+
+> ⚠️ **`ResultSpec` 的形状是冻结契约**（`tellurion:docs/SPEC.md`「ResultSpec 冻结（K9，2026-10-12）」节：字段集 27 项、指标口径、`status` 三值语义三者都冻结）：改形状属**改冻结契约**，必须先破护栏测试再走正式契约变更评审，**不得顺手改**。
 
 > 判断一条类型该不该进本仓：**被 ≥2 个仓使用**才算；只有一个仓用的，留在那个仓（否则这里会变成公共代码堆放处）。
 
