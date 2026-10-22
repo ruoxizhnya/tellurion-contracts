@@ -71,7 +71,7 @@ go run ./tools/check_release_matrix   # 版本规则表 + 兼容矩阵 ↔ CHANG
 <!-- matrix:begin -->
 | 契约版本 | 状态 | 支持的 core（`tellurion`） | 支持的 agent（`tellurion-agent`） |
 |---|---|---|---|
-| `main`（未发版） | 开发基线，**不做兼容承诺** | 尚无 require（本仓侧已落码；待 push 后由下游接入） | 尚无 require（同上） |
+| `main`（未发版） | 开发基线，**不做兼容承诺** | 尚无 require（本仓侧已落码并推 `fbe9a2d`；下游切依赖待执行） | 尚无 require（同上） |
 <!-- matrix:end -->
 
 ⚠️ 本仓今天**零 tag**（已有 429 个导出符号，S1 本仓侧落码完成）：首个版本将是 `v0.1.0`，由 `tellurion:docs/TASKS.md` QT-07 ③-S2-a 在 S2 打。在那之前，「矩阵里有没有我的版本」这个问题对任何使用方的答案都是「没有，你在用 `main`，随时可能 breaking」。

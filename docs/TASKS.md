@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-10-22
-verified-by: QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）
+verified-by: QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；A2 推送回写（6 个 commit 已推 `origin/main`，该批 HEAD = `fbe9a2d`，`go get` 实测可解析，CI 429/429；§8 #4 登记为 X1a 待办）
 ---
 
 # TASKS — tellurion-contracts 未完成项
@@ -52,23 +52,23 @@ verified-by: QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 +
 > `CHANGELOG.md` 必须把 `[Unreleased]` 的内容搬进 `## [v0.1.0] - 日期` 节，否则 `go run ./tools/check_release_matrix` 红
 > （CI「版本纪律核对」同款）。tag 那条腿今天空跑（0 tag），从第一个 tag 开始才咬人。
 
-### QT-05 · S1 契约层与工具层落地（代码直接写进两个新仓）[P0] 🔶 本仓侧已完成；下游腿（③-③④⑤⑦⑨）待 push
+### QT-05 · S1 契约层与工具层落地（代码直接写进两个新仓）[P0] 🔶 本仓侧已完成并已推（`fbe9a2d`）；下游腿（③-③④⑤⑦⑨）待 core/agent 执行
 
 > **迁入说明（2026-10-21）**：本单自 core 仓 `tellurion:docs/TASKS.md`「S1」迁入（任务台账批量重分布：S1 双仓落点，主单落本仓）。六字段正文逐字保留、不改写；**kit 腿**拆分为 `tellurion-kit:docs/TASKS.md` 的 **QT-05-B**（③-② 的执行单，判据以本单为准）；core 侧留同号指针，core 侧改动（③-③/④/⑥/⑦/⑨）随本单执行。执行顺序（W0 全绿后的 S1）见 core `tellurion:docs/TASKS.md` 执行顺序总览。
 
-> **进度（2026-10-22，本仓侧已完成）**：`fees/` ✅（13 符号）、`domain/market/` ✅（46）、`domain/` ✅（176）、`engine/` ✅（194）四包全落，登记进 `docs/API.md` §4，两条随仓护栏绿（导出面 **429/429**）。§8 待裁 **#1 已裁决并写成 [`adr/0003`](adr/0003-哨兵与-abi-不独立成包.md)**（errors//abi/ 随 engine/，不拆包；61 文件的旧估计实测证伪）、**#2 已裁决（[`adr/0002`](adr/0002-config-族的边界处置.md)）**、**#3 已裁决**（fees 整包）；只剩 **#4**（dataprotocol 落点时机，挂 X1a）。
-> ⚠️ **剩下的全部是下游腿（③-③④⑤⑦⑨），阻塞在 push**：`go get <本仓>@<sha>` 只能从远端解析，而 ③-④ 禁 `replace`。本仓四个代码 commit 与台账/自审 commit 都在本地 main，推上去之前下游没法 `require`。
+> **进度（2026-10-22，本仓侧已完成）**：`fees/` ✅（13 符号）、`domain/market/` ✅（46）、`domain/` ✅（176）、`engine/` ✅（194）四包全落，登记进 `docs/API.md` §4，两条随仓护栏绿（导出面 **429/429**）。§8 待裁 **#1 已裁决并写成 [`adr/0003`](adr/0003-哨兵与-abi-不独立成包.md)**（errors//abi/ 随 engine/，不拆包；61 文件的旧估计实测证伪）、**#2 已裁决（[`adr/0002`](adr/0002-config-族的边界处置.md)）**、**#3 已裁决**（fees 整包）；只剩 **#4**（dataprotocol 落点时机，已登记为 X1a 待办）。
+> ✅ **push 阻塞已解除（A2，2026-10-22）**：本仓 6 个 commit 已推到 `origin/main`（该批 HEAD = `fbe9a2d`）；仓外空模块里 `GOPROXY=https://proxy.golang.org,direct go get github.com/ruoxizhnya/tellurion-contracts@fbe9a2d` 实测解析为 `v0.0.0-20261022191510-fbe9a2d0df17`。CI 全绿（导出面 429/429）。剩下的全部是下游腿（③-③④⑤⑦⑨），由 core / agent 执行；③-④ 仍禁 `replace`。
 > ⚠️ **`domain/` 落地后，core 侧切换依赖那次 commit 多出两条待办**：① **5 个零引用的部署配置类型不必单独删**——它们就在 `pkg/domain/types.go` 里，随整目录删除自动消失（实测 0 调用点，不会牵连任何调用）；② `go.mod` 需要 `github.com/stretchr/testify v1.11.1`（域测试用到；同版本已在 core，不会引入第二个大版本）。
 > ⚠️ **③-⑨ 的 core-only 清单已产出（2026-10-22 重测）**：`domain/` 根包 176 个导出符号折 **119 个根名**，agent import 了 **38** 个，**0 命中 81** 个；族与判据、再生成命令都在 `docs/API.md` §6 的 core-only 行——**清单以命令输出为准，不手抄**。S2 后按它回收。
 > ⚠️ **`domain/market/` 落地后多出一条跨仓互锁**：core 的 `pkg/domain/spec_drift_test.go`（`OHLCV` / `Fundamental` 字段集 + `Frequency` 词表 ↔ `tellurion:docs/SPEC.md`）**刻意留 core**，core 侧 sed 后改为 import 本包。⇒ 在本仓给这两个类型加字段，core 侧 CI 会红，这是设计意图；那条测试也是本仓这两个类型字段集的**唯一机器判据**，别当它在迁移里被漏掉了。
 > ⚠️ **② 的实测数字已滞后，且没写测试/非测试的拆分**（W0 期间 core 侧新增了 filltiming / provenance / canonical）。2026-10-22 重新取（`wc -l`）：
 > `pkg/backtest/contracts` **非测试 10 文件 2543 行 ｜ 测试 11 文件 2455 行**（② 写「6 文件 2113 行」）；`pkg/domain` **非测试 16 文件 2208 行 ｜ 测试 8 文件 1795 行**（② 写「17 文件 3983 行」）；`pkg/domain/market` 非测试 5 文件 480 行 ｜ 测试 2 文件 430 行；`pkg/fees` 非测试 1 文件 250 行 ｜ 测试 1 文件 283 行。
 > **别照抄 ② 的数字做工作量估计**。另：两个测试文件是**SPEC 互锁守卫，刻意留 core 不迁**（`pkg/domain/spec_drift_test.go`、`pkg/backtest/contracts/resultspec_test.go`——它们读 core 的 SPEC 文本），所以实际迁入的测试文件数是 7 与 10。
-> ⚠️ **core/agent 那条腿（③-③④⑤⑦⑨）阻塞在 push**：③-③ 要 `go get <本仓>@<sha>`，而 `go get` 只从远端解析，③-④ 又禁 `replace`——本仓提交不推上去，下游就没法 `require`。窗口期内 core 的 `pkg/domain` 与本仓的 `domain/` **并存 = 双份真相**，两边都不许改，直到 core 侧 sed 落地并删旧包。
+> ⚠️ **core/agent 那条腿（③-③④⑤⑦⑨）的 push 前置已解除**（该批 HEAD `fbe9a2d` 已在 `origin/main`），但**双份真相窗口仍在**：core 的 `pkg/domain` / `pkg/backtest/contracts` 与本仓同名包并存，两边都不许改，直到 core 侧 sed 落地并删旧包。
 
 #### 下游腿交接单（2026-10-22，本仓侧交棒；**不在本仓执行**）
 
-> 本仓侧四个代码 commit（`c9e2d6d` fees → `a044f80` domain/market → `f1d0e2d` domain → `cfad6c8` engine）与台账/自审 commit 都在**本地 main**，**未推**。下面每一步都以「已推到 `main`」为前提。
+> 本仓侧四个代码 commit（`c9e2d6d` fees → `a044f80` domain/market → `f1d0e2d` domain → `cfad6c8` engine）与台账/自审 commit 已推到 **`origin/main`（2026-10-22，该批 HEAD `fbe9a2d`）**，下面每一步直接可执行。取版本用 `@fbe9a2d`（实测解析为 `v0.0.0-20261022191510-fbe9a2d0df17`），不要写 `@main`。
 
 **A. core（`tellurion` 仓）**
 
@@ -138,7 +138,7 @@ verified-by: QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 +
 | QT-05 | S1：把 `pkg/domain` + `pkg/backtest/contracts` 搬进本仓 | **已迁入本仓「一、本仓任务」**（2026-10-21；core `tellurion:docs/TASKS.md` 留同号指针；kit 腿见 `tellurion-kit:docs/TASKS.md` QT-05-B） |
 | QT-07 | S2：打 `v0.1.0` 并把下游伪版本换成 tag | `tellurion:docs/TASKS.md` |
 | QT-19 | 版本策略 / 兼容矩阵 / CHANGELOG 规则 | `tellurion:docs/TASKS.md` |
-| QT-40（T2） | `dataprotocol` 要不要独立成包、何时迁 | 单在 `tellurion-data:docs/TASKS.md`（QT-40 的接口对表待办 T2）；**登记落在本仓** `docs/API.md` §8 待裁 **#4**（2026-10-22），QT-05 落码前要与 §8 #1/#2/#3 一起给结论 |
+| QT-40（T2） | `dataprotocol` 要不要独立成包、何时迁 | 单在 `tellurion-data:docs/TASKS.md`（QT-40 的接口对表待办 T2）；**落点与两条读法登记在本仓** `docs/API.md` §8 待裁 **#4**。⇒ **已登记为 X1a 待办（2026-10-22，A2）**：X1a 开工前必须在 §8 #4 挑定 (a)/(b) 并写回本节与设计文档 §4.1 注 ②；X1a 的施工序在 `tellurion-data:docs/TASKS.md` 施工序表 |
 
 ---
 
