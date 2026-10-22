@@ -1,7 +1,7 @@
 ---
 status: active
-last-verified: 2026-10-21
-verified-by: CT-01（建本文件 + tools/check_api_surface 护栏）
+last-verified: 2026-10-22
+verified-by: CT-01（建本文件 + tools/check_api_surface 护栏）；§8 待裁新增 #4（QT-40 对表 T2，dataprotocol 落点与时机）
 ---
 
 # API — 导出面规格（本仓有哪些符号、各自稳不稳定、错了怎么判）
@@ -210,6 +210,7 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 | 1 | `errors/` 与 `abi/` 是否独立成包 | [`ARCHITECTURE.md`](ARCHITECTURE.md) §2 列了这两个包，但 QT-05 ③-① 只说迁 `domain/`、`engine/`、`fees/`（`engine/` 内保持 `package contracts`），abi 常量与哨兵今天都随 `engine/` 走。二者口径不一致，本文件按 QT-05 落点写（§5/§7 归 `engine/`） |
 | 2 | `*Config` 命名族要不要进本仓 | ADR-0001 ③ 禁 `Config`/`Options`/`Impl` 命名，但 S1 整包迁会带进来 9 个：`domain/` 的 `Config`（精确同名）、`ServiceConfig`、`DatabaseConfig`、`RedisConfig`、`TushareConfig`、`StrategyConfig`、`ExecutionConfig` + `engine/` 的 `TradingConfig`、`PriceLimitConfig`。后两个还是 §5.1 的 frozen 伴生符号——禁令与冻结面在这儿撞车，落码前要结论，不能两边都当没看见 |
 | 3 | `fees/` 的取舍 | QT-05 ①「只放数据形状」+ ④「不搬 `fees` 的计算部分」：`AShareFees`/`Default*` 常量/`StampTaxCutDate` 进；`StampTaxRateFor`（按日取档的函数）与 `ApplyDefaults`/`Validate` 留 core —— 但 `AShareFees` 的方法在迁入包里，切不开。落码前必须定「方法算不算计算部分」 |
+| 4 | `dataprotocol` 是否独立成包（QT-40 对表 T2，2026-10-22 登记） | **落点已定名**：`contracts/dataprotocol`（包名 `dataprotocol`）——不叫 `data/`（包名要能自证「这是协议不是实现」，与 #1 的 `errors/`/`abi/` 之争同型），不叫 `dataset`（那是 X1b 的 aggregator 面，形状还没定）。依据 `tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md` §4.1 A 组注 ①。**要裁的是迁入时机，而且两份上游文档给的判据并不一致**：「只有单个仓使用的类型不许提前迁」对应的是 ①「本仓只放被 ≥2 个仓使用的类型」（[AGENTS.md](AGENTS.md) §3 把它写成「只有单个仓使用的类型属泄漏」）；对表注 ② 与本仓下游的 `tellurion-data:docs/api-schema.md` §4 **原先都把它引成 ③**（③ 管的是 `Config`/`Options`/`Impl` 命名），两处引用已于 2026-10-22 同步订正。**但同一份 ADR 的「代价」节明写 S1 整包迁时接受 core-only 类型临时进来、输出一份清单、S2 后回收**，而本仓台账已把这条落成硬要求（`docs/TASKS.md` QT-05 ③-⑨：`screen`/`sector`/`supply_chain`/`macro`/`mining` 在 agent 侧各 0 命中，仍整包迁）。于是有两条都自洽的走法：(a) `dataprotocol` 不适用那条容忍（它是**名单外的新建包**，不是整包迁的附带品）⇒ 挂 X1b 第一 commit，`tellurion-data` 一 import，两个使用方立刻成立；(b) 把它当同类容忍处理，随 S1 一起落、进那份 core-only 清单（③-⑨ 那份名单今天不含它，选 (b) 就要把它加进去）。X1a 之前要挑一条并写进本节，**别两份文档各按一条**（现在的写法是注 ② 选 (a)、而它引的条款其实同时允许 (b)）。X1a 冻结前要先定形状的三处实测：① `UnifiedDataPoint` 今天有**两份同名同字段副本**（`tellurion:pkg/data/source/unified.go:16` 与 `pkg/storage/bulk_insert.go:17`，后者注释自述「storage 不能 import source（会成环）」）⇒ 进 contracts 后成环理由消失，**必须删副本改引用**，否则协议加一列时 `BulkInsert` 的列布局会静默少写一列（`bulk_insert_ddl_test.go` 只核「目标表在 DDL 里」，核不到字段）；② **没有 `DataType` 类型**——`ConnectorDeclaration.DataType` 与 `UnifiedDataPoint.DataType` 都是裸 `string`，取值集靠 `DataType*` 常量；③ **没有 `Aggregator` 接口**（§5.2 的 port 表里只有未定形的 `DataPort`，标着「⬜ 设计中，S1 不落」）：aggregator 今天只有 HTTP 形状，要么随 X1b 实现定、要么先不落 port，**不许在文档里造一个无实现的接口**（§8 已禁默认实现/mock 进本仓）。另：`TimeSemantics` 枚举定义在 `tellurion:pkg/domain/market/visibility.go:61`，**随 QT-05 整包迁 `contracts/domain/market`，不在 `dataprotocol` 里重复定义**——同一次迁移出现两份 `TimeSemantics`，等于把 #1 与 #4 合成一个真事故 |
 
 ---
 

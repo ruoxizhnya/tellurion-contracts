@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-10-22
-verified-by: CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）
+verified-by: CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；§二 新增 QT-40 T2 指针（`docs/API.md` §8 待裁 #4）
 ---
 
 # TASKS — tellurion-contracts 未完成项
@@ -94,6 +94,7 @@ verified-by: CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + c
 | QT-05 | S1：把 `pkg/domain` + `pkg/backtest/contracts` 搬进本仓 | **已迁入本仓「一、本仓任务」**（2026-10-21；core `tellurion:docs/TASKS.md` 留同号指针；kit 腿见 `tellurion-kit:docs/TASKS.md` QT-05-B） |
 | QT-07 | S2：打 `v0.1.0` 并把下游伪版本换成 tag | `tellurion:docs/TASKS.md` |
 | QT-19 | 版本策略 / 兼容矩阵 / CHANGELOG 规则 | `tellurion:docs/TASKS.md` |
+| QT-40（T2） | `dataprotocol` 要不要独立成包、何时迁 | 单在 `tellurion-data:docs/TASKS.md`（QT-40 的接口对表待办 T2）；**登记落在本仓** `docs/API.md` §8 待裁 **#4**（2026-10-22），QT-05 落码前要与 §8 #1/#2/#3 一起给结论 |
 
 ---
 
