@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-10-22
-verified-by: QT-05 ③-① 落码完成本仓侧（§2 订正「只依赖 kit」为实测零依赖 + 四个包均标已落 + errors//abi/ 按 adr/0003 并入 engine；§3 四行按实测收紧；§5 依赖图同步订正；§8 S1 标本仓侧已完成、下游腿阻塞在 push）
+verified-by: QT-05 ③-① 落码完成本仓侧（§2 订正「只依赖 kit」为实测零依赖 + 四个包均标已落 + errors//abi/ 按 adr/0003 并入 engine；§3 四行按实测收紧；§5 依赖图同步订正；§6 ADR 索引补 0002~0004；§8 S1 标本仓侧已完成、下游腿阻塞在 push）
 ---
 
 # 架构 — tellurion-contracts
@@ -19,7 +19,8 @@ verified-by: QT-05 ③-① 落码完成本仓侧（§2 订正「只依赖 kit」
 
   domain/     值对象：Signal / Order / Position / Portfolio / 公司行为 / 因子名册 / BacktestResult（✅ 2026-10-22 已落地，176 个导出符号）
   domain/market/  行情值对象 + 频率/时间语义词表 + Provider（✅ 2026-10-22 已落地，46 个导出符号）
-  engine/     四契约：RunSpec / SignalSpec / ResultSpec / EngineRunner + MarketRouter（✅ 2026-10-22 已落地，194 个导出符号）
+  engine/     四契约：RunSpec→BacktestRequest / SignalSpec→SignalWeight /
+              ResultSpec→BacktestResponse / EngineRunner + MarketRouter（✅ 2026-10-22 已落地，194 个导出符号）
               + 三类哨兵与 abi 常量：**已裁决不独立成包**，随本包走（[`adr/0003`](adr/0003-哨兵与-abi-不独立成包.md)）
   fees/       费率 / 滑点 / 成本模型的**定义**（算钱留在 core）
 ```
@@ -62,10 +63,13 @@ tellurion-contracts
 ## 6. 关键决策
 
 - [`adr/0001-契约只增不破且零实现.md`](adr/0001-契约只增不破且零实现.md)
+- [`adr/0002-config-族的边界处置.md`](adr/0002-config-族的边界处置.md) —— `*Config` 族的三条例外判据
+- [`adr/0003-哨兵与-abi-不独立成包.md`](adr/0003-哨兵与-abi-不独立成包.md) —— 哨兵 / abi 随 `engine/`
+- [`adr/0004-值对象上的纯函数行为随类型走.md`](adr/0004-值对象上的纯函数行为随类型走.md) —— 「零实现」不按「零方法体」解释，四条判据
 
 ## 7. 非目标（明确不做）
 
-- 不做实现、不做默认实现
+- 不做实现、不做默认实现（值对象自带的纯函数方法按 [`adr/0004`](adr/0004-值对象上的纯函数行为随类型走.md) 的四条判据判定）
 - 不做 HTTP / gRPC 服务（跨进程协议是 OpenAPI，归 core；本仓只管进程内形状）
 - 不持有任何表
 - 不做策略执行（那是 core 的 WASM host）

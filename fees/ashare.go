@@ -1,6 +1,6 @@
 // Package fees — A 股费率模型的**数据形状**（常量 / 档位 / 结构体 / 纯校验）。
 //
-// 2026-10-22 自 `tellurion:pkg/fees` 逐字迁入（QT-05 ③-①，sha256 对拍后只改注释里的跨仓路径）。
+// 2026-10-22 自 `tellurion:pkg/fees` 迁入（QT-05 ③-①，sha256 对拍后只改注释：跨仓路径 + Validate 注释与实现不符之处；代码行零差异）。
 // **算钱不在本仓**：成交额 × 费率、最低佣金兜底那套算术住在
 // `tellurion:pkg/backtest/tracker`（回测）与 `tellurion:pkg/live/mock_trader.go`（纸交易）。
 // 本包只回答「费率是多少、哪一天适用哪一档、这组值合不合法」。
@@ -229,13 +229,15 @@ func (f *AShareFees) ApplyDefaults() {
 }
 
 // Validate returns nil if every field is in a plausible
-// range. Used by core's OrderManager before placing a live order —
+// range. Intended as a config gate before placing a live order —
 // we'd rather refuse the order than execute it with a 100%
 // commission (which has happened in production at a
 // competitor; the QA missed the config typo).
+// No production caller is wired today; the package's own tests
+// are the only callers.
 //
 // Plausible range:
-//   - CommissionRate / StampTaxRate / TransferFeeRate in (0, 0.05)
+//   - CommissionRate / StampTaxRate / TransferFeeRate in [0, 0.05)
 //   - MinCommission in [0, 1000) (the regulatory floor is ¥5; ¥1000
 //     would imply an absurdly small minimum)
 //   - SlippageRate in [0, 0.1) (10% slippage means the order is

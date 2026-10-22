@@ -1,7 +1,7 @@
 ---
 status: active
-last-verified: 2026-10-21
-verified-by: CT-01 自审（§1.3 哨兵现状标注 + §1.4 的 13→12 订正，逐条回源码核对）
+last-verified: 2026-10-22
+verified-by: QT-05 ③-① 落码后订正（§1.1 port 状态与承载路径、§1.2 「只搬不改名」已落地；符号本体住本仓 `engine/`）
 ---
 
 # API Schema — tellurion-contracts
@@ -19,11 +19,11 @@ verified-by: CT-01 自审（§1.3 哨兵现状标注 + §1.4 的 13→12 订正�
 
 | 接口 | 语义 | 实现方 | 状态 |
 |---|---|---|---|
-| `EngineRunner` | 跑一次回测 | core（`pkg/backtest/contracts/contracts.go:366`） | ✅ **已存在** |
+| `EngineRunner` | 跑一次回测 | core（实现）；接口本体已迁本仓 `engine/` | ✅ **已存在** |
 | `SignalProvider` | 逐 bar 出信号（v1 per-symbol / v2 混合 scope） | core（`pkg/strategy/signal_provider.go:41`） | ✅ **已存在** |
-| `BrokerGateway` | 券商通道：下单 / 撤单 / 查单 / 持仓 / 成交 | `tellurion-broker` | ⬜ 设计中（S1 落 port；形态见 `broker-gateway-design.md` §3） |
-| `DataPort` | 数据集解析与取数 | `tellurion-data` | ⬜ 设计中（S1 落 port） |
-| `ExecutionPort` | 撮合与成交回传 | core | ⬜ 设计中（S1 落 port） |
+| `BrokerGateway` | 券商通道：下单 / 撤单 / 查单 / 持仓 / 成交 | `tellurion-broker` | ⬜ 设计中（**S1 未落**：S1 只搬既有面；形态见 `broker-gateway-design.md` §3） |
+| `DataPort` | 数据集解析与取数 | `tellurion-data` | ⬜ 设计中（**S1 未落**；归 X1） |
+| `ExecutionPort` | 撮合与成交回传 | core | ⬜ 设计中（**S1 未落**；执行留 core） |
 
 > **命名冲突已统一**：D29 §3.3 把券商通道写成 `BrokerPort`，而 `broker-gateway-design.md` 用 `BrokerGateway`。
 > **以 `BrokerGateway` 为准**——设计文档里出现 `BrokerPort` 时按同一物的旧写法理解。
@@ -32,17 +32,17 @@ verified-by: CT-01 自审（§1.3 哨兵现状标注 + §1.4 的 13→12 订正�
 
 `RunSpec` · `SignalSpec` · `ResultSpec` · `EngineRunner` —— 回测的**输入 / 信号 / 输出 / 执行者**。
 
-> ⚠️ **这四个是设计术语，不是四个同名 Go 类型。** 今天 core 里的承载物是：
+> ⚠️ **这四个是设计术语，不是四个同名 Go 类型。** 承载物是：
 >
-> | 契约术语 | 今天的承载 | 依据 |
+> | 契约术语 | 承载 | 依据 |
 > |---|---|---|
-> | `RunSpec` | `contracts.BacktestRequest`（含 `ValidateRunSpec()`；未知名拒绝） | `pkg/backtest/contracts/contracts.go:171` |
-> | `ResultSpec` | `contracts.BacktestResponse`（`status` 三值冻结） | 同上 `:202` + `resultspec_test.go` |
-> | `SignalSpec` | 信号形状（`SignalWeight` 等）+ 信号提供者契约 | `contracts.go:160` |
-> | `EngineRunner` | `contracts.EngineRunner`（interface） | `contracts.go:366` |
+> | `RunSpec` | `contracts.BacktestRequest`（含 `ValidateRunSpec()`；未知名拒绝） | 本仓 `engine/contracts.go`（core 旧路径 `tellurion:pkg/backtest/contracts/contracts.go`） |
+> | `ResultSpec` | `contracts.BacktestResponse`（`status` 三值冻结） | 本仓 `engine/contracts.go` + core 的 `resultspec_test.go`（SPEC 互锁，刻意留 core） |
+> | `SignalSpec` | 信号形状（`SignalWeight` 等）+ 信号提供者契约 | 本仓 `engine/contracts.go` |
+> | `EngineRunner` | `contracts.EngineRunner`（interface） | 本仓 `engine/contracts.go` |
 >
-> **S1 只搬不改名**：是否把承载类型改名为 `RunSpec` / `ResultSpec`，是 **W0（QT-01~04）** 的决定。
-> 看到本仓里没有 `type RunSpec struct` 不是缺漏——这是当前刻意的状态。
+> **S1 只搬不改名（已落地，2026-10-22）**：W0 已结束，承载类型未改名——`BacktestRequest` / `BacktestResponse` 就是 `RunSpec` / `ResultSpec` 的 Go 符号，符号本体今天住本仓 `engine/`（core 侧旧包保留到 sed 落地）。
+> 看到本仓里没有 `type RunSpec struct` 不是缺漏——这是当前刻意的状态；今后改名属破坏性变更（MAJOR）。
 
 ### 1.3 哨兵错误（QT-10 的三分法）
 

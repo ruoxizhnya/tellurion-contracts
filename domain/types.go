@@ -1,5 +1,5 @@
-// Package domain contains core domain types and interfaces for the
-// quant trading system.
+// Package domain contains cross-repo domain types and interfaces for
+// the quant trading system.
 //
 // S7-P3-4 (ODR-043 D3): Market-data types (OHLCV, Stock, Fundamental,
 // etc.) now live in this repo's `domain/market` (2026-10-22 自 core 的

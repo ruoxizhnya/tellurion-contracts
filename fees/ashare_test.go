@@ -136,7 +136,7 @@ func TestValidate_AcceptsBoundary(t *testing.T) {
 // TestConstantsAreWiredToAShareFees confirms the
 // `Default*` constants and `DefaultAShareFees()` agree
 // bit-for-bit. This is the contract that lets code in
-// tellurion:pkg/backtest/execution.go safely write
+// tellurion:pkg/backtest/execution safely write
 // `fees.DefaultCommissionRate` instead of re-declaring
 // the literal 0.0003.
 // TestStampTaxRate_HistoricalTimeline encodes the rate history so that

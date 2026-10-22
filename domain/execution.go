@@ -22,7 +22,7 @@ type ExecutionConfig struct {
 	// K4（D5）：平方根市场冲击模型的**可选**参数，仅当
 	// SlippageModel == "impact" 时生效（`tellurion:pkg/backtest/execution`）。
 	//
-	// 零值语义（对齐 `tellurion:pkg/backtest/marketimpact` 的既有约定）：
+	// 零值语义（对齐 `tellurion:pkg/marketimpact` 的既有约定）：
 	//   - ImpactSigma 零值 → 冲击 = 0（模型退化为无冲击；要启用大单
 	//     冲击必须显式给出日波动率，如 0.02）。
 	//   - ImpactLiquidityFactor 零值 → 1.0（市场冲击模型内部把

@@ -1,4 +1,4 @@
-// Package contracts is the LEAF package for pkg/backtest subpackages.
+// Package contracts is the LEAF package for the backtest engine contracts.
 //
 // S7-P2-1 (ODR-043): extracting shared DTOs + a narrow EngineRunner
 // interface here lets the sibling subpackages (tracker/, state/,
@@ -6,13 +6,12 @@
 // pkg/backtest), which breaks the import cycle that would otherwise
 // prevent leaf extraction.
 //
-// This is a LEAF package: it imports only pkg/domain (for
-// PortfolioValue / Trade return types), pkg/fees (canonical fee-rate
-// source), and the standard library. It does NOT import pkg/backtest
-// or any sibling subpackage, so importing contracts never creates a
-// reverse dependency.
+// This is a LEAF package: it imports only this repo's `domain` and
+// `fees` packages plus the standard library. It does NOT import
+// core's `pkg/backtest` or any sibling subpackage, so importing
+// contracts never creates a reverse dependency.
 //
-// Aliasing convention: the parent package pkg/backtest re-exports
+// Aliasing convention: core's `pkg/backtest` (`aliases.go`) re-exports
 // every type and constant defined here via Go type/const aliases
 // (`type X = contracts.X`), so all existing callers that use
 // `backtest.BacktestRequest` / `backtest.TradingConfig` / etc. keep

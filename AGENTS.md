@@ -6,7 +6,7 @@
 
 跨仓唯一缝隙：**port 接口 · DTO/值对象（含 domain）· 四个引擎契约 · 哨兵错误 · abi 常量**。所有跨边界的东西只能住这里。
 
-**状态**：S1 落代码（QT-05）／S2 打 tag（QT-07）——当前为占位仓，尚无实现
+**状态**：S1 落代码本仓侧已完成（QT-05 ③-①，2026-10-22：`fees` / `domain/market` / `domain` / `engine` 四包、429 个导出符号）／S2 打 tag（QT-07）待做——今天零 tag，使用方只能 pin `main`；core/agent 切依赖那条腿另需一次 push
 
 ## 2. 构建 / 测试（必须单仓可跑）
 
@@ -39,6 +39,8 @@ go run ./tools/check_release_matrix   # 版本规则表 + 兼容矩阵 ↔ CHANG
 > **`*Config` 族的例外判据**：不按名字判、按类型在边界上的角色判——见 [`docs/adr/0002`](docs/adr/0002-config-族的边界处置.md)。
 > 简版：冻结文本 / 跨语言契约里的名字保留；core-only 的搭车类型不迁或迁后回收；只有「长期留在本仓 + 名字泄漏实现细节」才改名（破坏性）。
 > **新备案的例外必须写进那条 ADR**，不许在 commit message 里口头豁免。
+>
+> **「零实现」的判据**：值对象自带的纯函数方法（校验 / 哈希 / 公司行为 Apply）不属禁止项；四条判据（无 I/O、依赖受限、无跨调用持久状态、不替代服务）见 [`docs/adr/0004`](docs/adr/0004-值对象上的纯函数行为随类型走.md)。回测 / 撮合 / 存储 / 调度 / 服务仍一律禁止。
 
 下面三条对所有仓都成立：
 
@@ -56,10 +58,9 @@ go run ./tools/check_release_matrix   # 版本规则表 + 兼容矩阵 ↔ CHANG
 
 | 依赖 | 版本 | 用途 | 引入包 |
 |---|---|---|---|
-| `github.com/stretchr/testify` | v1.11.1 | **仅测试**断言（随 core 的 `pkg/domain` / `pkg/backtest/contracts` 测试一起迁入；`domain` 已落地，`engine` 待落） | `domain` / `engine` 的 `_test.go` |
+| `github.com/stretchr/testify` | v1.11.1 | **仅测试**断言（随 core 的 `pkg/domain` / `pkg/backtest/contracts` 测试一起迁入；`domain` 与 `engine` 均已落地） | `domain` / `engine` 的 `_test.go` |
 
 > testify 的间接依赖随它自动进 `go.mod`（`davecgh/go-spew`、`pmezard/go-difflib`、`gopkg.in/yaml.v3`，均 `// indirect`）；`go.sum` 里另有 `gopkg.in/check.v1`（testify 的测试依赖，不进构建）。它们不是独立决策，但**一并登记**，免得下次 tidy 时以为被谁偷偷加了。
-> 版本与 core 当前 `go.mod` 对齐（v1.11.1），避免迁移期同一个库在两个仓里出现两个大版本。
 > 版本与 core 当前 `go.mod` 对齐（v1.11.1），避免迁移期同一个库在两个仓里出现两个大版本。
 > `fees` / `domain/market` 的测试只用标准库，**不引 testify**。
 

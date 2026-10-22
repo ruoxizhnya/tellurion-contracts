@@ -18,7 +18,7 @@
 | `tools/check_api_surface/` | 导出面 AST 扫描护栏（`go run ./tools/check_api_surface`） |
 | `tools/check_release_matrix/` | 版本纪律护栏：矩阵 ↔ CHANGELOG ↔ tag 三件套不一致即红（`go run ./tools/check_release_matrix`） |
 | `AGENTS.md` | 本仓入口（构建、边界、禁止、依赖版本、拉取前提） |
-| `doc.go` | 占位包（让空仓 `go build ./...` 从一开始就是绿的） |
+| `doc.go` | 根包（仅 `doc.go`，无导出符号；代码一律住子包） |
 
 ## 快速开始
 
@@ -36,14 +36,14 @@ go run ./tools/check_release_matrix   # 版本规则表 + 兼容矩阵 ↔ CHANG
 
 **可以**：被 core / agent / 各服务 `require`；只放**被 ≥2 个仓使用**的跨边界类型与接口
 
-**不可以**：任何实现、业务规则、DB 访问；`Config` / `Options` / `Impl` 命名（契约泄漏实现细节的形状）；只有单个仓使用的类型（那条属于泄漏，应留在使用方）
+**不可以**：任何实现、业务规则、DB 访问（值对象自带的纯函数方法按 [`adr/0004`](docs/adr/0004-值对象上的纯函数行为随类型走.md) 判定）；`Config` / `Options` / `Impl` 命名（契约泄漏实现细节的形状）；只有单个仓使用的类型（那条属于泄漏，应留在使用方）
 
 ## 版本规则
 
 规则口径的唯一源头是 `tellurion:docs/TASKS.md` **QT-19 ③**（跨仓决策）；本节是它落在本仓的执行形态，改口径先去那张单，不要在这里另起一套。
 
 <!-- rules:begin -->
-| 位 | 何时 bump | 例子（符号名指设计文档，本仓今天还没有符号） |
+| 位 | 何时 bump | 例子（符号名是设计术语或本仓符号） |
 |---|---|---|
 | `MAJOR` | **删符号**、**改签名**、**改语义**（默认值、错误语义、单位与口径都算语义） | 去掉 `RunSpec` 的字段；`CheckOrder` 的返回含义翻转；哨兵错误的判定条件变松 |
 | `MINOR` | **新增向后兼容的能力**：新包、新类型、新导出符号、struct 新增字段 | 新增 `domain.Interval`；给 DTO 加一个可选字段 |
@@ -71,10 +71,10 @@ go run ./tools/check_release_matrix   # 版本规则表 + 兼容矩阵 ↔ CHANG
 <!-- matrix:begin -->
 | 契约版本 | 状态 | 支持的 core（`tellurion`） | 支持的 agent（`tellurion-agent`） |
 |---|---|---|---|
-| `main`（未发版） | 开发基线，**不做兼容承诺** | 尚无 require（QT-05 落码后接入） | 尚无 require（同上） |
+| `main`（未发版） | 开发基线，**不做兼容承诺** | 尚无 require（本仓侧已落码；待 push 后由下游接入） | 尚无 require（同上） |
 <!-- matrix:end -->
 
-⚠️ 本仓今天**零符号、零 tag**：首个版本将是 `v0.1.0`，由 `tellurion:docs/TASKS.md` QT-07 ③-S2-a 在 S2 打。在那之前，「矩阵里有没有我的版本」这个问题对任何使用方的答案都是「没有，你在用 `main`，随时可能 breaking」。
+⚠️ 本仓今天**零 tag**（已有 429 个导出符号，S1 本仓侧落码完成）：首个版本将是 `v0.1.0`，由 `tellurion:docs/TASKS.md` QT-07 ③-S2-a 在 S2 打。在那之前，「矩阵里有没有我的版本」这个问题对任何使用方的答案都是「没有，你在用 `main`，随时可能 breaking」。
 
 ## 发版流程
 
