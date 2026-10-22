@@ -36,6 +36,10 @@ go run ./tools/check_release_matrix   # 版本规则表 + 兼容矩阵 ↔ CHANG
 - `Config` / `Options` / `Impl` 命名（契约泄漏实现细节的形状）
 - 只有单个仓使用的类型（那条属于泄漏，应留在使用方）
 
+> **`*Config` 族的例外判据**：不按名字判、按类型在边界上的角色判——见 [`docs/adr/0002`](docs/adr/0002-config-族的边界处置.md)。
+> 简版：冻结文本 / 跨语言契约里的名字保留；core-only 的搭车类型不迁或迁后回收；只有「长期留在本仓 + 名字泄漏实现细节」才改名（破坏性）。
+> **新备案的例外必须写进那条 ADR**，不许在 commit message 里口头豁免。
+
 下面三条对所有仓都成立：
 
 - **禁止** `replace` 指向仓外路径（单仓就不可构建了）。**唯一过渡例外**：`tellurion-agent` 的 `replace tellurion => ../tellurion`（拆仓过渡态，S3 后收回），以 `tellurion-agent:docs/adr/0001-编译期依赖-core-是过渡态.md` 为准。
@@ -52,9 +56,12 @@ go run ./tools/check_release_matrix   # 版本规则表 + 兼容矩阵 ↔ CHANG
 
 | 依赖 | 版本 | 用途 | 引入包 |
 |---|---|---|---|
-| `github.com/stretchr/testify` | v1.11.1 | **仅测试**断言（随 core 的 `pkg/domain` / `pkg/backtest/contracts` 测试一起迁入） | `domain` / `engine` 的 `_test.go` |
+| `github.com/stretchr/testify` | v1.11.1 | **仅测试**断言（随 core 的 `pkg/domain` / `pkg/backtest/contracts` 测试一起迁入；`domain` 已落地，`engine` 待落） | `domain` / `engine` 的 `_test.go` |
 
-> 版本与 core 当前 `go.mod` 对齐，避免迁移期同一个库在两个仓里出现两个大版本。`fees` 的测试只用标准库，**不引 testify**。
+> testify 的间接依赖随它自动进 `go.mod`（`davecgh/go-spew`、`pmezard/go-difflib`、`gopkg.in/yaml.v3`，均 `// indirect`）；`go.sum` 里另有 `gopkg.in/check.v1`（testify 的测试依赖，不进构建）。它们不是独立决策，但**一并登记**，免得下次 tidy 时以为被谁偷偷加了。
+> 版本与 core 当前 `go.mod` 对齐（v1.11.1），避免迁移期同一个库在两个仓里出现两个大版本。
+> 版本与 core 当前 `go.mod` 对齐（v1.11.1），避免迁移期同一个库在两个仓里出现两个大版本。
+> `fees` / `domain/market` 的测试只用标准库，**不引 testify**。
 
 > 跨仓依赖**只认版本号**（伪版本或 tag），不认源码路径。契约变更走 `tellurion-contracts` 的发布，不走"顺手改一下"。
 

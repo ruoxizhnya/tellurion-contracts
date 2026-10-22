@@ -15,7 +15,7 @@ verified-by: QT-05 ③-① 落码进行中（`fees/` 已落地 → QT-05 标 �
 
 ## 一、本仓任务
 
-> **不再是占位仓（2026-10-22 起）**：QT-05 ③-① 落码进行中，`fees/`（13 符号）与 `domain/market/`（46 符号）已落地，`docs/API.md` §4 已登记、两条护栏绿（59/59）；CT-01/CT-02 两张**随仓文档交付**（refactor-plan-review M6/L4/L5 修复传播，2026-10-20 登记）均已结案 → 落码前面没有拦路的文档单了。
+> **不再是占位仓（2026-10-22 起）**：QT-05 ③-① 落码进行中，`fees/`（13 符号）、`domain/market/`（46）、`domain/`（176）已落地，`docs/API.md` §4 已登记、两条护栏绿（235/235）；CT-01/CT-02 两张**随仓文档交付**（refactor-plan-review M6/L4/L5 修复传播，2026-10-20 登记）均已结案 → 落码前面没有拦路的文档单了。
 >
 > ✅ **CT-01 已结案（2026-10-21）**：`docs/API.md` + `tools/check_api_surface`（CI 步骤「导出面核对」）落地，整条搬进
 > [`archive/TASKS-2026-10-21-archived.md`](archive/TASKS-2026-10-21-archived.md)（含验收逐条与实测偏差）。
@@ -56,7 +56,9 @@ verified-by: QT-05 ③-① 落码进行中（`fees/` 已落地 → QT-05 标 �
 
 > **迁入说明（2026-10-21）**：本单自 core 仓 `tellurion:docs/TASKS.md`「S1」迁入（任务台账批量重分布：S1 双仓落点，主单落本仓）。六字段正文逐字保留、不改写；**kit 腿**拆分为 `tellurion-kit:docs/TASKS.md` 的 **QT-05-B**（③-② 的执行单，判据以本单为准）；core 侧留同号指针，core 侧改动（③-③/④/⑥/⑦/⑨）随本单执行。执行顺序（W0 全绿后的 S1）见 core `tellurion:docs/TASKS.md` 执行顺序总览。
 
-> **进度（2026-10-22，本仓侧）**：`fees/` ✅（13 符号）、`domain/market/` ✅（46 符号）已落地，均登记进 `docs/API.md` §4，两条随仓护栏绿（导出面 59/59）；余下按 ④「一次只搬一个包」依次落 `domain/` → `engine/`。§8 待裁 **#3 已裁决**（fees 整包迁入，含 `StampTaxRateFor`），**#1/#2 在 engine / domain 那两个 commit 里裁**（#1 要同时改 `docs/ARCHITECTURE.md` §2 的图 + 一条 ADR）。
+> **进度（2026-10-22，本仓侧）**：`fees/` ✅（13 符号）、`domain/market/` ✅（46）、`domain/` ✅（176）已落地，均登记进 `docs/API.md` §4，两条随仓护栏绿（导出面 235/235）；只剩 `engine/`（④ 那条「一次只搬一个包」的最后一步）。§8 待裁 **#3 已裁决**（fees 整包迁入，含 `StampTaxRateFor`），**#2 已裁决并写成 [`adr/0002`](adr/0002-config-族的边界处置.md)**（5 个零引用 `*Config` 不迁、2 个 core-only 迁入待回收、engine 的两个冻结伴生名保留），**#1 在 engine 那个 commit 里裁**（要同时改 `docs/ARCHITECTURE.md` §2 的图 + 一条 ADR）。
+> ⚠️ **`domain/` 落地后，core 侧切换依赖那次 commit 多出两条待办**：① **删掉 5 个零引用的部署配置类型**（`Config` / `DatabaseConfig` / `RedisConfig` / `ServiceConfig` / `TushareConfig`，`domain/types.go` 里整段；实测 0 调用点，删了不用改任何调用）——本仓已不提供它们，不删就会出现「core 里有一份、本仓没有」的第三份真相；② `go.mod` 需要 `github.com/stretchr/testify v1.11.1`（域测试用到；同版本已在 core，不会引入第二个大版本）。
+> ⚠️ **③-⑨ 的 core-only 清单已产出（2026-10-22 重测）**：`domain/` 根包 176 个导出符号折 **119 个根名**，agent import 了 **38** 个，**0 命中 81** 个；族与判据、再生成命令都在 `docs/API.md` §6 的 core-only 行——**清单以命令输出为准，不手抄**。S2 后按它回收。
 > ⚠️ **`domain/market/` 落地后多出一条跨仓互锁**：core 的 `pkg/domain/spec_drift_test.go`（`OHLCV` / `Fundamental` 字段集 + `Frequency` 词表 ↔ `tellurion:docs/SPEC.md`）**刻意留 core**，core 侧 sed 后改为 import 本包。⇒ 在本仓给这两个类型加字段，core 侧 CI 会红，这是设计意图；那条测试也是本仓这两个类型字段集的**唯一机器判据**，别当它在迁移里被漏掉了。
 > ⚠️ **② 的实测数字已滞后，且没写测试/非测试的拆分**（W0 期间 core 侧新增了 filltiming / provenance / canonical）。2026-10-22 重新取（`wc -l`）：
 > `pkg/backtest/contracts` **非测试 10 文件 2543 行 ｜ 测试 11 文件 2455 行**（② 写「6 文件 2113 行」）；`pkg/domain` **非测试 16 文件 2208 行 ｜ 测试 8 文件 1795 行**（② 写「17 文件 3983 行」）；`pkg/domain/market` 非测试 5 文件 480 行 ｜ 测试 2 文件 430 行；`pkg/fees` 非测试 1 文件 250 行 ｜ 测试 1 文件 283 行。

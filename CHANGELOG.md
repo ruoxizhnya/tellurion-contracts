@@ -22,6 +22,15 @@
   - 稳定性：字面量词表（`Frequency` / `FrequencySpec` / `TimeSemantics` 及各自常量）标 **frozen**——取值与 nt-sidecar `sidecar/mapping.py` 逐字对齐，改字面量 = 同时改 Python 侧；`OHLCV` / `Fundamental` 的字段集也标 **frozen**（**SPEC 互锁**：core 的 `pkg/domain/spec_drift_test.go` 与 `tellurion:docs/SPEC.md` 双向比对，那条测试**刻意留 core**，core 侧改依赖后改为 import 本包）。
   - 第三方依赖：**零新增**（本包只用标准库，测试也不用 testify）。本仓 `go.mod` 仍只有 module 行。
 
+- **QT-05 ③-①（2026-10-22，进行中）**：新增 **`domain/`** 包（176 个导出符号，已登记进 `docs/API.md` §4）——自 `tellurion:pkg/domain` 迁入（23 文件：16 非测试 + 7 测试）。**这不是逐字等价迁**，刻意改动只有三类，且逐项留痕：
+  - ① import 换成本仓路径（`domain/market`、`fees`）；
+  - ② **删掉 5 个零引用的部署配置类型**：`Config` / `DatabaseConfig` / `RedisConfig` / `ServiceConfig` / `TushareConfig`——core 与 agent 实测 **0 引用**（连 core 自己都不用），`Config` 还带 `Password` 字段。裁决记录：[`docs/adr/0002-config-族的边界处置.md`](docs/adr/0002-config-族的边界处置.md)；core 侧随切换依赖那次 commit 一并删除（0 调用点）。**破坏性：`domain.Config` / `domain.DatabaseConfig` / `domain.RedisConfig` / `domain.ServiceConfig` / `domain.TushareConfig` → 移除**（本仓不提供；core 侧删除后彻底消失——今天无使用方，故无实际迁移成本）。
+  - ③ 随之删掉只为它们存在、且断言恒真的 `TestConfig_Types`。
+  - **等价性证据**：剥注释 + 归一化 import 后，20/23 文件与 core 完全相同；`execution_test.go` 只差 gofmt 的 import 顺序；`types.go` / `types_test.go` 只差被删的那两段（−31 / −24 行）。
+  - 稳定性：领域词汇（信号/订单/持仓/组合/公司行为/因子名册/回测结果）标 stable；core-only 数据族标 experimental + 进 QT-05 ③-⑨ 回收清单（2026-10-22 重测：119 个根名，agent import 38 个，0 命中 81）。
+  - **第三方依赖**：`github.com/stretchr/testify v1.11.1`（**仅测试**）——`domain` 的 `_test.go` 随迁带入，版本与 core 对齐；`go.mod` 从此有 `require`（另有 3 个 testify 的间接依赖）。这不是新增决策：AGENTS §4 的第三方表在 C1/C2 时已预登记。
+  - ⚠️ 记录在案：`FactorDefinition.Validate` / `FactorRegistration.Validate` / `FactorMiningRecord.Validate` **会返回错误**（fail-closed），但它们是包内 `fmt.Errorf`，**不是** `AppError`（本包不依赖 kit，也不依赖尚不存在的三类哨兵）。消费方按「`error != nil` ⇒ 拒绝登记 / 拒绝入库」处理，别按错误类型分支。
+
 ### 变更（PATCH 级：文档与仓内自查工具，不改导出面）
 
 - **CT-02**（2026-10-22）：README 补「版本规则表 + 兼容矩阵 + 发版流程 + 拉取前提（`GOPRIVATE`）」；新建本 `CHANGELOG.md`；新建护栏 `tools/check_release_matrix`（矩阵 ↔ CHANGELOG ↔ tag 三件套不一致即红）并接进 CI。导出面零变化。
