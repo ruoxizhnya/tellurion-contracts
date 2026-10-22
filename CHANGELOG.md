@@ -7,7 +7,12 @@
 
 ## [Unreleased]
 
-尚未发版（**零 tag**；QT-05 ③-① 本仓侧落码完成，四个库包 / 429 个导出符号）。首个版本将是 `v0.1.0`，由 `tellurion:docs/TASKS.md` QT-07 ③-S2-a 在 S2 打；在此之前使用方只能 pin `main`，**无兼容承诺**。
+暂无未发版改动。
+
+## [v0.1.0] - 2026-10-23
+
+S1 落码首版（QT-05 ③-①，本仓侧）：`fees/` + `domain/market/` + `domain/` + `engine/` 四个库包，
+**429 个导出符号**全部登记进 `docs/API.md` §4。0.x 阶段按 README 版本规则允许 breaking，逐条见下。
 
 ### 新增（MINOR 级：加包 / 加导出符号）
 

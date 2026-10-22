@@ -1,6 +1,6 @@
 # tellurion-contracts
 
-> module: `github.com/ruoxizhnya/tellurion-contracts` ｜ 状态：**S1 落代码本仓侧已完成并已推（QT-05 ③-①，2026-10-22：`fees/` + `domain/market/` + `domain/` + `engine/` 四个包，429 个导出符号；6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）／S2 打 tag（QT-07）待做——今天零 tag，使用方只能 pin `main`；下游切依赖那一步已可直接执行（`go get` 实测可解析）**
+> module: `github.com/ruoxizhnya/tellurion-contracts` ｜ 状态：**S1 落码已完成（QT-05 ③-①，2026-10-22：`fees/` + `domain/market/` + `domain/` + `engine/` 四个包，429 个导出符号）／S2 已发版 `v0.1.0`（QT-07 ③-S2-a，2026-10-23，tag 在 `main` 上）**
 
 跨仓唯一缝隙：**port 接口 · DTO/值对象（含 domain）· 四个引擎契约 · 哨兵错误 · abi 常量**。所有跨边界的东西只能住这里。
 
@@ -71,10 +71,11 @@ go run ./tools/check_release_matrix   # 版本规则表 + 兼容矩阵 ↔ CHANG
 <!-- matrix:begin -->
 | 契约版本 | 状态 | 支持的 core（`tellurion`） | 支持的 agent（`tellurion-agent`） |
 |---|---|---|---|
-| `main`（未发版） | 开发基线，**不做兼容承诺** | 尚无 require（本仓侧已落码并推 `fbe9a2d`；下游切依赖待执行） | 尚无 require（同上） |
+| `v0.1` | 已发版（2026-10-23，首个版本） | `v0.1.0`（QT-07 S2-b 切 tag） | `v0.1.0`（同上） |
+| `main`（未发版） | 开发基线，**不做兼容承诺** | 已切 `v0.1.0` | 已切 `v0.1.0` |
 <!-- matrix:end -->
 
-⚠️ 本仓今天**零 tag**（已有 429 个导出符号，S1 本仓侧落码完成）：首个版本将是 `v0.1.0`，由 `tellurion:docs/TASKS.md` QT-07 ③-S2-a 在 S2 打。在那之前，「矩阵里有没有我的版本」这个问题对任何使用方的答案都是「没有，你在用 `main`，随时可能 breaking」。
+首个版本 `v0.1.0` 已于 **2026-10-23** 打在 `main` 上并 push（QT-07 ③-S2-a）。0.x 阶段按上面的规则允许 breaking，但每一处都在 `CHANGELOG.md` 留了账。使用方一律 `require v0.1.0`，**不写 `replace`**（ADR-D31 / D29 §9 C1）。
 
 ## 发版流程
 
