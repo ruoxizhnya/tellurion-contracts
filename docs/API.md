@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-10-22
-verified-by: QT-05 ③-① 落码（`fees` 13 + `domain/market` 46 + `domain` 176 = 235 个符号已登记，护栏 235/235 绿）；§8 待裁 #3（fees 整包）与 #2（`*Config` 族，ADR-0002）均已裁决；§6 core-only 清单按 2026-10-22 重测（119 根名 / agent 用 38 / 0 命中 81）
+verified-by: QT-05 ③-① 本仓侧落码完成（`fees` 13 + `domain/market` 46 + `domain` 176 + `engine` 194 = 429 个符号已登记，护栏 429/429 绿）；§8 待裁 #1（errors//abi/，ADR-0003）、#2（`*Config` 族，ADR-0002）、#3（fees 整包）均已裁决；#4（dataprotocol 时机）仍待 X1a
 ---
 
 # API — 导出面规格（本仓有哪些符号、各自稳不稳定、错了怎么判）
@@ -10,11 +10,11 @@ verified-by: QT-05 ③-① 落码（`fees` 13 + `domain/market` 46 + `domain` 17
 > 本文件定**清单**（导出符号逐个回答「它在不在、稳不稳定、失败时是什么」）。
 > 符号级冲突以本文件为准（它由 CI 核对，`api-schema.md` 不核对符号名）；规则级冲突以 `api-schema.md` 为准。
 >
-> **现状口径（开工前必读）**：本仓**正在落码中**（QT-05 ③-①，2026-10-22 起）——今天已落地的库包是 `fees/`、`domain/market/`、`domain/`，
-> 只剩 `engine/` 按「一次只搬一个包」待落，落下后就在 §4 补一节并跑护栏。
-> `tools/` 下的命令是 `package main`，不计入导出面。
-> **§5~§7 仍是目标面快照**（2026-10-21 用 §1 的命令从 core 实测抓的），只有已经出现在 §4 的包才是「现在能 import 的东西」；
-> §4 没登记的包（今天只有 `engine/`），就算 §5~§7 描述了它，也**还不能 import**。
+> **现状口径（开工前必读）**：本仓的**库代码已全部落地**（QT-05 ③-①，2026-10-22）：`fees/`、`domain/market/`、`domain/`、`engine/` 四个包，
+> 429 个导出符号全部登记在 §4。`tools/` 下的命令是 `package main`，不计入导出面。
+> **§5~§7 已从「目标面快照」变成「现行规格」**——它们的符号今天都在 §4 的登记表里，本节只是把冻结面 / 语义讲透。
+> ⚠️ **但下游还不能 `import` 本仓**：core / agent 切依赖那条腿阻塞在 push（`go get` 只从远端解析 + 禁止 `replace`），
+> 在它落地前，core 仍用自己那份 `pkg/domain` / `pkg/backtest/contracts`（双份真相窗口，见 `docs/ARCHITECTURE.md` §8）。
 
 ---
 
@@ -381,18 +381,228 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 | `ExecutionConfig` | type | experimental | 执行配置（订单类型 / 滑点模型 / 费率 / 冲击模型参数）。§8 #2：名字按豁免保留（core 21 个文件在用）；③-⑨ 待回收，**执行留在 core**，所以它大概率也该回 core |
 | `DefaultExecutionConfig` | func | experimental | 默认执行配置；费率字段取自 `fees.Default*`（单一来源，S7-P1-4 修过 0.00025 与 0.0003 漂移） |
 
+### `engine/` — 包 `contracts`（四契约 / 内核路由 / 成交口径 / canonical 身份 / abi；2026-10-22 自 `tellurion:pkg/backtest/contracts` 逐字迁入）
+
+> **目录叫 `engine/`、包名保持 `contracts`，是刻意的**（QT-05 ③-⑧）：调用点的 `contracts.X` 前缀一行不改，只有 import 路径变；改成 `package engine` 会波及 core 50 处 + agent 5 处。
+> **迁入形状**：20 个文件（10 非测试 + 10 测试）逐字搬入，刻意的代码改动**只有 import 路径**（`domain` / `fees` / 测试包自引用）——剥注释 + 归一化 import 后，17/20 文件完全相同，3 个测试文件只差 gofmt 的 import 顺序，**0 处真实代码差异**。
+> **留在 core**：`resultspec_test.go`（它读 core 的 `docs/SPEC.md` 做文档互锁；core 侧切换依赖后改为 import 本包）。
+> **§8 #1 已裁决（[`adr/0003`](adr/0003-哨兵与-abi-不独立成包.md)）**：`errors/` 与 `abi/` **不独立成包**，随 `engine/` 走。理由不是「改动太大」——实测 `contracts.Err*` 只有 10 个消费文件、`contracts.Host*` 只有 4 个，**而且每个文件都在同时用同包的其它符号**（≥2 个），拆出去没有任何调用点能少 import 一个包，只会多 import 一个。
+> **稳定性**：四契约 §5.1 frozen；status 与 invalid code §5.3 frozen；abi 常量族 §7 frozen；错误族 §5.4 stable；其余工具函数 stable。`TradingConfig` / `PriceLimitConfig` 按 [`adr/0002`](adr/0002-config-族的边界处置.md) ③「冻结面伴生名」保留原名。
+
+| 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
+|---|---|---|---|
+| `EngineRunner` | interface | **frozen** | 跑一次回测的接口（§5.1）：`RunBacktest(ctx, req) (BacktestResponse, error)`。签名与 fail-closed 语义冻结 |
+| `EngineRunner.RunBacktest` | method | **frozen** | status 是唯一成功判据；错误分类见 §5.4 |
+| `BacktestRunner` | interface | stable | 另一条**跨仓**回测口（返回 `*domain.BacktestResult`，签名与 `EngineRunner` 不同）：被 agent 的 pipeline / copilot 与 core 的 strategy adapter 实现（agent 实测 5 个文件 import 本包）。加方法 = 破坏所有实现方 |
+| `BacktestRunner.RunBacktest` | method | stable | `(ctx, strategyName, stockPool, startDate, endDate) → (*domain.BacktestResult, error)`；字符串日期是这条口的既有形状，别改成 time.Time 而不升版本 |
+| `BacktestRequest` | type | **frozen** | `RunSpec` 的承载物（§5.1）：策略 / 票池 / 区间 / 资金 / 频率 / 内核 / 引擎参数 / 信号行 / 成交口径。未知名拒绝（`ValidateRunSpec`） |
+| `BacktestResponse` | type | **frozen** | `ResultSpec` 的承载物（§5.1）：`status` 三值冻结 + `invalid_reasons` + 指标 + 净值 + 成交 |
+| `SignalWeight` | type | stable | `SignalSpec` 的权重形状（§5.1；K15 目标权重流）：`Symbol` / `Weight` / `AsOf`（ISO 日期字符串） |
+| `TradingConfig` | type | **frozen** | A 股交易规则集合（费率 / 涨跌停 / 新股天数 / 融券费率）。**名字按 [`adr/0002`](adr/0002-config-族的边界处置.md) ③ 保留**（SPEC 冻结文本的伴生符号） |
+| `TradingConfig.WithDefaults` | method | **frozen** | **逐字段**填默认（不是整体替换；AUD-37 的教训：整体替换会犯「只改了一行 yaml，其余全被重置」） |
+| `PriceLimitConfig` | type | **frozen** | 涨跌停档位（主板 / ST / 新股）——名字按 ADR-0002 ③ 保留 |
+| `DefaultTradingConfig` | func | stable | 默认交易规则（五个费率项来自 `fees.Default*`，涨跌停 / 新股窗口 / 融券费率是本包字面量） |
+| `StatusCompleted` | const | **frozen** | `"completed"`：`invalid_reasons` 空、`error` 空（§5.3） |
+| `StatusInvalid` | const | **frozen** | `"invalid"`：`invalid_reasons` 必填、`error` 必空；指标照常给出但不得当成功观测（§5.3） |
+| `StatusFailed` | const | **frozen** | `"failed"`：`error` 必填、`invalid_reasons` 空（§5.3）。**禁止第四值** |
+| `DefaultStampTaxRate` | const | **frozen** | `= fees.DefaultStampTaxRate`（0.0005；2023-08-28 起）。别名而非新字面量——费率单一来源 |
+| `DefaultStampTaxRateBefore` | const | **frozen** | `= fees.DefaultStampTaxRateBefore`（0.001；削减日前）。与上一个配对，跨削减日的窗口按日取档 |
+| `DefaultMinCommission` | const | **frozen** | `= fees.DefaultMinCommission`（¥5 绝对额，不是比率） |
+| `DefaultTransferFeeRate` | const | **frozen** | `= fees.DefaultTransferFeeRate`（0.00001，双边） |
+| `DefaultPriceLimitNormal` | const | **frozen** | `0.10`（主板 ±10%）。创业板 / 科创板 ±20%、北交所 ±30% 由 symbol 在决策时派生，**不是**改这个常量 |
+| `DefaultPriceLimitST` | const | **frozen** | `0.10`：主板 ST / *ST **2026-07-06 起**的涨跌停（AUD-07：原值 0.05 已过时；创业板/科创板风险警示股仍按板块 ±20%） |
+| `DefaultPriceLimitSTBefore` | const | **frozen** | `0.05`：2026-07-06 **之前**的主板 ST 档位。跨规则变更的窗口按日取档 |
+| `DefaultPriceLimitNew` | const | **frozen** | `0.20`：新股上市首日涨跌停（创业板 / 科创板口径） |
+| `DefaultNewStockDays` | const | **frozen** | `60`：上市后多少天算「新股」 |
+| `DefaultShortSellingRate` | const | **frozen** | `0.106`：融券年化费率，按持仓市值逐日计提 |
+| `TradingDaysPerYear` | const | **frozen** | `252`：年化 → 日的除数（回测按交易日推进；实盘 margin 模块用 365，**别混**） |
+| `FillTiming` | type | **frozen** | 成交时点口径（QT-02）：`next_open` / `same_close`。字面量进 `run_spec_hash`，改名 = 改所有历史 hash |
+| `FillTimingNextOpen` | const | **frozen** | `"next_open"`：**默认口径**（信号日 D 的决策在 D+1 开盘成交） |
+| `FillTimingSameClose` | const | **frozen** | `"same_close"`：D 日收盘成交（含 T 日信息参与成交的已知偏差，必须用 `KnownBiasSameCloseFill` 标注） |
+| `DefaultFillTiming` | const | **frozen** | `= FillTimingNextOpen` |
+| `FillTiming.Valid` | method | stable | 是否在两个合法字面量内；零值 → false（零值是**未声明**，不是默认口径） |
+| `FillTiming.String` | method | stable | 原样返回字面量 |
+| `FillTiming.KnownBiases` | method | stable | `same_close` → `["same_close_fill"]`；`next_open` → nil。**结果必须自带已知偏差**，别让读者自己猜 |
+| `KnownBiasSameCloseFill` | const | stable | `"same_close_fill"`：同收盘成交的已知偏差标签 |
+| `ResolveFillTiming` | func | stable | 严格解析：空 → `ErrFillTimingMissing`；不认识 → `ErrFillTimingUnknown`；**绝不回落默认值**（默认只在 `EffectiveFillTiming` 那一处决定） |
+| `BacktestRequest.EffectiveFillTiming` | method | stable | 空值 → `DefaultFillTiming`；**不写回**请求（回填会改变存量 JSON 序列化） |
+| `BacktestRequest.EffectiveKernel` | method | stable | 空值 → `DefaultKernel`；同样**不写回**（存量请求的 JSON 不多出 `"kernel":"go"`） |
+| `BacktestRequest.ValidateRunSpec` | method | stable | 返回非 nil = 请求非法（API 层映射 400）：引擎参数未知名、signals 行非法值、**显式声明**但不认识的 fill_timing。空值**不拒**（走默认语义） |
+| `DefaultKernel` | const | stable | `"go"` |
+| `KnownEngineParams` | func | stable | 该内核已登记的引擎参数名（排序副本）；未登记的内核返回空切片 = 「不接受任何引擎特有参数」 |
+| `KernelCaliber` | type | stable | 内核口径对（内核名 + **实际成交**口径），K15 双跑的前置断言输入 |
+| `ErrFillTimingMissing` | var | stable | 见 §5.4：必填面缺失（声明为空）——与「不认识」「两侧不符」分开，调用方才知道该改哪边 |
+| `ErrFillTimingUnknown` | var | stable | 见 §5.4：给了但不认识（拼错 / 上游新增口径而本内核没实现） |
+| `ErrFillTimingMismatch` | var | stable | 见 §5.4：两内核各自声明的口径不一致（K15 对拍前置门；口径不符 ≠ 结果超差） |
+| `CompareKernelCalibers` | func | stable | 两侧都取自「实际成交」一侧；任一侧为空 / 不认识 → 错误（`ErrFillTiming*` 包装内核名）。**口径不符 ≠ 结果超差**：前者根本没有可比性 |
+| `EngineRegistry` | type | stable | 内核注册表（并发安全）。**零静默回退**：未注册内核必须点名报错 |
+| `NewEngineRegistry` | func | stable | 构造空注册表 |
+| `EngineRegistry.Register` | method | stable | 装配期登记（**无热插拔**）。Must 风格：**空名 / nil runner / 重名 → panic**（装配期编程错误，fail-fast；panic 前先解锁，残留状态仍可用）。注意 typed-nil 陷阱：`Register(name, (*Engine)(nil))` 过不了接口 nil 检查，会在首次 `RunBacktest` 才崩 |
+| `EngineRegistry.Resolve` | method | stable | 取内核；未注册 → `ErrKernelNotRegistered`（不回落 `go`） |
+| `EngineRegistry.Names` | method | stable | 已注册内核名（排序副本），供诊断 / 诊断端点 |
+| `ErrKernelNotRegistered` | var | stable | 见 §5.4：请求期 400；零静默回退 |
+| `MarketRouter` | type | stable | 市场 → 内核路由器（配置驱动）。**零值不可用**（nil 表一律拒绝，请用构造器）。市场名构造时归一（去空白 + 大写：`US` 与 `us` 是同一条路由） |
+| `NewMarketRouter` | func | stable | 由映射构造；**空表合法**（存量部署没有 `kernel_routing` 配置时，不带市场的请求行为必须逐字节不变）。拒绝并报错：市场名为空、内核名为空、大小写归一并冲突（同一条路由两个答案——挑一个就是静默回退） |
+| `NewMarketRouterFromConfig` | func | stable | 配置读取包装；nil / 缺配置节 = 空表（不报错） |
+| `MarketRouter.ResolveKernel` | method | stable | 按市场（归一后）取内核；未命中 / 空名 / nil 表 → `ErrMarketNotRegistered`，错误里点名「被拒的市场 + 已登记集合 + 不回落默认内核」——**绝不猜默认内核** |
+| `MarketRouter.Markets` | method | stable | 已路由的市场名（排序副本） |
+| `ErrMarketNotRegistered` | var | stable | 见 §5.4 |
+| `ResolveRunTarget` | func | stable | 市场 + 显式内核 → 生效内核名。四种组合：都不给 → `""`（走默认语义，**不回填**）；只给内核 → 原样；只给市场 → 查路由；两者都给 → **必须一致**，不一致 → 错误（拒绝替调用方挑一个）。**不校验内核是否已注册**（那是 `EngineRegistry.Resolve` 的单一职责） |
+| `CheckValidity` | func | stable | 「无效运行」的**唯一**判定实现（OBS-01）：返回 `InvalidReason` 列表；消费方读结果里的 `InvalidReasons`，不各自重算 |
+| `InvalidReason` | type | **frozen** | 无效原因（Code + Detail）；**Code 是稳定集，Detail 才可改** |
+| `InvalidReasonCodes` | func | **frozen** | 全部合法 Code（排序副本），供文档 / 前端枚举 |
+| `InvalidEmptyUniverse` | const | **frozen** | `empty_universe` |
+| `InvalidZeroTrades` | const | **frozen** | `zero_trades` |
+| `InvalidZeroStartDate` | const | **frozen** | `zero_start_date` |
+| `InvalidGarbageMetric` | const | **frozen** | `garbage_metric`（NaN / Inf 等） |
+| `InvalidExecAlgoUnknownStyle` | const | **frozen** | `exec_algo_unknown_style` |
+| `InvalidExecAlgoAttachFailed` | const | **frozen** | `exec_algo_attach_failed` |
+| `Canonical` | type | stable | 确定性编码器（链式 API，错误在内部累积，`Hex` 时一次性返回）。输出是 hash 的字节基础：**编码顺序写死，改顺序 = 所有历史 hash 失效** |
+| `NewCanonical` | func | stable | 开启一段编码，先写域标签（`Domain*Hash`） |
+| `Canonical.Str` | method | stable | 字符串字段 |
+| `Canonical.Int` | method | stable | int64 字段 |
+| `Canonical.Float` | method | stable | 浮点字段：**NaN / Inf 不可 canonical 编码** → `ErrCanonicalUnsupported` |
+| `Canonical.Time` | method | stable | 时间字段（UTC 日历日编码） |
+| `Canonical.Sequence` | method | stable | **保序**序列（如交易日轴） |
+| `Canonical.SymbolSet` | method | stable | **集合**语义（排序 + 去重；票池用它）。与 `Sequence` 的区别是刻意的，别互换 |
+| `Canonical.Value` | method | stable | 任意值（走 canonicalValue）；不支持的类型 → `ErrCanonicalUnsupported` |
+| `Canonical.Hex` | method | stable | 返回 sha256 hex；内部有错误则返回该错误 |
+| `Canonical.MustHex` | method | stable | 只用于**已证明可编码**的调用点；内部错误 → panic（不是丢字段） |
+| `ErrCanonicalUnsupported` | var | stable | 见 §5.4：不可编码 → 当场失败，禁止退化成「猜一个 hash」 |
+| `DomainRunSpecHash` | const | **frozen** | `"tellurion.run_spec_hash.v1"` 域标签（升版本 = 所有历史 hash 失效） |
+| `DomainDatasetSnapshotHash` | const | **frozen** | `"tellurion.dataset_snapshot_hash.v1"` |
+| `DomainUniverseHash` | const | **frozen** | `"tellurion.universe_hash.v1"` |
+| `DomainCalendarHash` | const | **frozen** | `"tellurion.calendar_hash.v1"` |
+| `DomainAnchorDigestsHash` | const | **frozen** | `"tellurion.adjustment_anchor_digests.v1"` |
+| `DomainParamsHash` | const | **frozen** | `"tellurion.params_hash.v1"`：**生效参数**的独立指纹，与 `run_spec_hash` 里那份**不同域**（只比参数时别误命中换了区间/票池的 run） |
+| `ArtifactHash` | func | stable | 字节码 sha256（hex），**刻意不加域标签**：要能被编译服务 / 缓存 / 外部工具独立算出且逐字节相同（内容寻址）。执行与结果以它为真相（N7） |
+| `UniverseHash` | func | stable | 票池**集合**指纹（排序 + 去重）：`["A","B"]` 与 `["B","A"]` 同 hash |
+| `CalendarHash` | func | stable | 交易日轴指纹，**保序**（`[d1,d2]` ≠ `[d2,d1]`）。Axis 必须进 dataset hash，否则解释不了「同 hash 不同结果」 |
+| `AdjustmentAnchorDigestsHash` | func | stable | 复权锚点 digest 集合指纹（按 `(symbol,start_date)` 排序）：属 **run** 分量，不是 dataset 分量 |
+| `DatasetSnapshotInput` | type | stable | dataset hash 的全部输入（票池 / 区间 / 频率 / 数据版本 / 交易日轴 / 复权口径） |
+| `DatasetSnapshotInput.Hash` | method | stable | 产出 `dataset_snapshot_hash` |
+| `DateRange` | type | stable | 闭区间日期对（UTC 日历日参与编码） |
+| `RunSpecInput` | type | **frozen** | 一次回测的**全部决定性输入**（N6-1）：**影响结果的就必须是字段**（加一个不进 hash 的输入 = 造出「同 hash 不同结果」）。空串/零值是合法输入（哈希保持全函数），必填性由各契约自己管 |
+| `RunSpecInput.Hash` | method | **frozen** | 产出 `run_spec_hash`；不可编码的值返回错误而**不是跳过字段**（跳过的字段改了也不变 hash = 会撒谎的留痕） |
+| `RunSpecInput.MustHash` | method | stable | 已证明可编码时用；错误 → panic |
+| `ParamsHash` | func | stable | 生效参数指纹（QT-63 的 `params_hash` 列） |
+| `StrategyRef` | type | stable | 策略引用（`name@hash` 形态；`Hash=""` = 最新） |
+| `StrategyRef.IsLatest` | method | stable | `Hash == ""` → true |
+| `StrategyRef.String` | method | stable | 还原 `name@hash` |
+| `ParseStrategyRef` | func | stable | 解析 `name@hash`；格式不对 → `ErrStrategyRefMalformed`（注意：artifact hex 段必须 64 位） |
+| `StrategyRefSeparator` | const | **frozen** | `"@"`：`strategy_ref` 的分隔符，改它 = 破坏所有已落库的 ref |
+| `ErrStrategyRefMalformed` | var | stable | 见 §5.4 |
+
+**abi 面（`engine/abi.go`；host 函数名 / 版本 / 内存区所有权按 §7 冻结）**
+
+| 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
+|---|---|---|---|
+| `HostFnGetBar` | const | **frozen** | v1：`(i32 bar_idx, i32 field_id) → f64`。见 §7 |
+| `HostFnGetSeriesLen` | const | **frozen** | v1：`(i32) → i32` |
+| `HostFnGetSymbolCount` | const | **frozen** | v1：`() → i32` |
+| `HostFnGetCrossSection` | const | **frozen** | v1：`(i32,i32,i32) → f64` |
+| `HostFnGetState` | const | **frozen** | v1：`(i32 key, i32 len) → i64`；traps 见 §7 |
+| `HostFnSetState` | const | **frozen** | v1：`(i32,i32,i32,i32)`；traps 见 §7 |
+| `HostFnEmitSignal` | const | **frozen** | v1：`(i32 symbol_idx, i32 action, f64 strength)`；traps 见 §7 |
+| `HostFnLog` | const | **frozen** | v1：`(i32,i32,i32)` |
+| `HostFnGetBar2` | const | **frozen** | v2 新增：`(i32,i32,i32) → f64`（带频率 / 口径参数） |
+| `HostFnGetSeriesLen2` | const | **frozen** | v2 新增：`(i32) → i32` |
+| `HostFnGetDate2` | const | **frozen** | v2 新增：`() → i32`（yyyymmdd） |
+| `HostFnEmitTarget2` | const | **frozen** | v2 新增：目标权重流；与 `emit_signal` **同 bar 同 symbol 混用即错**（`ErrEmitSourcesMixed`） |
+| `HostFnCount` | func | **frozen** | 返回 `len(hostFnContracts)`（枚举结果），**不是**文档字面数；今天是 **12** |
+| `HostFnContract` | type | **frozen** | 单条 host 函数契约（名 / Since / Params / Results / Traps / Doc） |
+| `HostFnContract.Signature` | method | **frozen** | 签名字符串（导入表比对用）；artifact 导入表不符 → `ErrImportSignatureMismatch` |
+| `HostABIContracts` | func | **frozen** | 全部契约（深拷贝，防调用方改内部表） |
+| `HostABIContract` | func | **frozen** | 按名字取一条；未知 → `(零值, false)` |
+| `HostAbiVersion` | type | **frozen** | abi 版本（1 / 2） |
+| `HostAbiV1` | const | **frozen** | `1` |
+| `HostAbiV2` | const | **frozen** | `2` |
+| `HostAbiVersion.Valid` | method | **frozen** | 只认 1 / 2 |
+| `HostAbiVersion.String` | method | **frozen** | `"v1"` / `"v2"` / `"unknown"` |
+| `HostAbiVersionFromName` | func | **frozen** | 解析 `on_bar/N` 的 N；失败 → `ErrAbiVersionUnknown` |
+| `HostValueType` | type | **frozen** | host 值类型（i32 / i64 / f64） |
+| `HostI32` | const | **frozen** | 枚举值 1 |
+| `HostI64` | const | **frozen** | 枚举值 2 |
+| `HostF64` | const | **frozen** | 枚举值 3 |
+| `HostValueType.String` | method | **frozen** | `"i32"` / `"i64"` / `"f64"` |
+| `FieldID` | type | **frozen** | bar 字段索引（abi 里的整数） |
+| `FieldClose` | const | **frozen** | `0` ——**索引即契约**，换序 = 所有 artifact 静默读错列 |
+| `FieldOpen` | const | **frozen** | `1` |
+| `FieldHigh` | const | **frozen** | `2` |
+| `FieldLow` | const | **frozen** | `3` |
+| `FieldVolume` | const | **frozen** | `4` |
+| `FieldID.Valid` | method | **frozen** | 是否在 0..4 |
+| `FieldIDs` | func | **frozen** | 全部字段（按索引升序） |
+| `Action` | type | **frozen** | 信号动作（abi 里的整数值） |
+| `ActionHold` | const | **frozen** | `0` |
+| `ActionLong` | const | **frozen** | `1` |
+| `ActionClose` | const | **frozen** | `2` |
+| `ActionShort` | const | **frozen** | `3` |
+| `Action.Valid` | method | **frozen** | 是否在 0..3 |
+| `Action.Direction` | method | **frozen** | 映射到 `domain.Direction`；非法值返回 **error**（调用方 trap，**不回落 hold**） |
+| `Actions` | func | **frozen** | 全部动作（按值升序） |
+| `StrategyScope` | type | **frozen** | 信号作用域（market / symbol） |
+| `ScopeMarket` | const | **frozen** | `"market"`：1 实例/run，横截面，Axis 为日期轴 |
+| `ScopeSymbol` | const | **frozen** | `"symbol"`：N 实例/run |
+| `StrategyScope.Valid` | method | **frozen** | 是否在两个字面量内 |
+| `ResolveScope` | func | **frozen** | 按 abi 版本裁定生效作用域：**v1 只能是 symbol**（v1 协议表达不了横截面）——`""` 按 symbol 补（兼容期唯一允许的「空值有意义」），声明 market ⇒ `ErrScopeMarketV1`；**v2 必须显式声明**且 ∈ {market, symbol}，否则 `ErrScopeUnknown`；版本不认识 ⇒ `ErrAbiVersionUnknown` |
+| `EmitSource` | type | stable | 发射来源（signal / target）——用于同 bar 混用检测 |
+| `EmitSourceSignal` | const | stable | `"signal"` |
+| `EmitSourceTarget` | const | stable | `"target"` |
+| `EmitSource.String` | method | stable | 原样返回字面量 |
+| `BarEmission` | type | stable | 一根 bar 上的一次发射（来源 / symbol / 值）；预算与混用检查的输入 |
+| `CheckEmitSources` | func | stable | 同 bar 同 symbol 混用两种来源 → `ErrEmitSourcesMixed`；未知来源 → `ErrEmitSourceUnknown` |
+| `CheckSignalBudget` | func | stable | 每 bar 发射数超 `MaxSignalsPerBar(symbolCount)` → `ErrSignalBudgetExceeded` |
+| `CheckStateBudget` | func | stable | 输入是「**本次写入之后**」的 key 数 / 总字节（调用方负责先算再写）：超 `MaxStateKeys` / `MaxInstanceStateBytes` → `ErrStateBudgetExceeded` |
+| `ValidateStrength` | func | stable | 非 finite 或越界 → `ErrStrengthOutOfRange`（非法信号 = 策略故障） |
+| `ValidateTargetWeight` | func | stable | 非 finite 或越界 → `ErrTargetWeightOutOfRange` |
+| `MaxParamsBytes` | const | **frozen** | `4096`：params 区上限（截断**不允许** → `ErrParamsTooLarge`） |
+| `MaxStateValueBytes` | const | **frozen** | `64 << 10`：单 state 值上限 |
+| `MaxInstanceStateBytes` | const | **frozen** | `4 << 20`：单实例 state 总字节上限 |
+| `MaxStateKeys` | const | **frozen** | `4096`：state key 数上限 |
+| `MaxScratchPerBar` | const | **frozen** | `256 << 10`：单 bar scratch 上限 |
+| `MaxSignalsPerBar` | func | **frozen** | 与 symbolCount 相关的每 bar 发射上限（函数而非常量） |
+| `HostRegionAlignment` | const | **frozen** | `8`：内存区指针对齐 |
+| `MinHostParamsPtr` | const | **frozen** | `= MaxParamsBytes`：params 区最小起始地址 |
+| `MinHostScratchSize` | const | **frozen** | `= MaxStateValueBytes`：scratch 区最小尺寸 |
+| `ExportHostParamsPtr` | const | **frozen** | `"__host_params_ptr"` 导出名（artifact 必须导出） |
+| `ExportHostScratchPtr` | const | **frozen** | `"__host_scratch_ptr"` |
+| `ExportHostScratchSize` | const | **frozen** | `"__host_scratch_size"` |
+| `HostRegionExports` | func | **frozen** | 三个必须存在的导出名；缺失 → `ErrHostRegionMissing` |
+| `HostRegionDeclaration` | type | **frozen** | 宿主内存区声明（params ptr / scratch ptr / scratch size） |
+| `HostRegionDeclaration.Validate` | method | **frozen** | 对齐、最小地址、最小尺寸逐条校验；不合法 → `ErrHostRegionInvalid` |
+| `ValidateParamsWrite` | func | stable | 写 params 前的边界校验：`paramsLen < 0` 或 `paramsLen > min(MaxParamsBytes, scratch_ptr−params_ptr)` → `ErrParamsTooLarge`。**截断是明确禁止的**（截断等于让策略读到半个 JSON）；阈值本身是 frozen 常量 |
+| `ErrAbiVersionUnknown` | var | stable | 见 §5.4（abi / artifact 校验族） |
+| `ErrAbiVersionMismatch` | var | stable | 见 §5.4 |
+| `ErrAbiFamilyMissing` | var | stable | 见 §5.4 |
+| `ErrAbiFamilyMixed` | var | stable | 见 §5.4 |
+| `ErrImportNotWhitelisted` | var | stable | 见 §5.4 |
+| `ErrImportSignatureMismatch` | var | stable | 见 §5.4 |
+| `ErrHostRegionMissing` | var | stable | 见 §5.4 |
+| `ErrHostRegionInvalid` | var | stable | 见 §5.4 |
+| `ErrParamsTooLarge` | var | stable | 见 §5.4 |
+| `ErrScopeUnknown` | var | stable | 见 §5.4 |
+| `ErrScopeMarketV1` | var | stable | 见 §5.4；解禁要立 ADR（D25） |
+| `ErrActionIllegal` | var | stable | 见 §5.4（信号校验族，归策略故障） |
+| `ErrStrengthOutOfRange` | var | stable | 见 §5.4 |
+| `ErrTargetWeightOutOfRange` | var | stable | 见 §5.4 |
+| `ErrEmitSourcesMixed` | var | stable | 见 §5.4 |
+| `ErrEmitSourceUnknown` | var | stable | 见 §5.4 |
+| `ErrSignalBudgetExceeded` | var | stable | 见 §5.4 |
+| `ErrStateBudgetExceeded` | var | stable | 见 §5.4 |
+
 <!-- surface:end -->
 
 ---
 
-## 5. 冻结面逐符号规格（S1 迁入 §4 时的权威口径）
+## 5. 冻结面逐符号规格（S1 已迁入 §4；本节是权威语义口径）
 
 > 每个冻结面只**指回** `tellurion:docs/SPEC.md` 的节标题（SPEC.md 用命名节，不用数字编号），不复制正文——
 > 复制的那一份一定会漂移。改这些节本身走 `tellurion:docs/TASKS.md`「维护本文件」的**冻结 schema 变更评审（硬规则）**。
 
 ### 5.1 四契约（ADR-031 D1 —— `tellurion-docs:docs/adr/adr-031-kernel-pluggable-nt-ready.md`）
 
-| 契约术语 | 承载符号（今天住 core，S1 → `engine/`） | 稳定性 | 冻结文本指回 |
+| 契约术语 | 承载符号（✅ 已在本仓 `engine/`） | 稳定性 | 冻结文本指回 |
 |---|---|---|---|
 | `RunSpec` | `BacktestRequest` + `BacktestRequest.ValidateRunSpec` / `EffectiveKernel` / `EffectiveFillTiming`；伴生：`SignalWeight`、`TradingConfig` + `TradingConfig.WithDefaults`、`PriceLimitConfig`、`FillTiming` | **frozen** | `tellurion:docs/SPEC.md` §「RunSpec 内核路由（K10，2026-10-12）：EngineRunner 可插拔」 |
 | `SignalSpec` | `SignalWeight`（K15 目标权重流）；信号本体 `domain.Signal` 随 `domain/` 迁入；供给契约 `SignalProvider`（今天 `tellurion:pkg/strategy`，见 §5.2） | stable（**SPEC.md 无 SignalSpec 节**） | `tellurion-contracts:docs/api-schema.md` §1.2 + `tellurion:docs/design/qt-decoupling/kernel-interface-map.md` §一.4 |
@@ -437,9 +647,9 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 | 三分法（**QT-10 待落，源码里今天没有**） | `ErrDataGap` | ⬜ 目标 | 跳过当天 + 写 `invalid_reasons`（`data_gap_skipped`），run 继续 |
 | 三分法 | `ErrStrategyFault` | ⬜ 目标 | **终止 run** → `status=failed` + `error`；不得当可重试的成功 |
 | 三分法 | `ErrContractBreach` | ⬜ 目标 | **终止 run** → `status=failed`；同时是「无法归类」的兜底类（§3.4） |
-| 内核路由 | `ErrKernelNotRegistered`、`ErrMarketNotRegistered` | stable（今天在 `tellurion:pkg/backtest/contracts`，S1 → `engine/`） | 请求期 400；异步 job 终态 `failed`。**零静默回退** |
+| 内核路由 | `ErrKernelNotRegistered`、`ErrMarketNotRegistered` | stable（✅ 已在 `engine/`） | 请求期 400；异步 job 终态 `failed`。**零静默回退** |
 | 成交口径 | `ErrFillTimingMissing`、`ErrFillTimingUnknown`、`ErrFillTimingMismatch` | stable | 引擎永远不猜口径；口径不符是错误不是结果差异 |
-| abi / artifact 校验 | `ErrAbiVersionUnknown`、`ErrAbiVersionMismatch`、`ErrAbiFamilyMissing`、`ErrAbiFamilyMixed`、`ErrImportNotWhitelisted`、`ErrImportSignatureMismatch`、`ErrHostRegionMissing`、`ErrHostRegionInvalid`、`ErrParamsTooLarge`、`ErrScopeUnknown`、`ErrScopeMarketV1` | stable（S1 → `engine/`；`errors/` 是否独立成包见 §8 待裁决） | 归 `ErrContractBreach` 语义：装载期拦下，不进 run |
+| abi / artifact 校验 | `ErrAbiVersionUnknown`、`ErrAbiVersionMismatch`、`ErrAbiFamilyMissing`、`ErrAbiFamilyMixed`、`ErrImportNotWhitelisted`、`ErrImportSignatureMismatch`、`ErrHostRegionMissing`、`ErrHostRegionInvalid`、`ErrParamsTooLarge`、`ErrScopeUnknown`、`ErrScopeMarketV1` | stable（✅ 已在 `engine/`；`errors/` 不独立成包见 §8 #1） | 归 `ErrContractBreach` 语义：装载期拦下，不进 run |
 | 信号校验 | `ErrActionIllegal`、`ErrStrengthOutOfRange`、`ErrTargetWeightOutOfRange`、`ErrEmitSourcesMixed`、`ErrEmitSourceUnknown`、`ErrSignalBudgetExceeded`、`ErrStateBudgetExceeded` | stable | 归 `ErrStrategyFault`（非法信号 / 预算超限 = 策略故障，终止 run） |
 | provenance / hash | `ErrCanonicalUnsupported`、`ErrStrategyRefMalformed` | stable | 输入身份不可 canonical 编码 → 当场失败，禁止退化成「猜一个 hash」 |
 
@@ -463,7 +673,7 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 
 ---
 
-## 7. abi 常量族（`engine/` 内，随 QT-05 迁入）
+## 7. abi 常量族（`engine/` 内，✅ QT-05 已迁入）
 
 来源：`tellurion:pkg/backtest/contracts/abi.go`（v2 修订见 `tellurion:docs/design/qt-decoupling/adr-029-amendment-host-api-v2.md`）。
 
@@ -489,7 +699,7 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 
 | # | 事项 | 现状 |
 |---|---|---|
-| 1 | `errors/` 与 `abi/` 是否独立成包 | [`ARCHITECTURE.md`](ARCHITECTURE.md) §2 列了这两个包，但 QT-05 ③-① 只说迁 `domain/`、`engine/`、`fees/`（`engine/` 内保持 `package contracts`），abi 常量与哨兵今天都随 `engine/` 走。二者口径不一致，本文件按 QT-05 落点写（§5/§7 归 `engine/`） |
+| 1 | `errors/` 与 `abi/` 是否独立成包 | ✅ **已裁决（2026-10-22，落码时实测）：不独立成包，随 `engine/` 走**（[`adr/0003`](adr/0003-哨兵与-abi-不独立成包.md)）。<br>**据实测而非估计**：`contracts.Err*` 消费方 10 个文件（非测试 4 + 测试 6），`contracts.Host*` 消费方 4 个文件（全在 `tellurion:pkg/sandbox/wasm`）；**没有任何一个消费方只想要其中一组**——每个文件同时用到 ≥2 个其它 `contracts.*` 符号（最少 2、最多 35）。⇒ 拆包不会让任何调用点少 import 一个包。<br>**代价**：`engine/` 成为 10 文件 / 2543 行（非测试）、194 个导出符号的包（占本仓 429 的 45%）。判据是「包内是否有真实的独立演化需求」——今天没有；等有（例如 abi 要独立发给 artifact 加载器）再拆，拆包本身是可排期的独立变更。<br>⚠️ **旧估计已作废**：前期笔记里的「约 61 个 core 文件」没有来源，实测是 4+6；结论不变，理由从「改动太大」换成「改了没人受益」 |
 | 2 | `*Config` 命名族要不要进本仓 | ✅ **已裁决（2026-10-22，落码时实测）：[`adr/0002`](adr/0002-config-族的边界处置.md) 按「类型在边界上的角色」分三条，不按名字分**。<br>① **零引用的部署配置不迁**：`Config` / `DatabaseConfig` / `RedisConfig` / `ServiceConfig` / `TushareConfig` —— core 与 agent 实测 **0 引用**（连 core 自己都不用），且 `Config` 带 `Password`，描述的是 core 的部署 YAML。留在 core，由切换依赖那次 commit 一并删除（0 调用点）。本仓**已删除**它们（`domain/types.go`），支撑它们的恒真测试 `TestConfig_Types` 同删。<br>② **core-only 但随整包迁的两条按原名保留，标 experimental**：`StrategyConfig`（core 4 文件）、`ExecutionConfig`（core 21 文件）——进 ③-⑨ 回收清单；不就地改名的理由是它们本就要搬走（`StrategyConfig` → 最可能 `tellurion-strategy`；`ExecutionConfig` → 大概率回 core，因为执行留 core），改名是给即将搬走的类型付一次破坏性变更的账。<br>③ **冻结面伴生名保留**：`TradingConfig` / `PriceLimitConfig`（随 `engine/` 落地）已写在 SPEC 的 RunSpec 冻结文本里，改名 = 改冻结文本 + 弄红 core 的 `spec_drift_test.go`——冻结面优先于命名规范。<br>判据（以后照此判）：名字是否已在冻结文本 / 跨语言契约里 → 是则保留；否则看它是否 core-only 搭车 → 是则不迁或迁后回收；只有「长期留在本仓 + 名字泄漏实现细节」才改名（破坏性，走 ADR） |
 | 3 | `fees/` 的取舍 | ✅ **已裁决（2026-10-22，落码时实测）：整包迁入，`StampTaxRateFor` / `ApplyDefaults` / `Validate` 一起进**。<br>**裁决依据是「④ 那句在今天的源码里没有对应物」**：`tellurion:pkg/fees` 一共 2 个文件 533 行（非测试 1 文件 250 行），**零算术**——导出面只有 7 个常量 + 1 个日期 var + 1 个结构体 + 4 个纯函数（取档选择器 / 默认值构造 / 零值填充 / 区间校验），全是 ③-① 说的「费率/滑点/成本模型的定义与枚举」。真正算钱的两处都在 core：`tellurion:pkg/backtest/tracker/tracker.go:145`（成交额 × 费率 + 最低佣金兜底，并且是 `StampTaxRateFor` 的**唯一生产调用方**）与 `tellurion:pkg/live/mock_trader.go`。<br>**为什么不把 `StampTaxRateFor` 留 core**：它与 `StampTaxCutDate` 是一对——源码注释自己写着「This is the ONLY place the cut date may be compared」（削减日只许在这一个地方比较）。把常量放本仓、比较点放 core，等于把这条不变量拆到两个仓，以后改档期的人只会看到其中一半。<br>**代价**：本仓因此有一个「看起来像行为」的函数（`StampTaxRateFor`）。判据是它**不读任何状态、不做算术、只按日期在两个给定值里选一个**，属"取值集的定义"而非"算钱"；`ApplyDefaults`/`Validate` 同理（填零值 / 判区间）。真出现按费率算成本的函数，那才越界，按 ADR-0001 ② 打回 |
 | 4 | `dataprotocol` 是否独立成包（QT-40 对表 T2，2026-10-22 登记） | **落点已定名**：`contracts/dataprotocol`（包名 `dataprotocol`）——不叫 `data/`（包名要能自证「这是协议不是实现」，与 #1 的 `errors/`/`abi/` 之争同型），不叫 `dataset`（那是 X1b 的 aggregator 面，形状还没定）。依据 `tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md` §4.1 A 组注 ①。**要裁的是迁入时机，而且两份上游文档给的判据并不一致**：「只有单个仓使用的类型不许提前迁」对应的是 ①「本仓只放被 ≥2 个仓使用的类型」（[AGENTS.md](AGENTS.md) §3 把它写成「只有单个仓使用的类型属泄漏」）；对表注 ② 与本仓下游的 `tellurion-data:docs/api-schema.md` §4 **原先都把它引成 ③**（③ 管的是 `Config`/`Options`/`Impl` 命名），两处引用已于 2026-10-22 同步订正。**但同一份 ADR 的「代价」节明写 S1 整包迁时接受 core-only 类型临时进来、输出一份清单、S2 后回收**，而本仓台账已把这条落成硬要求（`docs/TASKS.md` QT-05 ③-⑨：`screen`/`sector`/`supply_chain`/`macro`/`mining` 在 agent 侧各 0 命中，仍整包迁）。于是有两条都自洽的走法：(a) `dataprotocol` 不适用那条容忍（它是**名单外的新建包**，不是整包迁的附带品）⇒ 挂 X1b 第一 commit，`tellurion-data` 一 import，两个使用方立刻成立；(b) 把它当同类容忍处理，随 S1 一起落、进那份 core-only 清单（③-⑨ 那份名单今天不含它，选 (b) 就要把它加进去）。X1a 之前要挑一条并写进本节，**别两份文档各按一条**（现在的写法是注 ② 选 (a)、而它引的条款其实同时允许 (b)）。X1a 冻结前要先定形状的三处实测：① `UnifiedDataPoint` 今天有**两份同名同字段副本**（`tellurion:pkg/data/source/unified.go:16` 与 `pkg/storage/bulk_insert.go:17`，后者注释自述「storage 不能 import source（会成环）」）⇒ 进 contracts 后成环理由消失，**必须删副本改引用**，否则协议加一列时 `BulkInsert` 的列布局会静默少写一列（`bulk_insert_ddl_test.go` 只核「目标表在 DDL 里」，核不到字段）；② **没有 `DataType` 类型**——`ConnectorDeclaration.DataType` 与 `UnifiedDataPoint.DataType` 都是裸 `string`，取值集靠 `DataType*` 常量；③ **没有 `Aggregator` 接口**（§5.2 的 port 表里只有未定形的 `DataPort`，标着「⬜ 设计中，S1 不落」）：aggregator 今天只有 HTTP 形状，要么随 X1b 实现定、要么先不落 port，**不许在文档里造一个无实现的接口**（§8 已禁默认实现/mock 进本仓）。另：`TimeSemantics` 枚举定义在 `tellurion:pkg/domain/market/visibility.go:61`，**已随 QT-05 ③-① 整包迁入 `domain/market/`（2026-10-22，见 §4）**，`dataprotocol` 里**不再重复定义**——同一次迁移出现两份 `TimeSemantics`，等于把 #1 与 #4 合成一个真事故 |

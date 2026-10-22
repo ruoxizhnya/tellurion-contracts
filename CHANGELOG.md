@@ -31,6 +31,13 @@
   - **第三方依赖**：`github.com/stretchr/testify v1.11.1`（**仅测试**）——`domain` 的 `_test.go` 随迁带入，版本与 core 对齐；`go.mod` 从此有 `require`（另有 3 个 testify 的间接依赖）。这不是新增决策：AGENTS §4 的第三方表在 C1/C2 时已预登记。
   - ⚠️ 记录在案：`FactorDefinition.Validate` / `FactorRegistration.Validate` / `FactorMiningRecord.Validate` **会返回错误**（fail-closed），但它们是包内 `fmt.Errorf`，**不是** `AppError`（本包不依赖 kit，也不依赖尚不存在的三类哨兵）。消费方按「`error != nil` ⇒ 拒绝登记 / 拒绝入库」处理，别按错误类型分支。
 
+- **QT-05 ③-①（2026-10-22，本仓侧收官）**：新增 **`engine/`** 包（**包名仍是 `contracts`**，194 个导出符号，已登记进 `docs/API.md` §4）——自 `tellurion:pkg/backtest/contracts` **逐字迁入**（20 个文件：10 非测试 + 10 测试）。刻意的代码改动**只有 import 路径**（`domain` / `fees` / 测试包自引用）：剥注释 + 归一化 import 后 17/20 文件完全相同，3 个测试文件只差 gofmt 的 import 顺序，**0 处真实代码差异**。
+  - 迁入面：四契约（`BacktestRequest` / `BacktestResponse` / `SignalWeight` / `EngineRunner` + `BacktestRunner`）、内核注册与市场路由、成交口径（`FillTiming` + 三个 `ErrFillTiming*`）、canonical 编码与 provenance 三 hash、`CheckValidity` 与无效 Code、**三类哨兵与 abi 常量**（同包）。
+  - `TradingConfig` / `PriceLimitConfig` 按 [`adr/0002`](docs/adr/0002-config-族的边界处置.md) ③「冻结面伴生名」保留原名。
+  - **裁决 `docs/API.md` §8 #1**：`errors/` 与 `abi/` **不独立成包**（[`adr/0003`](docs/adr/0003-哨兵与-abi-不独立成包.md)）——实测 `contracts.Err*` 只有 10 个消费文件、`contracts.Host*` 只有 4 个，且每个文件都在同时用同包的其它符号，拆包没有调用点能少 import 一个包。代价如实登记：`engine/` 194 个符号、占本仓 429 的 45%。
+  - **留在 core**：`resultspec_test.go`（读 core 的 `docs/SPEC.md` 做文档互锁；core 侧切换依赖后改为 import 本包）。
+  - 第三方依赖：零新增（本包测试沿用已登记的 testify）。
+
 ### 变更（PATCH 级：文档与仓内自查工具，不改导出面）
 
 - **CT-02**（2026-10-22）：README 补「版本规则表 + 兼容矩阵 + 发版流程 + 拉取前提（`GOPRIVATE`）」；新建本 `CHANGELOG.md`；新建护栏 `tools/check_release_matrix`（矩阵 ↔ CHANGELOG ↔ tag 三件套不一致即红）并接进 CI。导出面零变化。
