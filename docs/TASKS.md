@@ -138,7 +138,7 @@ verified-by: QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 +
 | QT-05 | S1：把 `pkg/domain` + `pkg/backtest/contracts` 搬进本仓 | **已迁入本仓「一、本仓任务」**（2026-10-21；core `tellurion:docs/TASKS.md` 留同号指针；kit 腿见 `tellurion-kit:docs/TASKS.md` QT-05-B） |
 | QT-07 | S2：打 `v0.1.0` 并把下游伪版本换成 tag | `tellurion:docs/TASKS.md` |
 | QT-19 | 版本策略 / 兼容矩阵 / CHANGELOG 规则 | `tellurion:docs/TASKS.md` |
-| QT-40（T2） | `dataprotocol` 要不要独立成包、何时迁 | 单在 `tellurion-data:docs/TASKS.md`（QT-40 的接口对表待办 T2）；**落点与两条读法登记在本仓** `docs/API.md` §8 待裁 **#4**。⇒ **已登记为 X1a 待办（2026-10-22，A2）**：X1a 开工前必须在 §8 #4 挑定 (a)/(b) 并写回本节与设计文档 §4.1 注 ②；X1a 的施工序在 `tellurion-data:docs/TASKS.md` 施工序表 |
+| QT-40（T2） | `dataprotocol` 要不要独立成包、何时迁 | 单在 `tellurion-data:docs/TASKS.md`（QT-40 的接口对表待办 T2）；**落点与两条读法登记在本仓** `docs/API.md` §8 待裁 **#4**。⇒ **已登记为 X1a 待办（2026-10-22，A2）**：X1a 开工前必须在 §8 #4 挑定 (a)/(b) 并写回 §8 #4 与设计文档 §4.1 注 ②；X1a 的施工序在 `tellurion-data:docs/TASKS.md` 施工序表 |
 
 ---
 
