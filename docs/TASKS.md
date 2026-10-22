@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-10-22
-verified-by: CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；§二 新增 QT-40 T2 指针（`docs/API.md` §8 待裁 #4）
+verified-by: QT-05 ③-① 落码进行中（`fees/` 已落地 → QT-05 标 🔶 并补进度/滞后数字/push 阻塞三条注；S1 行与 S3-QT-19 行按实测订正）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）
 ---
 
 # TASKS — tellurion-contracts 未完成项
@@ -15,7 +15,7 @@ verified-by: CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + c
 
 ## 一、本仓任务
 
-> **占位仓**：实现落地前不写业务代码；CT-01/CT-02 两张是**随仓文档交付**（refactor-plan-review M6/L4/L5 修复传播，2026-10-20 登记），可与 S1 落码并行。**两张都已结案 → QT-05（S1 落码主单）前面没有拦路的文档单了。**
+> **不再是占位仓（2026-10-22 起）**：QT-05 ③-① 落码进行中，`fees/` 已落地（13 个导出符号，`docs/API.md` §4 已登记，两条护栏绿）；CT-01/CT-02 两张**随仓文档交付**（refactor-plan-review M6/L4/L5 修复传播，2026-10-20 登记）均已结案 → 落码前面没有拦路的文档单了。
 >
 > ✅ **CT-01 已结案（2026-10-21）**：`docs/API.md` + `tools/check_api_surface`（CI 步骤「导出面核对」）落地，整条搬进
 > [`archive/TASKS-2026-10-21-archived.md`](archive/TASKS-2026-10-21-archived.md)（含验收逐条与实测偏差）。
@@ -52,9 +52,15 @@ verified-by: CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + c
 > `CHANGELOG.md` 必须把 `[Unreleased]` 的内容搬进 `## [v0.1.0] - 日期` 节，否则 `go run ./tools/check_release_matrix` 红
 > （CI「版本纪律核对」同款）。tag 那条腿今天空跑（0 tag），从第一个 tag 开始才咬人。
 
-### QT-05 · S1 契约层与工具层落地（代码直接写进两个新仓）[P0] ⬜
+### QT-05 · S1 契约层与工具层落地（代码直接写进两个新仓）[P0] 🔶 进行中
 
 > **迁入说明（2026-10-21）**：本单自 core 仓 `tellurion:docs/TASKS.md`「S1」迁入（任务台账批量重分布：S1 双仓落点，主单落本仓）。六字段正文逐字保留、不改写；**kit 腿**拆分为 `tellurion-kit:docs/TASKS.md` 的 **QT-05-B**（③-② 的执行单，判据以本单为准）；core 侧留同号指针，core 侧改动（③-③/④/⑥/⑦/⑨）随本单执行。执行顺序（W0 全绿后的 S1）见 core `tellurion:docs/TASKS.md` 执行顺序总览。
+
+> **进度（2026-10-22，本仓侧）**：`fees/` ✅ 已落地（③-① 的第一个包，13 个导出符号已登记进 `docs/API.md` §4，两条随仓护栏绿）；余下按 ④「一次只搬一个包」依次落 `domain/market/` → `domain/` → `engine/`。§8 待裁 **#3 已裁决**（fees 整包迁入，含 `StampTaxRateFor`），**#1/#2 在 engine / domain 那两个 commit 里裁**（#1 要同时改 `docs/ARCHITECTURE.md` §2 的图 + 一条 ADR）。
+> ⚠️ **② 的实测数字已滞后，且没写测试/非测试的拆分**（W0 期间 core 侧新增了 filltiming / provenance / canonical）。2026-10-22 重新取（`wc -l`）：
+> `pkg/backtest/contracts` **非测试 10 文件 2543 行 ｜ 测试 11 文件 2455 行**（② 写「6 文件 2113 行」）；`pkg/domain` **非测试 16 文件 2208 行 ｜ 测试 8 文件 1795 行**（② 写「17 文件 3983 行」）；`pkg/domain/market` 非测试 5 文件 480 行 ｜ 测试 2 文件 430 行；`pkg/fees` 非测试 1 文件 250 行 ｜ 测试 1 文件 283 行。
+> **别照抄 ② 的数字做工作量估计**。另：两个测试文件是**SPEC 互锁守卫，刻意留 core 不迁**（`pkg/domain/spec_drift_test.go`、`pkg/backtest/contracts/resultspec_test.go`——它们读 core 的 SPEC 文本），所以实际迁入的测试文件数是 7 与 10。
+> ⚠️ **core/agent 那条腿（③-③④⑤⑦⑨）阻塞在 push**：③-③ 要 `go get <本仓>@<sha>`，而 `go get` 只从远端解析，③-④ 又禁 `replace`——本仓提交不推上去，下游就没法 `require`。窗口期内 core 的 `pkg/domain` 与本仓的 `domain/` **并存 = 双份真相**，两边都不许改，直到 core 侧 sed 落地并删旧包。
 
 > **形态已裁决（2026-10-20，用户选 Plan B → 落地形态见 ADR-D31）**：两仓已存在（各含最终 module path 的 `go.mod` + `AGENTS.md` + `doc.go` 占位），所以**代码直接写进新仓**，core/agent 用 `require <伪版本>` 取用，**全程不出现 `replace`**。原 Plan A（先在 core 内建 `contracts/` `kit/` 子 module，S2 再搬）作废——它会搬两次，且与 core 顶层 `contracts/` 数据目录撞名。
 
@@ -83,9 +89,9 @@ verified-by: CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + c
 
 | 阶段 | 内容 | 上游单号 | 前置 |
 |---|---|---|---|
-| S1 | 把 `pkg/domain`（17 文件）+ `pkg/backtest/contracts`（6 文件）搬入本仓；core/agent 改 `require` 伪版本（正文见「一、本仓任务」QT-05） | `QT-05` | W0 全绿 |
+| S1 | 把 `pkg/domain` + `pkg/backtest/contracts` 搬入本仓（**文件数/行数以 QT-05 进度注里 2026-10-22 的实测为准**，本行原先抄的「17 文件 / 6 文件」已滞后）；core/agent 改 `require` 伪版本（正文见「一、本仓任务」QT-05） | `QT-05` | W0 全绿 |
 | S2 | 打 `v0.1.0`；下游把伪版本换 tag | `QT-07` | S1 全绿 |
-| S3 | 版本规则表 + 兼容矩阵 + CHANGELOG | `QT-19` | S2 打 tag 后 |
+| S3 | 版本规则表 + 兼容矩阵 + CHANGELOG | `QT-19` | S2 打 tag 后 —— ⚠️ **已提前落地（CT-02，2026-10-22）**：README 规则表 + 兼容矩阵 + `CHANGELOG.md` + 护栏 `tools/check_release_matrix` 都在册。S2 打 tag 时只剩「矩阵补 `v0.1` 那一行 + CHANGELOG 把 `[Unreleased]` 搬进 `## [v0.1.0] - 日期`」，别重做一遍 |
 
 ## 二、跨仓指针（不在本仓，勿双写）
 

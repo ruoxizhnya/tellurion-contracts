@@ -1,6 +1,6 @@
 # tellurion-contracts
 
-> module: `github.com/ruoxizhnya/tellurion-contracts` ｜ 状态：**S1 落代码（QT-05）／S2 打 tag（QT-07）——当前为占位仓，尚无实现**
+> module: `github.com/ruoxizhnya/tellurion-contracts` ｜ 状态：**S1 落代码进行中（QT-05 ③-①，2026-10-22 起：`fees/` 已落地）／S2 打 tag（QT-07）待做——今天零 tag，使用方只能 pin `main`**
 
 跨仓唯一缝隙：**port 接口 · DTO/值对象（含 domain）· 四个引擎契约 · 哨兵错误 · abi 常量**。所有跨边界的东西只能住这里。
 
@@ -8,6 +8,7 @@
 
 | 路径 | 内容 |
 |---|---|
+| `fees/` | **已落地的库包**：A 股费率模型的数据形状（常量 / 档位 / 结构体 / 纯校验）。导出面见 `docs/API.md` §4，边界裁决见 §8 #3 |
 | `docs/` | 本仓文档：台账 / 边界 / 决策 / 归档 —— 从这里进：`docs/README.md` |
 | `docs/API.md` | 导出面清单（符号 × 稳定性 × 错误语义）；登记区由 CI 核对 |
 | `CHANGELOG.md` | 版本账本：每个发版一节，breaking 逐条写明「旧 → 新」 |

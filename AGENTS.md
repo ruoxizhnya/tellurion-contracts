@@ -46,7 +46,15 @@ go run ./tools/check_release_matrix   # 版本规则表 + 兼容矩阵 ↔ CHANG
 
 | 依赖 | 版本 | 说明 |
 |---|---|---|
-| `github.com/ruoxizhnya/tellurion-kit` | 待定（S2 后 `v0.1.0`） | 只用它的 decimal / errors，不反向依赖 |
+| `github.com/ruoxizhnya/tellurion-kit` | **今天不 require**（2026-10-22 对 core 侧四个待迁包实测） | 原写「只用它的 decimal / errors」——实测迁移输入（`tellurion:pkg/fees`、`pkg/domain`、`pkg/domain/market`、`pkg/backtest/contracts`）**一个 kit 符号都不碰**：非标准库 import 只有 testify（测试），仓内 import 只在这四个包彼此之间。要用 kit 是一次显式 MINOR + 一条 ADR（例如把 `float64` 换成 `kit/decimal`），不是默认前提 |
+
+第三方依赖（QT-05 迁入时登记；**新增先改这张表，再改 `go.mod`**）：
+
+| 依赖 | 版本 | 用途 | 引入包 |
+|---|---|---|---|
+| `github.com/stretchr/testify` | v1.11.1 | **仅测试**断言（随 core 的 `pkg/domain` / `pkg/backtest/contracts` 测试一起迁入） | `domain` / `engine` 的 `_test.go` |
+
+> 版本与 core 当前 `go.mod` 对齐，避免迁移期同一个库在两个仓里出现两个大版本。`fees` 的测试只用标准库，**不引 testify**。
 
 > 跨仓依赖**只认版本号**（伪版本或 tag），不认源码路径。契约变更走 `tellurion-contracts` 的发布，不走"顺手改一下"。
 

@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-10-22
-verified-by: CT-01（建本文件 + tools/check_api_surface 护栏）；§8 待裁新增 #4（QT-40 对表 T2，dataprotocol 落点与时机）
+verified-by: QT-05 ③-① 落码进行中（`fees/` 已落地并在 §4 登记 13 个符号，护栏绿）；§8 待裁 #3 已裁决（fees 整包迁入，实测本包零算术）
 ---
 
 # API — 导出面规格（本仓有哪些符号、各自稳不稳定、错了怎么判）
@@ -10,10 +10,11 @@ verified-by: CT-01（建本文件 + tools/check_api_surface 护栏）；§8 待�
 > 本文件定**清单**（导出符号逐个回答「它在不在、稳不稳定、失败时是什么」）。
 > 符号级冲突以本文件为准（它由 CI 核对，`api-schema.md` 不核对符号名）；规则级冲突以 `api-schema.md` 为准。
 >
-> **现状口径（开工前必读）**：本仓**今天没有库**——唯一的库代码是根包 `doc.go` 占位（零导出符号），
-> `tools/` 下的命令是 `package main`，不计入导出面。下面 §5~§7 全部是**目标面快照**——
-> 2026-10-21 用 §1 的命令从 core 实测抓出来的，S1（QT-05）落码时逐包迁入 §4 的登记表并接受 CI 核对。
-> 把它们当"现在已经能 import 的东西"就错了。
+> **现状口径（开工前必读）**：本仓**正在落码中**（QT-05 ③-①，2026-10-22 起）——今天已落地的库包是 `fees/`，
+> `domain/`、`domain/market/`、`engine/` 按「一次只搬一个包」依次落，每落一个就在 §4 补一节并跑护栏。
+> `tools/` 下的命令是 `package main`，不计入导出面。
+> **§5~§7 仍是目标面快照**（2026-10-21 用 §1 的命令从 core 实测抓的），只有已经出现在 §4 的包才是「现在能 import 的东西」；
+> §4 没登记的包，就算 §5~§7 描述了它，也**还不能 import**。
 
 ---
 
@@ -91,13 +92,36 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 
 <!-- surface:begin -->
 
-> **本区今天没有条目，这是事实而不是缺漏。** 库代码只有根包 `doc.go` 一个占位文件（零导出符号），
-> `tools/` 是 `package main` 不参与核对，所以 `go run ./tools/check_api_surface` 现在绿——
-> 它核对的是「0 个库导出符号对 0 行登记」。
->
-> **S1（QT-05）落码时必须做的事**：对每个落地的包跑
-> `go run ./tools/check_api_surface -root <core 里的旧包目录> -list`，把输出逐行登记成 §1 的表格形状，
-> 逐行填稳定性与错误语义，然后本区的核对才有实质内容。核对强度不靠人保证，靠红向 ①②③④。
+> **登记口径**：一个包一个小节，标题里的反引号目录名就是包路径（根包写 `.`）。只有第一列参与核对，
+> 其余三列给人读——所以**稳定性与错误语义靠评审逐行读，护栏核不到**（§1 末的覆盖面限制）。
+> 新增导出符号：先跑 `go run ./tools/check_api_surface -list` 拿到符号名，在本区补行，再落代码；
+> 顺序反了 CI 就红（红向 ①）。
+
+### `.` — 根包（只有 `doc.go`，零导出符号）
+
+| 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
+|---|---|---|---|
+
+> 本区没有行是事实：根包只放文档（`package contracts`），代码一律住子包。留这个小节是为了
+> 「根包新增导出符号」有路可登记——没有它，那条路是不存在的（CT-01 自审修的正是这一处）。
+
+### `fees/` — 包 `fees`（A 股费率模型的数据形状；2026-10-22 自 `tellurion:pkg/fees` 逐字迁入）
+
+| 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
+|---|---|---|---|
+| `DefaultCommissionRate` | const | **frozen** | `0.0003`（双边佣金，监管上限/历史默认）。**取值即契约**：改一位数，core 每一笔回测成交的成本跟着变，且不会报错 |
+| `DefaultStampTaxRate` | const | **frozen** | `0.0005`（仅卖出，2023-08-28 起减半后的档）。AUD-06 修过 2 倍错值——历史教训是「常量错了曲线照样漂亮」 |
+| `DefaultStampTaxRateBefore` | const | **frozen** | `0.001`（2008-09-19~2023-08-27 的卖出档）。跨削减日的窗口必须按日取档，见 `StampTaxRateFor` |
+| `DefaultTransferFeeRate` | const | **frozen** | `0.00001`（过户费，双边，2022 起） |
+| `DefaultMinCommission` | const | **frozen** | `5.0`（**绝对元**，不是比率；只约束佣金那一条线） |
+| `DefaultSlippageRate` | const | **frozen** | `0.0001`。**非监管值**，是回测真实性旋钮；置 0 = 确定性测试里关掉滑点 |
+| `FixedSlippageRate` | const | **frozen** | `0.001`（"fixed" 模型专用，刻意悲观 10 倍：该模型没有逐单波动率反馈） |
+| `StampTaxCutDate` | var | **frozen** | 印花税减半生效日 `2023-08-28`（UTC 零点，只比日期不比墙钟）。⚠️ **它是导出 `var` 不是 `const`**（`time.Time` 做不了 const），进程内可被任何导入方改写；本仓按 QT-05 ④ 没动它，下游**只读**。要 const 化就得换成函数入口 = 破坏性改名，另立单 |
+| `StampTaxRateFor` | func | **frozen** | 「按成交日取档」的**唯一**比较点：`asOf < StampTaxCutDate → before`，否则 `current`；`asOf` 零值 → `current`（给不出日期的调用方拿今天的规则，不静默拿历史档）；`before`/`current` 非正 → 回落包常量。判据由 `TestStampTaxRateFor_DateSegmented` / `_ZeroAndNegativeFallBack` 钉住 |
+| `AShareFees` | type | stable | 五个费率旋钮的聚合（四个比率 + `MinCommission` 绝对元）。⚠️ **加字段必须先定零值语义**：零值在费率路径上不是「未设置」而是「**免费**」——实测 `tellurion:pkg/portfolio/portfolio.go:45` 的 `ComputeFees` 对零值 `AShareFees` 返回全 0 三项，且**不调** `ApplyDefaults`；两个生产消费方（`tellurion:pkg/backtest/tracker/tracker.go:141` 的 `feeSchedule(asOf)`、`tellurion:pkg/live/mock_trader.go:180` 的 `feeSchedule()`）各自按自己的配置逐字段构造，也不调它。所以加一个默认为 0 的新字段 = 让成交静默变便宜，**没有任何一层会报错** |
+| `DefaultAShareFees` | func | stable | 返回监管默认档；等价于五个 `Default*` 常量装进结构体（`TestConstantsAreWiredToAShareFees` 逐位对拍） |
+| `AShareFees.ApplyDefaults` | method | stable | **逐字段**填零值，不是整体替换；**幂等**（三条测试钉住：填零 / 保留覆写 / 全填时是 no-op）。**负值不清零**：负费率是调用方 bug，要它显形为错 P&L，不要静默回落。<br>⚠️ **今天零生产调用方**（全仓 grep：只有它自己的 `_test.go`）——它是 `MockTrader` 旧内联默认值（`if cfg.CommissionRate <= 0 {…}`）的迁移 shim。别因此当它可删：删掉就把"给不出默认值的构造方"逼回各自内联。<br>同型教训的正确出处是 **AUD-37**，但那条修的是 `tellurion:pkg/backtest/contracts` 的 `TradingConfig.WithDefaults`（整体替换会犯「我只改了一行 yaml，其余全被重置」的错），**不是本函数**——两者形状相同、来历不同，引用时别混 |
+| `AShareFees.Validate` | method | stable | 区间即判据：三个比率 ∈ **[0, 0.05)**、`MinCommission` ∈ [0, 1000)、`SlippageRate` ∈ [0, 0.1)；越界返回 error（**不是** `AppError`，本包不依赖 kit）。**0 是刻意合法值**（免佣 VIP / 确定性测试关滑点），由 `TestValidate_AcceptsBoundary` 钉住——⚠️ 源码里那条 doc 注释写成 `(0, 0.05)` 与实现不符，**以实现与本行为准**（QT-05 ④ 不改业务逻辑，注释订正留给 core 侧同一次改动）。另：**零值 `AShareFees{}` 也能通过 `Validate`**（全 0 在区间内），所以"先 Validate 再 ApplyDefaults"拦不住"整组费率忘配"——那是 `ApplyDefaults` 的活，不是它的。**放宽区间属语义变更**（原本被拒的配置会通过），按版本规则记账 |
 
 <!-- surface:end -->
 
@@ -209,7 +233,7 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 |---|---|---|
 | 1 | `errors/` 与 `abi/` 是否独立成包 | [`ARCHITECTURE.md`](ARCHITECTURE.md) §2 列了这两个包，但 QT-05 ③-① 只说迁 `domain/`、`engine/`、`fees/`（`engine/` 内保持 `package contracts`），abi 常量与哨兵今天都随 `engine/` 走。二者口径不一致，本文件按 QT-05 落点写（§5/§7 归 `engine/`） |
 | 2 | `*Config` 命名族要不要进本仓 | ADR-0001 ③ 禁 `Config`/`Options`/`Impl` 命名，但 S1 整包迁会带进来 9 个：`domain/` 的 `Config`（精确同名）、`ServiceConfig`、`DatabaseConfig`、`RedisConfig`、`TushareConfig`、`StrategyConfig`、`ExecutionConfig` + `engine/` 的 `TradingConfig`、`PriceLimitConfig`。后两个还是 §5.1 的 frozen 伴生符号——禁令与冻结面在这儿撞车，落码前要结论，不能两边都当没看见 |
-| 3 | `fees/` 的取舍 | QT-05 ①「只放数据形状」+ ④「不搬 `fees` 的计算部分」：`AShareFees`/`Default*` 常量/`StampTaxCutDate` 进；`StampTaxRateFor`（按日取档的函数）与 `ApplyDefaults`/`Validate` 留 core —— 但 `AShareFees` 的方法在迁入包里，切不开。落码前必须定「方法算不算计算部分」 |
+| 3 | `fees/` 的取舍 | ✅ **已裁决（2026-10-22，落码时实测）：整包迁入，`StampTaxRateFor` / `ApplyDefaults` / `Validate` 一起进**。<br>**裁决依据是「④ 那句在今天的源码里没有对应物」**：`tellurion:pkg/fees` 一共 2 个文件 533 行（非测试 1 文件 250 行），**零算术**——导出面只有 7 个常量 + 1 个日期 var + 1 个结构体 + 4 个纯函数（取档选择器 / 默认值构造 / 零值填充 / 区间校验），全是 ③-① 说的「费率/滑点/成本模型的定义与枚举」。真正算钱的两处都在 core：`tellurion:pkg/backtest/tracker/tracker.go:145`（成交额 × 费率 + 最低佣金兜底，并且是 `StampTaxRateFor` 的**唯一生产调用方**）与 `tellurion:pkg/live/mock_trader.go`。<br>**为什么不把 `StampTaxRateFor` 留 core**：它与 `StampTaxCutDate` 是一对——源码注释自己写着「This is the ONLY place the cut date may be compared」（削减日只许在这一个地方比较）。把常量放本仓、比较点放 core，等于把这条不变量拆到两个仓，以后改档期的人只会看到其中一半。<br>**代价**：本仓因此有一个「看起来像行为」的函数（`StampTaxRateFor`）。判据是它**不读任何状态、不做算术、只按日期在两个给定值里选一个**，属"取值集的定义"而非"算钱"；`ApplyDefaults`/`Validate` 同理（填零值 / 判区间）。真出现按费率算成本的函数，那才越界，按 ADR-0001 ② 打回 |
 | 4 | `dataprotocol` 是否独立成包（QT-40 对表 T2，2026-10-22 登记） | **落点已定名**：`contracts/dataprotocol`（包名 `dataprotocol`）——不叫 `data/`（包名要能自证「这是协议不是实现」，与 #1 的 `errors/`/`abi/` 之争同型），不叫 `dataset`（那是 X1b 的 aggregator 面，形状还没定）。依据 `tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md` §4.1 A 组注 ①。**要裁的是迁入时机，而且两份上游文档给的判据并不一致**：「只有单个仓使用的类型不许提前迁」对应的是 ①「本仓只放被 ≥2 个仓使用的类型」（[AGENTS.md](AGENTS.md) §3 把它写成「只有单个仓使用的类型属泄漏」）；对表注 ② 与本仓下游的 `tellurion-data:docs/api-schema.md` §4 **原先都把它引成 ③**（③ 管的是 `Config`/`Options`/`Impl` 命名），两处引用已于 2026-10-22 同步订正。**但同一份 ADR 的「代价」节明写 S1 整包迁时接受 core-only 类型临时进来、输出一份清单、S2 后回收**，而本仓台账已把这条落成硬要求（`docs/TASKS.md` QT-05 ③-⑨：`screen`/`sector`/`supply_chain`/`macro`/`mining` 在 agent 侧各 0 命中，仍整包迁）。于是有两条都自洽的走法：(a) `dataprotocol` 不适用那条容忍（它是**名单外的新建包**，不是整包迁的附带品）⇒ 挂 X1b 第一 commit，`tellurion-data` 一 import，两个使用方立刻成立；(b) 把它当同类容忍处理，随 S1 一起落、进那份 core-only 清单（③-⑨ 那份名单今天不含它，选 (b) 就要把它加进去）。X1a 之前要挑一条并写进本节，**别两份文档各按一条**（现在的写法是注 ② 选 (a)、而它引的条款其实同时允许 (b)）。X1a 冻结前要先定形状的三处实测：① `UnifiedDataPoint` 今天有**两份同名同字段副本**（`tellurion:pkg/data/source/unified.go:16` 与 `pkg/storage/bulk_insert.go:17`，后者注释自述「storage 不能 import source（会成环）」）⇒ 进 contracts 后成环理由消失，**必须删副本改引用**，否则协议加一列时 `BulkInsert` 的列布局会静默少写一列（`bulk_insert_ddl_test.go` 只核「目标表在 DDL 里」，核不到字段）；② **没有 `DataType` 类型**——`ConnectorDeclaration.DataType` 与 `UnifiedDataPoint.DataType` 都是裸 `string`，取值集靠 `DataType*` 常量；③ **没有 `Aggregator` 接口**（§5.2 的 port 表里只有未定形的 `DataPort`，标着「⬜ 设计中，S1 不落」）：aggregator 今天只有 HTTP 形状，要么随 X1b 实现定、要么先不落 port，**不许在文档里造一个无实现的接口**（§8 已禁默认实现/mock 进本仓）。另：`TimeSemantics` 枚举定义在 `tellurion:pkg/domain/market/visibility.go:61`，**随 QT-05 整包迁 `contracts/domain/market`，不在 `dataprotocol` 里重复定义**——同一次迁移出现两份 `TimeSemantics`，等于把 #1 与 #4 合成一个真事故 |
 
 ---
