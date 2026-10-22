@@ -1,6 +1,6 @@
 # tellurion-contracts
 
-> module: `github.com/ruoxizhnya/tellurion-contracts` ｜ 状态：**S1 落代码本仓侧已完成（QT-05 ③-①，2026-10-22：`fees/` + `domain/market/` + `domain/` + `engine/` 四个包，429 个导出符号）／S2 打 tag（QT-07）待做——今天零 tag，使用方只能 pin `main`；下游切依赖那一步另需一次 push**
+> module: `github.com/ruoxizhnya/tellurion-contracts` ｜ 状态：**S1 落代码本仓侧已完成并已推（QT-05 ③-①，2026-10-22：`fees/` + `domain/market/` + `domain/` + `engine/` 四个包，429 个导出符号；6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）／S2 打 tag（QT-07）待做——今天零 tag，使用方只能 pin `main`；下游切依赖那一步已可直接执行（`go get` 实测可解析）**
 
 跨仓唯一缝隙：**port 接口 · DTO/值对象（含 domain）· 四个引擎契约 · 哨兵错误 · abi 常量**。所有跨边界的东西只能住这里。
 
