@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-10-22
-verified-by: QT-05 ③-① 落码（§2 订正「只依赖 kit」为实测零依赖 + 标注 errors//abi/ 不独立成包；§3 fees 行按实测收紧；§8 S1 标 🔶 并写明 push 阻塞与双份真相窗口）
+verified-by: QT-05 ③-① 落码（§2 订正「只依赖 kit」为实测零依赖 + 标注 errors//abi/ 不独立成包 + `domain/market/` 已落；§3 加 `domain/market/` 行、fees 行按实测收紧；§5 依赖图同步订正；§8 S1 标 🔶 并写明 push 阻塞与双份真相窗口）
 ---
 
 # 架构 — tellurion-contracts
@@ -18,6 +18,7 @@ verified-by: QT-05 ③-① 落码（§2 订正「只依赖 kit」为实测零依
 （被所有 Go 仓依赖）
 
   domain/     值对象：OHLCV / Trade / BacktestResult / Factor* / Direction
+  domain/market/  行情值对象 + 频率/时间语义词表 + Provider（✅ 2026-10-22 已落地，46 个导出符号）
   engine/     四契约：RunSpec / SignalSpec / ResultSpec / EngineRunner + MarketRouter
   fees/       费率 / 滑点 / 成本模型的**定义**（算钱留在 core）
   errors/     三类哨兵          ⚠️ 已裁决**不独立成包**（随 engine/），图待 engine 落地时改
@@ -36,6 +37,7 @@ verified-by: QT-05 ③-① 落码（§2 订正「只依赖 kit」为实测零依
 | 包 | 职责 | 不该做什么 |
 |---|---|---|
 | `domain/` | 跨边界值对象 | 不做计算、不读配置 |
+| `domain/market/` | 行情值对象 + 频率/时间语义词表 + `Provider` 接口 | 不做计算；`OHLCV`/`Fundamental` 的字段集与 core `docs/SPEC.md` 互锁（加字段 = core 侧红），见 `docs/API.md` §4 |
 | `engine/` | 回测四契约 + 路由接口 | 不含引擎实现 |
 | `fees/` | 成本模型的形状 | 不算钱（成交额 × 费率、最低佣金兜底在 core 的 tracker / mock_trader；本包实测零算术，见 `docs/API.md` §8 #3 的裁决依据） |
 | `errors/` | 三类哨兵 + 包装约定 | 不做日志 |
@@ -51,8 +53,9 @@ verified-by: QT-05 ③-① 落码（§2 订正「只依赖 kit」为实测零依
 ## 5. 依赖方向
 
 ```
-tellurion-kit（decimal / errors）
-        ↑
+（今天无内部依赖：本仓不 require tellurion-kit，见 §2 的实测订正；
+  未来若要用 kit/decimal，是一次显式 MINOR + 一条 ADR，不是默认前提）
+
 tellurion-contracts
         ↑            ↑            ↑
       core        agent        各服务
@@ -73,6 +76,6 @@ tellurion-contracts
 
 | 阶段 | 内容 | 状态 |
 |---|---|---|
-| S1（QT-05） | `pkg/domain` + `pkg/backtest/contracts` 搬入本仓，core/agent 改 `require` 伪版本 | 🔶 **进行中（2026-10-22）**：本仓侧 `fees/` ✅ 已落（13 个导出符号已登记进 `docs/API.md` §4，护栏绿）；`domain/market` → `domain` → `engine` 按「一次只搬一个包」依次落。**core/agent 切依赖那条腿阻塞在 push**：`go get <本仓>@<sha>` 只能从远端解析，而 ③-④ 禁止 `replace`——本地提交不推上去，下游就没法 `require`。窗口期内 core 的 `pkg/domain` 与本仓的 `domain/` **并存（双份真相）**，两边都不许改，直到 core 侧 sed 落地并删掉旧包 |
+| S1（QT-05） | `pkg/domain` + `pkg/backtest/contracts` 搬入本仓，core/agent 改 `require` 伪版本 | 🔶 **进行中（2026-10-22）**：本仓侧 `fees/` ✅（13 符号）、`domain/market/` ✅（46 符号）已落并登记进 `docs/API.md` §4，护栏 59/59 绿；余下 `domain` → `engine` 按「一次只搬一个包」依次落。**core/agent 切依赖那条腿阻塞在 push**：`go get <本仓>@<sha>` 只能从远端解析，而 ③-④ 禁止 `replace`——本地提交不推上去，下游就没法 `require`。窗口期内 core 的 `pkg/domain` 与本仓的 `domain/` **并存（双份真相）**，两边都不许改，直到 core 侧 sed 落地并删掉旧包 |
 | S2（QT-07） | 打 `v0.1.0`，下游换 tag | ⬜ |
 | QT-19 | 版本规则表 + 兼容矩阵 + CHANGELOG | ✅ 已随 CT-02 落地（2026-10-22，护栏 `tools/check_release_matrix` 进 CI） |

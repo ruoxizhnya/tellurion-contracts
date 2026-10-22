@@ -17,6 +17,11 @@
   - 第三方依赖：**零新增**（`fees` 的测试只用标准库）。本仓 `go.mod` 未变。
   - ⚠️ 登记在案的形状代价：`StampTaxCutDate` 是**导出 `var`**（`time.Time` 做不了 const），进程内可被导入方改写；本次按 QT-05 ④「不改任何业务逻辑」没动它，下游只读。
 
+- **QT-05 ③-①（2026-10-22，进行中）**：新增 **`domain/market/`** 包（46 个导出符号，已登记进 `docs/API.md` §4）——自 `tellurion:pkg/domain/market` **逐字迁入**。7 个文件落地时 sha256 逐字节相同；随后只改注释里的跨仓路径为 `repo:path` 形式，剥掉全部注释行再 diff，**七个文件退出码全 0**（代码行零差异）。
+  - 迁入面：行情值对象（`OHLCV` / `Stock` / `Fundamental` / `FundamentalData` / `Split` / `Dividend` / `IndexDaily` / `IndexConstituent`）+ 频率词表（`Frequency` / `FrequencySpec`）+ 时间语义与 PIT 原语（`TimeSemantics` / `AsiaShanghai` / `DailyVisibleAt` / `IntradayVisibleAt` / `OHLCV.VisibleBy`）+ `Provider` 接口（5 个方法）。
+  - 稳定性：字面量词表（`Frequency` / `FrequencySpec` / `TimeSemantics` 及各自常量）标 **frozen**——取值与 nt-sidecar `sidecar/mapping.py` 逐字对齐，改字面量 = 同时改 Python 侧；`OHLCV` / `Fundamental` 的字段集也标 **frozen**（**SPEC 互锁**：core 的 `pkg/domain/spec_drift_test.go` 与 `tellurion:docs/SPEC.md` 双向比对，那条测试**刻意留 core**，core 侧改依赖后改为 import 本包）。
+  - 第三方依赖：**零新增**（本包只用标准库，测试也不用 testify）。本仓 `go.mod` 仍只有 module 行。
+
 ### 变更（PATCH 级：文档与仓内自查工具，不改导出面）
 
 - **CT-02**（2026-10-22）：README 补「版本规则表 + 兼容矩阵 + 发版流程 + 拉取前提（`GOPRIVATE`）」；新建本 `CHANGELOG.md`；新建护栏 `tools/check_release_matrix`（矩阵 ↔ CHANGELOG ↔ tag 三件套不一致即红）并接进 CI。导出面零变化。

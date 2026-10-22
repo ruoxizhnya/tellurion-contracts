@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-10-22
-verified-by: QT-05 ③-① 落码进行中（`fees/` 已落地并在 §4 登记 13 个符号，护栏绿）；§8 待裁 #3 已裁决（fees 整包迁入，实测本包零算术）
+verified-by: QT-05 ③-① 落码进行中（`fees/` 13 个符号 + `domain/market/` 46 个符号已登记，护栏绿 59/59）；§8 待裁 #3 已裁决（fees 整包迁入，实测本包零算术）
 ---
 
 # API — 导出面规格（本仓有哪些符号、各自稳不稳定、错了怎么判）
@@ -10,8 +10,8 @@ verified-by: QT-05 ③-① 落码进行中（`fees/` 已落地并在 §4 登记 
 > 本文件定**清单**（导出符号逐个回答「它在不在、稳不稳定、失败时是什么」）。
 > 符号级冲突以本文件为准（它由 CI 核对，`api-schema.md` 不核对符号名）；规则级冲突以 `api-schema.md` 为准。
 >
-> **现状口径（开工前必读）**：本仓**正在落码中**（QT-05 ③-①，2026-10-22 起）——今天已落地的库包是 `fees/`，
-> `domain/`、`domain/market/`、`engine/` 按「一次只搬一个包」依次落，每落一个就在 §4 补一节并跑护栏。
+> **现状口径（开工前必读）**：本仓**正在落码中**（QT-05 ③-①，2026-10-22 起）——今天已落地的库包是 `fees/` 与 `domain/market/`，
+> `domain/`、`engine/` 按「一次只搬一个包」依次落，每落一个就在 §4 补一节并跑护栏。
 > `tools/` 下的命令是 `package main`，不计入导出面。
 > **§5~§7 仍是目标面快照**（2026-10-21 用 §1 的命令从 core 实测抓的），只有已经出现在 §4 的包才是「现在能 import 的东西」；
 > §4 没登记的包，就算 §5~§7 描述了它，也**还不能 import**。
@@ -123,6 +123,63 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 | `AShareFees.ApplyDefaults` | method | stable | **逐字段**填零值，不是整体替换；**幂等**（三条测试钉住：填零 / 保留覆写 / 全填时是 no-op）。**负值不清零**：负费率是调用方 bug，要它显形为错 P&L，不要静默回落。<br>⚠️ **今天零生产调用方**（全仓 grep：只有它自己的 `_test.go`）——它是 `MockTrader` 旧内联默认值（`if cfg.CommissionRate <= 0 {…}`）的迁移 shim。别因此当它可删：删掉就把"给不出默认值的构造方"逼回各自内联。<br>同型教训的正确出处是 **AUD-37**，但那条修的是 `tellurion:pkg/backtest/contracts` 的 `TradingConfig.WithDefaults`（整体替换会犯「我只改了一行 yaml，其余全被重置」的错），**不是本函数**——两者形状相同、来历不同，引用时别混 |
 | `AShareFees.Validate` | method | stable | 区间即判据：三个比率 ∈ **[0, 0.05)**、`MinCommission` ∈ [0, 1000)、`SlippageRate` ∈ [0, 0.1)；越界返回 error（**不是** `AppError`，本包不依赖 kit）。**0 是刻意合法值**（免佣 VIP / 确定性测试关滑点），由 `TestValidate_AcceptsBoundary` 钉住——⚠️ 源码里那条 doc 注释写成 `(0, 0.05)` 与实现不符，**以实现与本行为准**（QT-05 ④ 不改业务逻辑，注释订正留给 core 侧同一次改动）。另：**零值 `AShareFees{}` 也能通过 `Validate`**（全 0 在区间内），所以"先 Validate 再 ApplyDefaults"拦不住"整组费率忘配"——那是 `ApplyDefaults` 的活，不是它的。**放宽区间属语义变更**（原本被拒的配置会通过），按版本规则记账 |
 
+### `domain/market/` — 包 `market`（行情值对象 + 频率/时间语义词表；2026-10-22 自 `tellurion:pkg/domain/market` 逐字迁入）
+
+> **两条纪律决定这里的稳定性标注**：
+> ① **字面量契约（跨语言）**：`Frequency` / `FrequencySpec` / `TimeSemantics` 的取值与 nt-sidecar `sidecar/mapping.py` 的常量逐字相同。**改一个已有字面量 = 同时改 Python 侧 = breaking**；**加一个词 = MINOR**（旧值照常解析）。
+> ② **SPEC 互锁**：`OHLCV` / `Fundamental` 的字段集与 `Frequency` 词表由 core 的 `pkg/domain/spec_drift_test.go` 与 `tellurion:docs/SPEC.md` 双向比对（Go 有而 SPEC 没写 = 红；SPEC 写了而 Go 没有 = 红）。**那条测试刻意留 core**（它读 core 的 `docs/SPEC.md`），core 侧改依赖后它改为 import 本包 ⇒ **在本包给这两个类型加字段，core 侧会红**，这是设计意图，不是漏配。
+> **单位口径（B 类规范化数据）**：`Volume` = **股**、`Turnover` = **CNY**；「缺失 ≠ 0」用指针表达（nil = 上游未发布）。
+> **零值口径**：`Frequency` / `VisibleAt` 的零值都表示「**未声明**」，不是「默认」——未声明的 PIT 数据按**不可见**处理（fail-closed）。
+
+| 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
+|---|---|---|---|
+| `Frequency` | type | **frozen** | 记录自带频率字段（ADR-031 §4.1）。字面量 `"1m"` / `"15m"` / `"1d"`；零值 `""` = **未声明**，不是合法频率。扩展 = 常量 + 路由分支 + 聚合口径 + SPEC 词表**四件套**同步（见 `tellurion:docs/SPEC.md` 规范层 Schema 节） |
+| `Freq1m` | const | **frozen** | `"1m"`（ohlcv_minute，mootdx）。与 nt-sidecar 的 `FREQ_1D` 等同族常量逐字对齐 |
+| `Freq15m` | const | **frozen** | `"15m"`（由 1m 聚合产出，**不物化**） |
+| `Freq1d` | const | **frozen** | `"1d"`（ohlcv_daily_qfq，Tushare 前复权——唯一进回测的口径） |
+| `Frequency.Valid` | method | stable | 是否在词表内；零值 → false |
+| `Frequency.String` | method | stable | 原样返回字面量，供日志/错误信息 |
+| `Frequency.IsIntraday` | method | stable | `1m` / `15m` → true，`1d` 与零值 → false |
+| `Frequency.IntradayMinutes` | method | stable | `(1,true)` / `(15,true)`；日频或未声明 → `(0,false)`（**不猜默认周期**） |
+| `ParseFrequency` | func | stable | 接受集 = `Frequency` 词表；未知 ⇒ `fmt.Errorf("market: unknown frequency …")`。**不静默回退到"默认"频率**（回测里的"默认"就是泄漏） |
+| `KnownFrequencies` | func | stable | 返回词表**拷贝**（防调用方改内部状态）。消费方（频率枚举 / 校验 / 防漂移测试）只读它，不各自维护清单 |
+| `FrequencySpec` | type | **frozen** | connector 注册契约（D2）的「源口径」枚举，与记录自带的 `Frequency` **正交**：前者说"这个源怎么产出"，后者说"这条记录是什么频率"。零值 = 未声明 |
+| `FreqSpecDaily` | const | **frozen** | `"daily"`（日线 / 资金流 / 龙虎榜等每日一条） |
+| `FreqSpecIntraday` | const | **frozen** | `"intraday"`（1m bar / 实时快照） |
+| `FreqSpecEvent` | const | **frozen** | `"event"`（披露 / 发布驱动的非等间隔记录；可见时间由记录自带的锚点承载） |
+| `FrequencySpec.Valid` | method | stable | 是否在词表内；零值 → false |
+| `FrequencySpec.String` | method | stable | 原样返回字面量 |
+| `ParseFrequencySpec` | func | stable | 接受集 = 词表；未知 ⇒ error，**不回退默认口径** |
+| `KnownFrequencySpecs` | func | stable | 词表**拷贝** |
+| `TimeSemantics` | type | **frozen** | 「该数据源的数据什么时候才可见」的注册契约字段（ADR-031 §4.2 红线：每条数据必须自带可见时间，否则即泄漏）。字面量与 nt-sidecar 对齐 |
+| `VisibleOnAnnouncementDay` | const | **frozen** | `"announcement_day"`（披露日 ≤ 回测日才可用：财报 / 公告 / 宏观发布） |
+| `VisibleAfterClose` | const | **frozen** | `"after_close"`（交易日 15:00 后：日线 / 资金流 / 龙虎榜）。**保守**口径，不早于真实可见时刻 |
+| `VisibleNextOpen` | const | **frozen** | `"next_open"`（次日开盘；用于收盘后仍拿不到的数据） |
+| `VisibleCustom` | const | **frozen** | `"custom"`（必须随声明给出 `VisibleExpr`；实时快照 = 观察时刻，分钟 bar = 周期结束） |
+| `TimeSemantics.Valid` | method | stable | 是否在词表内；零值 → false |
+| `TimeSemantics.RequiresExpression` | method | stable | 仅 `VisibleCustom` → true；别的语义给了表达式也不报错（**由注册侧判**，本方法只回答"必需吗"） |
+| `TimeSemantics.String` | method | stable | 原样返回字面量 |
+| `ParseTimeSemantics` | func | stable | 接受集 = 词表；未知 ⇒ error（时间语义的"默认"就是数据泄漏，**不回退**） |
+| `KnownTimeSemantics` | func | stable | 词表**拷贝**（扩展 = 常量 + 校验 + SPEC 三件套同步） |
+| `AsiaShanghai` | **var** | **frozen** | A 股交易时区 = `time.FixedZone("Asia/Shanghai", +8h)`。**故意不用 `LoadLocation`**：1991 年后无夏令时，固定偏移语义等价，且 Windows 开发机 / 精简 CI 容器默认没有 tzdata（`LoadLocation` 会直接失败）。⚠️ 它是**导出 `var`**（`*time.Location` 做不了 const），进程内可被重新赋值 ⇒ 下游只读；要改成不可变入口 = 破坏性改名 |
+| `DailyVisibleAt` | func | **frozen** | 日线 bar 可见点 = 交易日 **15:00 Asia/Shanghai**。入参按 UTC 零点解释（PG `DATE` 经 pgx 扫出的形态），**只取日历日期分量**，时段与位置另建——不要把入参的钟点带进来 |
+| `IntradayVisibleAt` | func | **frozen** | 日内 bar 可见点 = **bar 周期结束**（1m stamped 10:00 → 10:01；15m bucket 09:30 → 09:45）。可见 ≠ 周期起点，提前一分钟就是前视 |
+| `OHLCV` | type | **frozen**（字段集 SPEC 互锁） | 任意频率的 bar。`Frequency` / `VisibleAt` 零值 = **未声明**（遗留取数路径不填）。单位见本节抬头。`LimitUp` / `LimitDown` 是当日涨跌停标记 |
+| `OHLCV.VisibleBy` | method | **frozen** | PIT 闸门判定原语（D6）：`VisibleAt` 非零且 ≤ asOf 才算可见；**零值 VisibleAt 恒不可见**（未声明 = 泄漏，不是"永远可见"）。闸门判据与 `VisibleAt` 的填充口径必须同文件同语义——拆开就会漂移 |
+| `Stock` | type | stable | 证券主数据。⚠️ `DelistDate` 用指针：**nil = 仍在市**（零值 `time.Time` 是 0001-01-01，会让"今天还在市"被算成"一万年前就退市"）。没有它修不了幸存者偏差（P2-4） |
+| `Split` | type | stable | 拆股 / 送股 / 转增事件，供前复权校验。字段名与 JSON tag 是形状契约；**落库列名由 storage 侧映射，本包不持有** |
+| `Dividend` | type | stable | 分红事件（公告日 / 登记日 / 派息日 / 现金与股票股利） |
+| `Fundamental` | type | **frozen**（字段集 SPEC 互锁） | 基本面快照。**数值字段一律 `*float64`**：缺失 ≠ 0（PE=0 会被读成"白送的股票"）。`Date` = **可用日**（读侧 `COALESCE(ann_date, trade_date)`），`AnnDate` = 真实披露日（nil = 不知道）——三季报 9/30 截止、10/25 披露，不可在 9/30 就可见（P0-1 / P1-4） |
+| `FundamentalData` | type | stable | **持久化视图**（ODR-043 D3 soft layering 的 "view" 半边）：在 `Fundamental` 之上带 `ID` / `CreatedAt` / `TsCode` / `EndDate`。指针语义同上 |
+| `IndexDaily` | type | stable | **指数**日线，与 `OHLCV` **刻意分开**（DATA-12）：身份列是 `Code`（→ `market.index_daily`），混用会让指数被当股票进票池。除 `Close`/`Volume` 外的数值列是指针（nil = 上游未发布） |
+| `IndexConstituent` | type | stable | 指数成分（入 / 出日与权重）。`OutDate` 零值 = 仍在成分内 |
+| `Provider` | interface | experimental | 行情数据访问接口（原 `domain.MarketDataProvider`，S7-P3-4 改名，旧名以别名保留）。⚠️ **实测今天 0 实现 / 0 消费**：core 全仓除定义、别名与别名测试外无引用（`pkg/marketdata` 用的是它**自己的** `Provider`，与这个不是同一个类型），agent 侧 0 命中。所以它标 experimental 而不是 stable——一个没人实现的 port，稳定性无从谈起。X1a（data 服务拆分 / `DataPort`）会重新裁这个形状，届时走 ADR，不许两边各留一份 |
+| `Provider.GetOHLCV` | method | experimental | 按 symbol + 区间取 bar，返回 `[]OHLCV`；**今天返回未分类 error**，QT-10 ③-② 落地后缺数据须包成 `ErrDataGap`（§5.4） |
+| `Provider.GetFundamental` | method | experimental | 按 symbol + 日期取基本面（PIT：用可用日，不是报告期）；错误分类同上 |
+| `Provider.GetStocks` | method | experimental | 按交易所取证券列表（含退市，见 `Stock.DelistDate`）；错误分类同上 |
+| `Provider.GetLatestPrice` | method | experimental | 最新价（只给价格，不给时间戳——需要 PIT 判定的场景不要用它）；错误分类同上 |
+| `Provider.GetIndexConstituents` | method | experimental | 取指数成分代码；错误分类同上 |
+
 <!-- surface:end -->
 
 ---
@@ -154,7 +211,7 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 | `MarketRouter` | `ResolveKernel` / `Markets` | core | stable | 未登记市场 → `ErrMarketNotRegistered`；路由表未装配 → 创建即拒绝、job 不落库 |
 | `BacktestRunner` | `RunBacktest(ctx, strategyName, stockPool, startDate, endDate) (*domain.BacktestResult, error)` | core / agent 适配器 | stable | 与 `EngineRunner` **刻意分离**（五参 + 返回 domain 结果，AI 管线端口）；签名不动是 K10 明文约束 |
 | `SignalProvider` | `Signals(ctx, Scope, asOf) ([]Signal, error)` | core（`tellurion:pkg/strategy`） | stable（S1 落点待 QT-05） | 返回 `as_of > asOf` 的信号即违约：`RejectFutureSignals` fail-loud，不静默跳过 |
-| `Provider`（`domain/market`，别名 `MarketDataProvider`） | `GetOHLCV` / `GetFundamental` / `GetStocks` / `GetLatestPrice` / `GetIndexConstituents` | core | stable | **今天返回未分类 error**；QT-10 ③-② 落地后缺数据须包成 `ErrDataGap`（跳过当天 + 写 `invalid_reasons`），不是 fault —— 见 §5.4 的「⬜ 目标」行 |
+| `Provider`（`domain/market`，别名 `MarketDataProvider`） | `GetOHLCV` / `GetFundamental` / `GetStocks` / `GetLatestPrice` / `GetIndexConstituents` | **无**（实测 0 实现 / 0 消费：core 除定义/别名/别名测试外 0 引用，`pkg/marketdata` 用的是它自己的同名接口） | **experimental**（原标 stable，2026-10-22 落码时按实测下调——没人实现的 port 没有稳定性可言；§4 已同步） | **今天返回未分类 error**；QT-10 ③-② 落地后缺数据须包成 `ErrDataGap`（跳过当天 + 写 `invalid_reasons`），不是 fault —— 见 §5.4 的「⬜ 目标」行 |
 | `RiskManager`（`domain/`） | `CheckStopLoss` / `CalculatePosition` / `DetectRegime` | core | stable | 裁决失败必须可归因；禁止把拒绝伪装成空信号 |
 | `CorporateAction`（`domain/`） | `Type` / `Symbol` / `ExDate` / `RecordDate` / `PayDate` / `Description` / `Apply` | core | stable | 公司行为按 ex-date 生效；`Apply` 的现金变动走返回值，不静默改持仓 |
 | `BrokerGateway` | **未定形**（形态见 `tellurion:docs/design/qt-decoupling/broker-gateway-design.md`） | `tellurion-broker` | ⬜ 设计中，S1 不落 | 见 `api-schema.md` §1.1「状态」列——今天源码 0 命中，**别当已存在接口去 import** |
@@ -189,7 +246,7 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 
 ## 6. 值对象面（`domain/`，S1 整包迁入）
 
-来源与再生成：`go run ./tools/check_api_surface -root ../tellurion/pkg/domain -list`（2026-10-21 实测 227 个导出符号，含 `market/` 子包）。
+来源与再生成：**本仓内**跑 `go run ./tools/check_api_surface -list`（已落地的包）；尚未落地的部分在 core 侧用 `-root <tellurion 仓>/pkg/domain` 取（2026-10-21 实测 227 个导出符号，含 `market/` 子包 ⇒ 其中 **46 个已于 2026-10-22 落地并登记在 §4**，余下是 `domain/` 根包）。
 **逐符号清单不在这里手抄**——抄一份就会漂；落码时用上面这条命令生成 §4 的表，再按下面分组填稳定性。
 
 | 组 | 代表符号 | 稳定性 | 备注 |
@@ -234,7 +291,7 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 | 1 | `errors/` 与 `abi/` 是否独立成包 | [`ARCHITECTURE.md`](ARCHITECTURE.md) §2 列了这两个包，但 QT-05 ③-① 只说迁 `domain/`、`engine/`、`fees/`（`engine/` 内保持 `package contracts`），abi 常量与哨兵今天都随 `engine/` 走。二者口径不一致，本文件按 QT-05 落点写（§5/§7 归 `engine/`） |
 | 2 | `*Config` 命名族要不要进本仓 | ADR-0001 ③ 禁 `Config`/`Options`/`Impl` 命名，但 S1 整包迁会带进来 9 个：`domain/` 的 `Config`（精确同名）、`ServiceConfig`、`DatabaseConfig`、`RedisConfig`、`TushareConfig`、`StrategyConfig`、`ExecutionConfig` + `engine/` 的 `TradingConfig`、`PriceLimitConfig`。后两个还是 §5.1 的 frozen 伴生符号——禁令与冻结面在这儿撞车，落码前要结论，不能两边都当没看见 |
 | 3 | `fees/` 的取舍 | ✅ **已裁决（2026-10-22，落码时实测）：整包迁入，`StampTaxRateFor` / `ApplyDefaults` / `Validate` 一起进**。<br>**裁决依据是「④ 那句在今天的源码里没有对应物」**：`tellurion:pkg/fees` 一共 2 个文件 533 行（非测试 1 文件 250 行），**零算术**——导出面只有 7 个常量 + 1 个日期 var + 1 个结构体 + 4 个纯函数（取档选择器 / 默认值构造 / 零值填充 / 区间校验），全是 ③-① 说的「费率/滑点/成本模型的定义与枚举」。真正算钱的两处都在 core：`tellurion:pkg/backtest/tracker/tracker.go:145`（成交额 × 费率 + 最低佣金兜底，并且是 `StampTaxRateFor` 的**唯一生产调用方**）与 `tellurion:pkg/live/mock_trader.go`。<br>**为什么不把 `StampTaxRateFor` 留 core**：它与 `StampTaxCutDate` 是一对——源码注释自己写着「This is the ONLY place the cut date may be compared」（削减日只许在这一个地方比较）。把常量放本仓、比较点放 core，等于把这条不变量拆到两个仓，以后改档期的人只会看到其中一半。<br>**代价**：本仓因此有一个「看起来像行为」的函数（`StampTaxRateFor`）。判据是它**不读任何状态、不做算术、只按日期在两个给定值里选一个**，属"取值集的定义"而非"算钱"；`ApplyDefaults`/`Validate` 同理（填零值 / 判区间）。真出现按费率算成本的函数，那才越界，按 ADR-0001 ② 打回 |
-| 4 | `dataprotocol` 是否独立成包（QT-40 对表 T2，2026-10-22 登记） | **落点已定名**：`contracts/dataprotocol`（包名 `dataprotocol`）——不叫 `data/`（包名要能自证「这是协议不是实现」，与 #1 的 `errors/`/`abi/` 之争同型），不叫 `dataset`（那是 X1b 的 aggregator 面，形状还没定）。依据 `tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md` §4.1 A 组注 ①。**要裁的是迁入时机，而且两份上游文档给的判据并不一致**：「只有单个仓使用的类型不许提前迁」对应的是 ①「本仓只放被 ≥2 个仓使用的类型」（[AGENTS.md](AGENTS.md) §3 把它写成「只有单个仓使用的类型属泄漏」）；对表注 ② 与本仓下游的 `tellurion-data:docs/api-schema.md` §4 **原先都把它引成 ③**（③ 管的是 `Config`/`Options`/`Impl` 命名），两处引用已于 2026-10-22 同步订正。**但同一份 ADR 的「代价」节明写 S1 整包迁时接受 core-only 类型临时进来、输出一份清单、S2 后回收**，而本仓台账已把这条落成硬要求（`docs/TASKS.md` QT-05 ③-⑨：`screen`/`sector`/`supply_chain`/`macro`/`mining` 在 agent 侧各 0 命中，仍整包迁）。于是有两条都自洽的走法：(a) `dataprotocol` 不适用那条容忍（它是**名单外的新建包**，不是整包迁的附带品）⇒ 挂 X1b 第一 commit，`tellurion-data` 一 import，两个使用方立刻成立；(b) 把它当同类容忍处理，随 S1 一起落、进那份 core-only 清单（③-⑨ 那份名单今天不含它，选 (b) 就要把它加进去）。X1a 之前要挑一条并写进本节，**别两份文档各按一条**（现在的写法是注 ② 选 (a)、而它引的条款其实同时允许 (b)）。X1a 冻结前要先定形状的三处实测：① `UnifiedDataPoint` 今天有**两份同名同字段副本**（`tellurion:pkg/data/source/unified.go:16` 与 `pkg/storage/bulk_insert.go:17`，后者注释自述「storage 不能 import source（会成环）」）⇒ 进 contracts 后成环理由消失，**必须删副本改引用**，否则协议加一列时 `BulkInsert` 的列布局会静默少写一列（`bulk_insert_ddl_test.go` 只核「目标表在 DDL 里」，核不到字段）；② **没有 `DataType` 类型**——`ConnectorDeclaration.DataType` 与 `UnifiedDataPoint.DataType` 都是裸 `string`，取值集靠 `DataType*` 常量；③ **没有 `Aggregator` 接口**（§5.2 的 port 表里只有未定形的 `DataPort`，标着「⬜ 设计中，S1 不落」）：aggregator 今天只有 HTTP 形状，要么随 X1b 实现定、要么先不落 port，**不许在文档里造一个无实现的接口**（§8 已禁默认实现/mock 进本仓）。另：`TimeSemantics` 枚举定义在 `tellurion:pkg/domain/market/visibility.go:61`，**随 QT-05 整包迁 `contracts/domain/market`，不在 `dataprotocol` 里重复定义**——同一次迁移出现两份 `TimeSemantics`，等于把 #1 与 #4 合成一个真事故 |
+| 4 | `dataprotocol` 是否独立成包（QT-40 对表 T2，2026-10-22 登记） | **落点已定名**：`contracts/dataprotocol`（包名 `dataprotocol`）——不叫 `data/`（包名要能自证「这是协议不是实现」，与 #1 的 `errors/`/`abi/` 之争同型），不叫 `dataset`（那是 X1b 的 aggregator 面，形状还没定）。依据 `tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md` §4.1 A 组注 ①。**要裁的是迁入时机，而且两份上游文档给的判据并不一致**：「只有单个仓使用的类型不许提前迁」对应的是 ①「本仓只放被 ≥2 个仓使用的类型」（[AGENTS.md](AGENTS.md) §3 把它写成「只有单个仓使用的类型属泄漏」）；对表注 ② 与本仓下游的 `tellurion-data:docs/api-schema.md` §4 **原先都把它引成 ③**（③ 管的是 `Config`/`Options`/`Impl` 命名），两处引用已于 2026-10-22 同步订正。**但同一份 ADR 的「代价」节明写 S1 整包迁时接受 core-only 类型临时进来、输出一份清单、S2 后回收**，而本仓台账已把这条落成硬要求（`docs/TASKS.md` QT-05 ③-⑨：`screen`/`sector`/`supply_chain`/`macro`/`mining` 在 agent 侧各 0 命中，仍整包迁）。于是有两条都自洽的走法：(a) `dataprotocol` 不适用那条容忍（它是**名单外的新建包**，不是整包迁的附带品）⇒ 挂 X1b 第一 commit，`tellurion-data` 一 import，两个使用方立刻成立；(b) 把它当同类容忍处理，随 S1 一起落、进那份 core-only 清单（③-⑨ 那份名单今天不含它，选 (b) 就要把它加进去）。X1a 之前要挑一条并写进本节，**别两份文档各按一条**（现在的写法是注 ② 选 (a)、而它引的条款其实同时允许 (b)）。X1a 冻结前要先定形状的三处实测：① `UnifiedDataPoint` 今天有**两份同名同字段副本**（`tellurion:pkg/data/source/unified.go:16` 与 `pkg/storage/bulk_insert.go:17`，后者注释自述「storage 不能 import source（会成环）」）⇒ 进 contracts 后成环理由消失，**必须删副本改引用**，否则协议加一列时 `BulkInsert` 的列布局会静默少写一列（`bulk_insert_ddl_test.go` 只核「目标表在 DDL 里」，核不到字段）；② **没有 `DataType` 类型**——`ConnectorDeclaration.DataType` 与 `UnifiedDataPoint.DataType` 都是裸 `string`，取值集靠 `DataType*` 常量；③ **没有 `Aggregator` 接口**（§5.2 的 port 表里只有未定形的 `DataPort`，标着「⬜ 设计中，S1 不落」）：aggregator 今天只有 HTTP 形状，要么随 X1b 实现定、要么先不落 port，**不许在文档里造一个无实现的接口**（§8 已禁默认实现/mock 进本仓）。另：`TimeSemantics` 枚举定义在 `tellurion:pkg/domain/market/visibility.go:61`，**已随 QT-05 ③-① 整包迁入 `domain/market/`（2026-10-22，见 §4）**，`dataprotocol` 里**不再重复定义**——同一次迁移出现两份 `TimeSemantics`，等于把 #1 与 #4 合成一个真事故 |
 
 ---
 
