@@ -35,6 +35,7 @@ verified-by: CT-02 结案（版本纪律三件套进导航与变更触发表）
 | [`API.md`](API.md) | **导出面清单**：逐个符号的稳定性与错误语义；§4 的登记区由 `tools/check_api_surface` 在 CI 核对 | 加/改导出符号的人 |
 | [`../README.md`](../README.md) §版本规则/兼容矩阵 + [`../CHANGELOG.md`](../CHANGELOG.md) | **版本纪律三件套**：三行 bump 表、按 `vX.Y` 序列建行的矩阵、每个发版一节的账本；由 `tools/check_release_matrix` 在 CI 与 tag 三方对拍 | 发版的人 |
 | [`dataflow.md`](dataflow.md) | 数据流向、时序、fail-closed 点、不变量 | 改链路的人 |
+| [`design/`](design/README.md) | **跨仓落点的裁决材料**（只出证据与影响面，不含实现；拍板后落成代码/台账） | 提变更的人 |
 | [`TASKS.md`](TASKS.md) | 可执行任务（六字段） | 每个人 |
 | [`adr/`](adr/README.md) | 架构决策（只增不删） | 提变更的人 |
 | [`odr/`](odr/README.md) | 运行 / 治理决策（删档、审计、迁移、工具） | 做事的人 |

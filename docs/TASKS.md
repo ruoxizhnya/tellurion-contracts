@@ -1,7 +1,7 @@
 ---
 status: active
-last-verified: 2026-10-23
-verified-by: QT-09 本仓侧交接（2026-10-23：② examples/ + ③ conformance 语料与契约侧自检腿 + ④ PR 模板/check_pr_body + ⑤ check_contract_shape + surface 冻结 check_surface_freeze/api-surface.txt，全部接进 CI；三条工具另补表驱动单测）；QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；推送回写（2026-10-22：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`，`go get` 实测可解析，CI 429/429；§8 #4 登记为 X1a 待办）
+last-verified: 2026-10-24
+verified-by: G0 执行组（2026-10-24：QT-20 契约腿 + QT-41b ④ 错误族，`v0.4.0` 已发；施工记录见「一、本仓任务」）+ G0D 裁决材料（QT-22 / QT-40 X1a / 服务 DTO 三份，只出材料、0 代码）；QT-09 本仓侧交接（2026-10-23：② examples/ + ③ conformance 语料与契约侧自检腿 + ④ PR 模板/check_pr_body + ⑤ check_contract_shape + surface 冻结 check_surface_freeze/api-surface.txt，全部接进 CI；三条工具另补表驱动单测）；QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；推送回写（2026-10-22：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`，`go get` 实测可解析，CI 429/429；§8 #4 登记为 X1a 待办）
 ---
 
 # TASKS — tellurion-contracts 未完成项
@@ -72,6 +72,22 @@ verified-by: QT-09 本仓侧交接（2026-10-23：② examples/ + ③ conformanc
 - **④ 约束与非目标**：不迁私有哨兵；不改四条的文案 / 身份；不在本仓实现编译或资产逻辑；不改 strategy 仓（其别名切换归 G13 通知腿）。
 - **⑤ 验收**：`TestCompileFamilySentinelsStayDistinctAndSurviveWrapping` 钉住四条互不命中 + 包装后仍可判定；全套 `go test ./... -count=1` EXIT=0；导出面 439 → 443。
 - **⑥ 边界**：只落哨兵；compile 服务实现、asset 状态机与 wire code 映射留在 `tellurion-strategy`。
+
+### G0D · QT-22 / QT-40 X1a / 服务 DTO 三份裁决材料 [P0] ✅ 完成（2026-10-24）
+
+> **只出材料，不写代码、不打 tag**。落点：`docs/design/`（导航见 [`design/README.md`](design/README.md)）。本组不直接改 broker / analytics / risk / data / core。
+
+- **① 目标**：把三个跨仓落点问题的**证据与影响面**写成可拍板的材料，每条结论带 `repo:path:line`。
+- **② 上下文**：`tellurion:docs/design/qt-decoupling/w1-repo-ownership.md:101`（version_hash 冻结 7 项）、
+  `tellurion-contracts:docs/API.md:731`（dataprotocol 待裁 #4）、`tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md:151-179`（A 组对表）、
+  `tellurion-risk:docs/TASKS.md:94-96`（ParseBundle 第二使用方判据）。
+- **③ 要求（全部落地）**：
+  - [QT-22 材料](design/qt22-version-hash-decision-material.md)：逐项对表 7 vs 6，给出保留 / 删除 / 新增与 `v2` 代价。
+  - [QT-40 X1a 材料](design/qt40-x1a-dataprotocol-decision-material.md)：`UnifiedDataPoint` 字段来源 + (a)/(b) 两份影响面 + 迁入判据。
+  - [服务 DTO 材料](design/service-dto-migration-decision-material.md)：QT-45 / QT-43 / QT-42 的当前落点、第二消费方、迁入后谁改 import。
+- **④ 约束与非目标**：不落 `StrategyVersionInput` / `dataprotocol` / 任何服务 DTO；不复用 `DomainParamsHash`；不改其他仓。
+- **⑤ 验收**：三份材料均在 `docs/design/`；每条结论带 `repo:path:line`；**本单 0 个 `.go` diff**（提交只含 `docs/`，可用 `git show --stat` 复核）。
+- **⑥ 边界**：只出材料。拍板与代码落点分别归 G1（core）、G4（strategy）、X1a 协调者、各服务仓协调者；分发对象 = G1 / G4 / G5 / G6 / G7。
 
 ### QT-05 · S1 契约层与工具层落地（代码直接写进两个新仓）[P0] 🔶 本仓侧已完成并已推（`fbe9a2d`）；下游腿（③-③④⑤⑦⑨）待 core/agent 执行
 
