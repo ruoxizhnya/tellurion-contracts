@@ -79,5 +79,5 @@ tellurion-contracts
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | S1（QT-05） | `pkg/domain` + `pkg/backtest/contracts` 搬入本仓，core/agent 改 `require` 伪版本 | 🔶 **本仓侧已完成并已推（2026-10-22，6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）**：`fees/` ✅（13）、`domain/market/` ✅（46）、`domain/` ✅（176，5 个零引用部署配置按 [`adr/0002`](adr/0002-config-族的边界处置.md) 不迁）、`engine/` ✅（194，哨兵/abi 按 [`adr/0003`](adr/0003-哨兵与-abi-不独立成包.md) 不拆包）——导出面 429/429，两条护栏绿；仓外空模块 `go get github.com/ruoxizhnya/tellurion-contracts@fbe9a2d` 实测解析为 `v0.0.0-20261022191510-fbe9a2d0df17`。**剩下的是下游那条腿（core/agent 切依赖，③-③④⑤⑦⑨）**，由下游仓执行，③-④ 仍禁 `replace`。窗口期内 core 的 `pkg/domain` 与本仓的 `domain/` **并存（双份真相）**，两边都不许改，直到 core 侧 sed 落地并删掉旧包 |
-| S2（QT-07） | 打 `v0.1.0`，下游换 tag | ⬜ |
+| S2（QT-07） | 打 `v0.1.0`，下游换 tag | ✅ `v0.1.0` 已打在 `main` 上并 push（2026-10-23）；`v0.1.1` 同日发出（把 `conformance/` 语料打进 tag，PATCH 级）。下游升 pin（C2）待执行 |
 | QT-19 | 版本规则表 + 兼容矩阵 + CHANGELOG | ✅ 已随 CT-02 落地（2026-10-22，护栏 `tools/check_release_matrix` 进 CI） |

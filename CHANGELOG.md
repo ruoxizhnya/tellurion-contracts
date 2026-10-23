@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+（暂无）
+
+## [v0.1.1] - 2026-10-23
+
+QT-09 的随仓交付物随 tag 分发（本节内容自 `[Unreleased]` 搬入）。**版本取 PATCH（`v0.1.0` → `v0.1.1`）**：本批全部是仓内自查工具 / 示例 / 语料，**导出面零变化**（仍 429/429，冻结基线 412 行），下游 import 的任何符号的形状与语义都没动。`conformance/` 虽是新包，但刻意零导出符号（见 `conformance/cases.go` 头注释），它不改变兼容面 —— 它改变的是**发布物**：`v0.1.0` 的 tag 树里 `conformance/` 命中 0 个文件，而 core（`tellurion:pkg/conformance`）与 agent（`tellurion-agent:internal/conformance`）两侧的腿按 pin 的版本读同一份 `cases.json` 且约定定位失败一律 `t.Fatalf`，所以下游升 tag 之前必须先把语料打进去（C1）。
+
 ### 变更（PATCH 级：仓内自查工具、示例与文档，不改导出面）
 
 - **QT-09（2026-10-23，本仓侧）**：新增三条随仓护栏与一份冻结基线，导出面零变化（仍 429/429）：
