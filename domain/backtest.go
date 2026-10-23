@@ -87,6 +87,16 @@ type BacktestParams struct {
 	// 已经写进 StockPool；保留原值是为了让 run_spec_hash 记下「票池从哪来」，
 	// 而不是只记一张看起来等价的名单。
 	IndexCode string `json:"index_code,omitempty"`
+
+	// Params 是本次运行**实际生效**的策略参数（QT-20）：manifest 的
+	// params_defaults 与请求覆写浅合并后的结果，字段名对齐 core 的
+	// RunMeta.Params。请求侧只写覆写（engine.BacktestRequest.StrategyParams），
+	// 生效值由执行侧解析后写入这里 —— 与 FillTiming / Kernel 同一条纪律：
+	// 引擎不猜，记录的是实际用过的值。
+	//
+	// 只承载浅层对象（与请求侧的校验同口径）；嵌套会让 params_hash 的
+	// 编码失去唯一定义。空/nil = 未提供参数（不是「空参数集」）。
+	Params map[string]any `json:"params,omitempty"`
 }
 
 type WalkForwardParams struct {

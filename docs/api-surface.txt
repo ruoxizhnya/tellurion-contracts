@@ -49,7 +49,7 @@ domain/ActionSplit ActionType
 domain/ActionType string
 domain/ApplyOutcome struct{Action CorporateAction; Position ApplyResult}
 domain/ApplyResult struct{Action CorporateAction; Symbol string; OldPos Position; NewPos Position; CashDelta float64; Applied bool; SkipReason string}
-domain/BacktestParams struct{StrategyName string; StockPool []string; StartDate time.Time; EndDate time.Time; InitialCapital float64; RiskFreeRate float64; LookbackDays int; FillTiming string; Kernel string; IndexCode string}
+domain/BacktestParams struct{StrategyName string; StockPool []string; StartDate time.Time; EndDate time.Time; InitialCapital float64; RiskFreeRate float64; LookbackDays int; FillTiming string; Kernel string; IndexCode string; Params map[string]any}
 domain/BacktestResult struct{StartDate time.Time; EndDate time.Time; TotalReturn float64; AnnualReturn float64; SharpeRatio float64; SortinoRatio float64; MaxDrawdown float64; MaxDrawdownDate time.Time; WinRate float64; TotalTrades int; WinTrades int; LoseTrades int; AvgHoldingDays float64; CalmarRatio float64; PortfolioValues []PortfolioValue; Trades []Trade; UniverseMaxSize *int; InvalidReasons []string}
 domain/BonusShare struct{SymbolValue string; ExDateValue time.Time; RecordValue time.Time; PayValue time.Time; BonusPer10 float64}
 domain/BuiltinFactorDefinitions []FactorDefinition
@@ -229,7 +229,7 @@ engine/ActionShort Action
 engine/Actions() []Action
 engine/AdjustmentAnchorDigestsHash([]string) string
 engine/ArtifactHash([]byte) string
-engine/BacktestRequest struct{Strategy string; StockPool []string; IndexCode string; StartDate string; EndDate string; InitialCapital float64; RiskFreeRate float64; Kernel string; FillTiming string; EngineParams map[string]any; Signals []SignalWeight; RunID string}
+engine/BacktestRequest struct{Strategy string; StockPool []string; IndexCode string; StartDate string; EndDate string; InitialCapital float64; RiskFreeRate float64; Kernel string; FillTiming string; EngineParams map[string]any; Signals []SignalWeight; StrategyRef string; StrategyParams map[string]any; RunID string}
 engine/BacktestRequest.EffectiveFillTiming() FillTiming
 engine/BacktestRequest.EffectiveKernel() string
 engine/BacktestRequest.ValidateRunSpec() error
@@ -278,7 +278,10 @@ engine/ErrAbiFamilyMixed = errors.New("abi: module mixes the v1 and v2 host fami
 engine/ErrAbiVersionMismatch = errors.New("abi: declared abi_version contradicts the import section")
 engine/ErrAbiVersionUnknown = errors.New("abi: unsupported abi_version")
 engine/ErrActionIllegal = errors.New("abi: illegal signal action")
+engine/ErrArtifactTooLarge = errors.New("strategy: artifact exceeds the 8 MiB blob limit")
 engine/ErrCanonicalUnsupported = fmt.Errorf("provenance: value is not canonically encodable")
+engine/ErrCompileFailed = errors.New("strategy: compile failed")
+engine/ErrCompileUnavailable = errors.New("strategy: compiler is not configured")
 engine/ErrContractBreach = errors.New("contract breach")
 engine/ErrDataGap = errors.New("data gap: required input is unavailable")
 engine/ErrEmitSourceUnknown = errors.New("abi: unknown emit source")
@@ -298,6 +301,7 @@ engine/ErrParamsTooLarge = errors.New("abi: strategy params exceed the frozen bu
 engine/ErrScopeMarketV1 = errors.New("abi: scope=market requires abi v2")
 engine/ErrScopeUnknown = errors.New("abi: unknown or missing strategy scope")
 engine/ErrSignalBudgetExceeded = errors.New("abi: per-bar signal budget exceeded")
+engine/ErrSourceTooLarge = errors.New("strategy: source exceeds the size limit")
 engine/ErrStateBudgetExceeded = errors.New("abi: host-side state budget exceeded")
 engine/ErrStrategyFault = errors.New("strategy fault")
 engine/ErrStrategyRefMalformed = fmt.Errorf("provenance: malformed strategy_ref")

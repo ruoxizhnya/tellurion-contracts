@@ -2,6 +2,7 @@ package contracts
 
 import (
 	"encoding/json"
+	"errors"
 	"math"
 	"strings"
 	"testing"
@@ -224,5 +225,143 @@ func TestRunSpec_SignalsWireRoundTrip(t *testing.T) {
 	}
 	if err := req.ValidateRunSpec(); err != nil {
 		t.Fatalf("合法请求被拒: %v", err)
+	}
+}
+
+// ─── QT-20：strategy_ref / strategy_params 的契约腿 ───────────────────
+
+// 引用串的 wire 形态必须与 provenance.go 的 ParseStrategyRef / String()
+// **互逆**（`id` / `id@hash`）：JSON 往返、解析、还原三步同一个值。
+// 这条同时钉住「不得新增第二种引用形状」——一旦引入别的分隔符或前缀，
+// 往返就会失真。
+func TestRunSpec_StrategyRefWireRoundTrip(t *testing.T) {
+	artifact := strings.Repeat("ab", 32)
+	body := `{"strategy":"momentum","start_date":"2024-01-01","end_date":"2024-06-30",` +
+		`"strategy_ref":"momentum@` + artifact + `","strategy_params":{"fast":5,"slow":20.5,"enabled":true,"note":null}}`
+
+	var req BacktestRequest
+	if err := json.Unmarshal([]byte(body), &req); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if err := req.ValidateRunSpec(); err != nil {
+		t.Fatalf("合法的 strategy_ref / strategy_params 不得被拒: %v", err)
+	}
+
+	ref, err := ParseStrategyRef(req.StrategyRef)
+	if err != nil {
+		t.Fatalf("ParseStrategyRef(%q): %v", req.StrategyRef, err)
+	}
+	if ref.ID != "momentum" || ref.Hash != artifact {
+		t.Fatalf("解析结果失真: %+v", ref)
+	}
+	if got := ref.String(); got != req.StrategyRef {
+		t.Fatalf("String() 与 wire 形态不互逆: got %q, want %q", got, req.StrategyRef)
+	}
+
+	// latest 形态（不带 hash）同样往返。
+	latest := BacktestRequest{Strategy: "momentum", StrategyRef: "momentum"}
+	if err := latest.ValidateRunSpec(); err != nil {
+		t.Fatalf("latest 引用（无 hash）必须合法: %v", err)
+	}
+	lRef, err := ParseStrategyRef(latest.StrategyRef)
+	if err != nil || !lRef.IsLatest() || lRef.String() != "momentum" {
+		t.Fatalf("latest 往返失真: ref=%+v err=%v", lRef, err)
+	}
+
+	// 序列化再反序列化：两个新字段都要在（有值时不能丢）。
+	raw, err := json.Marshal(req)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var round BacktestRequest
+	if err := json.Unmarshal(raw, &round); err != nil {
+		t.Fatalf("round-trip unmarshal: %v", err)
+	}
+	if round.StrategyRef != req.StrategyRef {
+		t.Fatalf("往返丢 strategy_ref: %q != %q", round.StrategyRef, req.StrategyRef)
+	}
+	if len(round.StrategyParams) != len(req.StrategyParams) {
+		t.Fatalf("往返丢 strategy_params: %#v", round.StrategyParams)
+	}
+	if round.StrategyParams["slow"] != 20.5 {
+		t.Fatalf("strategy_params 数值失真: %#v", round.StrategyParams["slow"])
+	}
+}
+
+// 形状不对的引用一律拒绝（fail-closed），且错误必须可 errors.Is 到
+// ErrStrategyRefMalformed —— 调用方不该靠字符串匹配认这条。
+func TestRunSpec_ValidateRejectsMalformedStrategyRef(t *testing.T) {
+	valid64 := strings.Repeat("a", 64)
+	for _, tc := range []struct {
+		name string
+		ref  string
+	}{
+		{"empty id", "@" + valid64},
+		{"empty hash", "momentum@"},
+		{"short hash", "momentum@" + strings.Repeat("a", 63)},
+		{"long hash", "momentum@" + strings.Repeat("a", 65)},
+		{"two separators", "momentum@a@b"},
+		{"uppercase hex", "momentum@" + strings.Repeat("A", 64)},
+		{"non hex", "momentum@" + strings.Repeat("z", 64)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := BacktestRequest{Strategy: "momentum", StrategyRef: tc.ref}
+			err := req.ValidateRunSpec()
+			if err == nil {
+				t.Fatalf("%s 的引用 %q 必须被拒绝", tc.name, tc.ref)
+			}
+			if !errors.Is(err, ErrStrategyRefMalformed) {
+				t.Fatalf("错误必须可 errors.Is 到 ErrStrategyRefMalformed, got: %v", err)
+			}
+		})
+	}
+}
+
+// 嵌套键必须被拒：浅层对象是「一个键一个标量」，嵌套会让浅合并与
+// params_hash 的编码失去唯一定义。
+func TestRunSpec_ValidateRejectsNestedStrategyParams(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		params map[string]any
+		key    string
+	}{
+		{"nested object", map[string]any{"risk": map[string]any{"max": 0.2}}, "risk"},
+		{"nested array", map[string]any{"windows": []any{5, 10}}, "windows"},
+		{"typed map", map[string]any{"risk": map[string]float64{"max": 0.2}}, "risk"},
+		{"typed slice", map[string]any{"windows": []int{5, 10}}, "windows"},
+		{"blank key", map[string]any{" ": 1}, " "},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := BacktestRequest{Strategy: "momentum", StrategyParams: tc.params}
+			err := req.ValidateRunSpec()
+			if err == nil {
+				t.Fatalf("%s 必须被拒绝（只接受浅层标量）", tc.name)
+			}
+			if !strings.Contains(err.Error(), "strategy_params") {
+				t.Fatalf("错误必须点名 strategy_params, got: %v", err)
+			}
+			if tc.key != " " && !strings.Contains(err.Error(), tc.key) {
+				t.Fatalf("错误必须点名嵌套键 %q, got: %v", tc.key, err)
+			}
+		})
+	}
+}
+
+// 合法浅层对象（含各数值宽度与 nil）不得误拒。
+func TestRunSpec_ValidateAcceptsScalarStrategyParams(t *testing.T) {
+	req := BacktestRequest{
+		Strategy: "momentum",
+		StrategyParams: map[string]any{
+			"fast":    int(5),
+			"slow":    int64(20),
+			"ratio":   0.25,
+			"factor":  float32(1.5),
+			"enabled": true,
+			"label":   "v1",
+			"unset":   nil,
+		},
+	}
+	if err := req.ValidateRunSpec(); err != nil {
+		t.Fatalf("合法浅层参数不得被拒: %v", err)
 	}
 }

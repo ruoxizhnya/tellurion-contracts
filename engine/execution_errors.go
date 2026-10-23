@@ -41,3 +41,39 @@ var (
 	// 处理——宁可停，不要跑出漂亮但错的曲线。
 	ErrContractBreach = errors.New("contract breach")
 )
+
+// QT-41b ④：策略编译 / 资产管线的**跨仓可识别**错误族。
+//
+// 迁入判据只有一条：**跨仓消费方必须能识别它**（`errors.Is`），且不能为此
+// import 策略资产服务的实现包。调用链今天至少横跨三个仓：
+//   - 生成侧（agent 的 AI 管线）要把「编译失败」与「服务没配好」分开——前者
+//     应把诊断反馈给模型，后者该重试 / 报警，而不是让模型反复生成同一份坏代码；
+//   - 执行侧（core 解析 strategy_ref → 取 artifact → 挂载）要把「fetch 失败」
+//     「字节超限」与「没有这个版本」分开，前者可重试，后者是配置错；
+//   - 编排侧（job 的终态判定）要区分可重试与不可重试。
+//
+// **不迁的是本仓（资产服务）私有哨兵**：`ErrStrategyExists` / `ErrStrategyNotFound`
+// / `ErrVersionNotFound` / `ErrInvalidTransition` / `ErrJobNotFound` 等描述的是
+// 资产服务自己的存储与状态机，跨仓调用方只看 HTTP status + wire code，不需要
+// （也不该）对内部状态机做 `errors.Is`。名单的实测出处：
+// `tellurion-strategy:internal/asset/errors.go`。
+//
+// 名字与语义**逐字不改**（错误文案一并保留）：`tellurion-strategy` 的
+// `internal/asset` 在声明的 grep 窗口内仍是这些值的定义处，等该仓升 pin 后改为
+// 本包别名（G13 的通知腿）——两边同名同义是过渡态，不是两份真相。
+var (
+	// ErrCompileFailed 是源码编译失败。错误须可检索：包装时必须带 toolchain
+	// 与日志片段（`%w` + 上下文），调用方靠它决定「反馈给模型」还是「报工具链故障」。
+	ErrCompileFailed = errors.New("strategy: compile failed")
+
+	// ErrCompileUnavailable 是服务未配置编译端口。与 ErrCompileFailed 分开：
+	// 后者是「源码有问题」，前者是「这台服务根本没接编译器」，重试与上报路径不同。
+	ErrCompileUnavailable = errors.New("strategy: compiler is not configured")
+
+	// ErrSourceTooLarge 是上传源码超过服务上限（1 MiB）。
+	ErrSourceTooLarge = errors.New("strategy: source exceeds the size limit")
+
+	// ErrArtifactTooLarge 是 artifact 超过 8 MiB 的 blob 上限（A 裁决：
+	// fail-loud，不静默截断）。取值上限本身属资产服务配置，不是契约。
+	ErrArtifactTooLarge = errors.New("strategy: artifact exceeds the 8 MiB blob limit")
+)

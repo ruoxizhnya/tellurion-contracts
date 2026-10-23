@@ -1,7 +1,7 @@
 ---
 status: active
-last-verified: 2026-10-23
-verified-by: QT-10 ③-① 契约腿（2026-10-23：三类执行错误哨兵 `ErrDataGap`/`ErrStrategyFault`/`ErrContractBreach` 落 `engine/execution_errors.go` + `CodeDataGapSkipped` 落 `engine/validity.go`，导出面 435 → 439；§3 的「三类还不存在」注、§5.3 Code 行、§5.4 三分法三行随之从 ⬜ 改 ✅，归类腿（③-②）仍在 core）；QT-05 ③-① 本仓侧落码完成（`fees` 13 + `domain/market` 46 + `domain` 176 + `engine` 194 = 429 个符号当时已登记，护栏 429/429 绿）；§8 待裁 #1（errors//abi/，ADR-0003）、#2（`*Config` 族，ADR-0002）、#3（fees 整包）均已裁决；#4（dataprotocol 时机）已登记为 X1a 待办（2026-10-22 推送回写：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）
+last-verified: 2026-10-24
+verified-by: QT-20 契约腿（2026-10-24：`BacktestRequest` 增可选 `StrategyRef`（wire 形态 = `ParseStrategyRef`/`String()` 的 `id`/`id@hash`）与 `StrategyParams`（浅层对象，嵌套键在 `ValidateRunSpec` 拒绝）；`domain.BacktestParams` 增生效参数 `Params`（对齐 core `RunMeta.Params`）；未知键清单不复制进本仓，归 core manifest（J2）；导出符号数不变 439，冻结基线 +2 行字段形状）；QT-41b ④ 错误族契约腿（2026-10-24：`ErrCompileFailed`/`ErrCompileUnavailable`/`ErrSourceTooLarge`/`ErrArtifactTooLarge` 四哨兵迁入 `engine/execution_errors.go`，名字语义不改，资产服务私有哨兵不迁；导出面 439 → 443）；QT-10 ③-① 契约腿（2026-10-23：三类执行错误哨兵 `ErrDataGap`/`ErrStrategyFault`/`ErrContractBreach` 落 `engine/execution_errors.go` + `CodeDataGapSkipped` 落 `engine/validity.go`）；QT-05 ③-① 本仓侧落码完成（`fees` 13 + `domain/market` 46 + `domain` 176 + `engine` 194 = 429 个符号当时已登记）；§8 待裁 #1（errors//abi/，ADR-0003）、#2（`*Config` 族，ADR-0002）、#3（fees 整包）均已裁决；#4（dataprotocol 时机）已登记为 X1a 待办（2026-10-22 推送回写：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）
 ---
 
 # API — 导出面规格（本仓有哪些符号、各自稳不稳定、错了怎么判）
@@ -404,7 +404,7 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `EngineRunner.RunBacktest` | method | **frozen** | status 是唯一成功判据；错误分类见 §5.4 |
 | `BacktestRunner` | interface | stable | 另一条**跨仓**回测口（返回 `*domain.BacktestResult`，签名与 `EngineRunner` 不同）：被 agent 的 pipeline / copilot 与 core 的 strategy adapter 实现（agent 实测 5 个文件 import 本包）。加方法 = 破坏所有实现方 |
 | `BacktestRunner.RunBacktest` | method | stable | `(ctx, strategyName, stockPool, startDate, endDate) → (*domain.BacktestResult, error)`；字符串日期是这条口的既有形状，别改成 time.Time 而不升版本 |
-| `BacktestRequest` | type | **frozen** | `RunSpec` 的承载物（§5.1）：策略 / 票池 / 区间 / 资金 / 频率 / 内核 / 引擎参数 / 信号行 / 成交口径。未知名拒绝（`ValidateRunSpec`） |
+| `BacktestRequest` | type | **frozen** | `RunSpec` 的承载物（§5.1）：策略 / 票池 / 区间 / 资金 / 频率 / 内核 / 引擎参数 / 信号行 / 成交口径 / **策略引用与参数覆写（QT-20，可选）**。未知名拒绝（`ValidateRunSpec`） |
 | `BacktestResponse` | type | **frozen** | `ResultSpec` 的承载物（§5.1）：`status` 三值冻结 + `invalid_reasons` + 指标 + 净值 + 成交 |
 | `SignalWeight` | type | stable | `SignalSpec` 的权重形状（§5.1；K15 目标权重流）：`Symbol` / `Weight` / `AsOf`（ISO 日期字符串） |
 | `TradingConfig` | type | **frozen** | A 股交易规则集合（费率 / 涨跌停 / 新股天数 / 融券费率）。**名字按 [`adr/0002`](adr/0002-config-族的边界处置.md) ③ 保留**（SPEC 冻结文本的伴生符号） |
@@ -609,6 +609,10 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `ErrDataGap` | var | stable | QT-10 ③-① 三分法之首：数据缺口 → **跳过当天** + `invalid_reasons` 写 `CodeDataGapSkipped`，run 继续、终态 `invalid`。三类里唯一不终止 run 的（§5.4） |
 | `ErrStrategyFault` | var | stable | QT-10：策略故障（wasm trap / 非法信号 / 预算超限 / artifact 校验失败）→ **终止 run** `status=failed` + `error`；禁止降级成「跳过这天继续」（§5.4） |
 | `ErrContractBreach` | var | stable | QT-10：契约违规（前视 / 未知参数 / abi 不符）→ **终止 run** `status=failed`；同时是「无法归类」的兜底类（§3.4） |
+| `ErrCompileFailed` | var | stable | QT-41b ④：源码编译失败（跨仓可识别；包装须带 toolchain + 日志）。与 `ErrCompileUnavailable` 分开：一个改源码，一个改配置（§5.4） |
+| `ErrCompileUnavailable` | var | stable | QT-41b ④：资产服务未配置编译端口（可重试 / 需报警，不是源码问题） |
+| `ErrSourceTooLarge` | var | stable | QT-41b ④：上传源码超过 1 MiB（不可重试，改输入） |
+| `ErrArtifactTooLarge` | var | stable | QT-41b ④：artifact 超过 8 MiB blob 上限（fail-loud，不截断；上限本身属资产服务配置） |
 
 <!-- surface:end -->
 
@@ -673,6 +677,7 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | abi / artifact 校验 | `ErrAbiVersionUnknown`、`ErrAbiVersionMismatch`、`ErrAbiFamilyMissing`、`ErrAbiFamilyMixed`、`ErrImportNotWhitelisted`、`ErrImportSignatureMismatch`、`ErrHostRegionMissing`、`ErrHostRegionInvalid`、`ErrParamsTooLarge`、`ErrScopeUnknown`、`ErrScopeMarketV1` | stable（✅ 已在 `engine/`；`errors/` 不独立成包见 §8 #1） | 归 `ErrContractBreach` 语义：装载期拦下，不进 run |
 | 信号校验 | `ErrActionIllegal`、`ErrStrengthOutOfRange`、`ErrTargetWeightOutOfRange`、`ErrEmitSourcesMixed`、`ErrEmitSourceUnknown`、`ErrSignalBudgetExceeded`、`ErrStateBudgetExceeded` | stable | 归 `ErrStrategyFault`（非法信号 / 预算超限 = 策略故障，终止 run） |
 | provenance / hash | `ErrCanonicalUnsupported`、`ErrStrategyRefMalformed` | stable | 输入身份不可 canonical 编码 → 当场失败，禁止退化成「猜一个 hash」 |
+| 策略编译 / 资产（**QT-41b ④，✅ 2026-10-24 已落在 `engine/execution_errors.go`**） | `ErrCompileFailed`、`ErrCompileUnavailable`、`ErrSourceTooLarge`、`ErrArtifactTooLarge` | stable | **跨仓消费方必须能识别**（agent 生成闭环 / core 取 artifact / orchestration 终态）：编译失败 → 反馈给模型；编译端口未配置 → 配置错 / 可重试；超限 → 不可重试。四条身份互斥，`errors.Is` 判定、`%w` 保链。**本仓（资产服务）私有哨兵不迁**（`ErrStrategyNotFound` / `ErrInvalidTransition` / `ErrJobNotFound` 等只看 wire code） |
 
 ---
 

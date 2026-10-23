@@ -3,6 +3,7 @@ package contracts
 import (
 	"fmt"
 	"math"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -49,7 +50,8 @@ func (r BacktestRequest) EffectiveKernel() string {
 
 // ValidateRunSpec 校验 RunSpec 的内核路由字段，返回非 nil 即请求非法
 // （API 层映射 400）。当前拒绝项：engine_params 里的未知名、signals 行的
-// 非法值（K15）、显式声明但不认识的 fill_timing（QT-02）。
+// 非法值（K15）、显式声明但不认识的 fill_timing（QT-02）、strategy_ref 的
+// 非 `id` / `id@hash` 形状与 strategy_params 的嵌套键（QT-20）。
 //
 // 为什么是「拒绝而非忽略」：静默吞掉一个拼错的参数名，调用方会以为参数
 // 生效了并拿这次结果下结论 —— 与 FR-1.3「不得静默回退 go 内核」同一条
@@ -60,8 +62,18 @@ func (r BacktestRequest) EffectiveKernel() string {
 // 默认语义（QT-02 ④：报告归档前默认口径不动，存量请求必须继续可用），
 // 而引擎日循环入口那道 ResolveFillTiming 才是「必填」的执行点 —— 它管的
 // 是所有入口（HTTP / job / batch / walkforward / 直接调 Engine）。
+//
+// 边界（QT-20 · J2）：本函数只做**形状 / 类型**校验。strategy_params 的
+// 未知键（清单来自策略 manifest）、默认值合并、参数取值范围都属于执行侧
+// 的业务规则，不在这里，也不在本包复制一份清单。
 func (r BacktestRequest) ValidateRunSpec() error {
 	if err := r.validateSignals(); err != nil {
+		return err
+	}
+	if err := r.validateStrategyRef(); err != nil {
+		return err
+	}
+	if err := r.validateStrategyParams(); err != nil {
 		return err
 	}
 	if r.FillTiming != "" && !r.EffectiveFillTiming().Valid() {
@@ -121,4 +133,72 @@ func (r BacktestRequest) validateSignals() error {
 		}
 	}
 	return nil
+}
+
+// validateStrategyRef 校验可选的策略引用串（QT-20）：形状必须能被
+// ParseStrategyRef 解析 —— `id` 或 `id@64位小写hex`，不做宽松解析、不认
+// 第二种引用形状。空值 = 未指定（走既有 Strategy 注册表键），不拒。
+//
+// 引用**指向什么**不在这里判：artifact_hash 与 version_hash 的形态不可自证，
+// 解析成哪个是资产服务查表的事（provenance.go 的 N7-3 注释）。
+func (r BacktestRequest) validateStrategyRef() error {
+	if r.StrategyRef == "" {
+		return nil
+	}
+	if _, err := ParseStrategyRef(r.StrategyRef); err != nil {
+		return fmt.Errorf("strategy_ref: %w", err)
+	}
+	return nil
+}
+
+// validateStrategyParams 校验参数覆写的**形状**（QT-20）：只接受浅层对象，
+// 值的类型必须是标量（string / number / bool / null）。
+//
+// 拒嵌套不是洁癖：浅合并与 params_hash 的编码都要求「一个键一个值」，
+// 嵌套会逼每个消费方自己定义遍历顺序，同参复现立刻失去唯一含义。
+//
+// 未知键**不在这里拒**——清单来自策略 manifest（J2），契约层若复制一份
+// 就成了第二个真相源，manifest 加参数时契约会先红。
+func (r BacktestRequest) validateStrategyParams() error {
+	if len(r.StrategyParams) == 0 {
+		return nil
+	}
+	keys := make([]string, 0, len(r.StrategyParams))
+	for k := range r.StrategyParams {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		if strings.TrimSpace(k) == "" {
+			return fmt.Errorf("strategy_params key must be a non-blank string")
+		}
+		v := r.StrategyParams[k]
+		if v == nil {
+			continue
+		}
+		if !isScalarValue(v) {
+			return fmt.Errorf(
+				"strategy_params[%q] has type %T: only scalar values are allowed (nested objects/arrays are rejected)",
+				k, v)
+		}
+	}
+	return nil
+}
+
+// isScalarValue 报告 v 是否为可进 strategy_params 的标量。
+// 数值囊括全部整数 / 浮点宽度：HTTP JSON 只产出 float64，进程内调用方
+// 可能直接给 int，两者都应被接受；nil 表示「该键无值」，不算嵌套。
+func isScalarValue(v any) bool {
+	if v == nil {
+		return true
+	}
+	switch reflect.ValueOf(v).Kind() {
+	case reflect.Bool, reflect.String,
+		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
+		reflect.Float32, reflect.Float64:
+		return true
+	default:
+		return false
+	}
 }

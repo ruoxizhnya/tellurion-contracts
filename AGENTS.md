@@ -6,7 +6,7 @@
 
 跨仓唯一缝隙：**port 接口 · DTO/值对象（含 domain）· 四个引擎契约 · 哨兵错误 · abi 常量**。所有跨边界的东西只能住这里。
 
-**状态**：S1 落代码已完成并已推（QT-05 ③-①，2026-10-22：`fees` / `domain/market` / `domain` / `engine` 四包、429 个导出符号）／已发版 `v0.1.0`（2026-10-23，QT-07）与 `v0.1.1`（同日，把 `conformance/` 语料打进 tag；导出面零变化）——core/agent 升 pin 归 C2/QT-07 ⑤ 执行
+**状态**：S1 落代码已完成并已推（QT-05 ③-①，2026-10-22：`fees` / `domain/market` / `domain` / `engine` 四包、429 个导出符号）／2026-10-23 一天四版：`v0.1.0`（QT-07 首版）→ `v0.1.1`（把 `conformance/` 语料打进 tag）→ `v0.2.0`（429→435）→ `v0.3.0`（435→439，QT-10 三类执行错误哨兵）／`v0.4.0`（2026-10-24：QT-20 参数投递入口 `StrategyRef`/`StrategyParams` + `BacktestParams.Params`；QT-41b ④ 编译 / 资产四哨兵；439→443）——core 与 agent 已切至 `v0.3.0`（2026-10-24 实测两边 `go.mod`），`v0.4.0` 的下游切 pin 归 G13
 
 ## 2. 构建 / 测试（必须单仓可跑）
 

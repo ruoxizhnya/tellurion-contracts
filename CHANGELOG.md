@@ -9,6 +9,21 @@
 
 （暂无）
 
+## [v0.4.0] - 2026-10-24
+
+MINOR 发版：两笔**只增不改**的契约腿（QT-20 参数投递入口 + QT-41b ④ 编译 / 资产错误族），导出面 439 → 443（+4 哨兵 `var`；两个结构体各 +1 可选字段，字段不计符号数），冻结基线 422 → 426 行（`git diff --numstat` 实测 +4 / −2：两条 struct 行因字段增加而改写）。无破坏性变更；`SignalWeight` / `ResultSpec` 冻结面一字未动。
+
+### 新增（MINOR 级：加导出符号 / 加可选字段）
+
+- **QT-20 契约腿（2026-10-24）**：`engine/contracts.go` 的 `BacktestRequest` 增两个可选字段——
+  - `StrategyRef string`（`json:"strategy_ref,omitempty"`）：wire 形态与 `engine/provenance.go` 的 `ParseStrategyRef` / `StrategyRef.String()` **互逆**（`id` 或 `id@hash`），**不新增第二种引用形状**；`ValidateRunSpec` 只做形状校验（`errors.Is(err, ErrStrategyRefMalformed)` 可判），「该 id 是否存在、解析成哪个 hash」属资产服务查表。
+  - `StrategyParams map[string]any`（`json:"strategy_params,omitempty"`）：**浅层对象**，值必须是标量（string / number / bool / null）；嵌套对象或数组在 `ValidateRunSpec` 拒绝并点名键。**未知键清单不复制进本仓**（J2：那属于 core 的策略 manifest，契约层只做形状 / 类型校验；合并 defaults ⊕ 覆写与取值域归执行侧）。
+  - `domain/backtest.go` 的 `BacktestParams` 增 `Params map[string]any`（`json:"params,omitempty"`）：**实际生效参数**，字段名对齐 core `RunMeta.Params`；与 `FillTiming` / `Kernel` 同一条纪律——记录执行侧解析后的值，引擎不猜。
+  - 存量行为不变：两个字段带 `omitempty`，`TestRunSpec_LegacyRequestSerializationUnchanged` 的逐字节 golden 仍绿。
+  - **未随本单落（如实）**：请求字段的消费（生效参数合并、未知键 400、`RunMeta.Params` 投递、各入口接线）在 core **G1-QT-20**；本仓只交付形状与形状校验。
+- **QT-41b ④ 错误族契约腿（2026-10-24）**：`engine/execution_errors.go` 增四个跨仓可识别哨兵——`ErrCompileFailed` / `ErrCompileUnavailable` / `ErrSourceTooLarge` / `ErrArtifactTooLarge`，名字与语义（含错误文案）逐字取自 `tellurion-strategy:internal/asset/errors.go`，`errors.Is` 可判、`%w` 保链、四条互不命中。迁入判据只有一条：**跨仓消费方必须能识别**（agent 生成闭环要把「编译失败」与「服务没配好」分开、core 取 artifact 要分「fetch 失败 / 超限 / 没有这个版本」、orchestration 要判可重试性），且不能为此 import 资产服务的实现包。**私有哨兵不迁**（`ErrStrategyNotFound` / `ErrStrategyExists` / `ErrVersionNotFound` / `ErrInvalidTransition` / `ErrJobNotFound` 等只看 HTTP status + wire code）。
+  - **过渡态（如实）**：`tellurion-strategy:internal/asset` 今天仍自己定义这四个值；该仓升 pin 后改为本包别名（G13 的通知腿）。两边同名同义，不是两份真相。
+
 ## [v0.3.0] - 2026-10-23
 
 MINOR 发版：QT-10 的契约腿（策略执行错误分级，**只增不改**），导出面 435 → 439（+4：3 个哨兵 `var` + 1 个 **frozen** `const`），冻结基线同步重生成（418 → 422 行，`git diff --numstat` 实测 **+4 / −0**）。无破坏性变更。

@@ -52,6 +52,27 @@ verified-by: QT-09 本仓侧交接（2026-10-23：② examples/ + ③ conformanc
 > `CHANGELOG.md` 必须把 `[Unreleased]` 的内容搬进 `## [v0.1.0] - 日期` 节，否则 `go run ./tools/check_release_matrix` 红
 > （CI「版本纪律核对」同款）。tag 那条腿今天空跑（0 tag），从第一个 tag 开始才咬人。
 
+### QT-20 契约腿 · `BacktestRequest.StrategyRef/StrategyParams` + `BacktestParams.Params` [P0] ✅ 完成（2026-10-24）
+
+> 由 G0 执行组派工，正文与验收逐条见本节的施工记录；core 侧消费腿（G1-QT-20）不在本仓。
+
+- **① 目标**：core 的 QT-20 参数投递有**入口字段**可消费——请求能指定策略引用与参数覆写，生效参数能落到 `BacktestParams`；形状错误 400，不把 manifest 业务规则搬进契约仓。
+- **② 上下文**：`engine/contracts.go:170-215`（v0.3.0 无这两字段）、`engine/provenance.go:249-312`（`StrategyRef` / `ParseStrategyRef` / `String()` 是引用形状的唯一实现）、core `pkg/strategy/signal_provider.go:52-65`（`RunMeta.Params` 是字段名对齐点）、`tellurion:docs/design/qt-decoupling/p0-remediation-design.md` A3 / D26、`w1-repo-ownership.md` J2。
+- **③ 要求（全部落地）**：① `BacktestRequest.StrategyRef string`，wire 形态与 `ParseStrategyRef`/`String()` 互逆（`id` / `id@hash`），不新增第二种引用形状；② `BacktestRequest.StrategyParams map[string]any` 只收浅层对象，嵌套键拒绝；③ `domain.BacktestParams.Params map[string]any` 承载生效参数；④ `ValidateRunSpec` 只做形状 / 类型校验，**未知键清单不由本仓提供**（core manifest）。
+- **④ 约束与非目标**：不改 `SignalWeight` / `ResultSpec` 冻结面；不新增 canonical 编码器；不在本仓实现 manifest / 合并 / 取值范围；不发 major tag。**未做**：core 的入口接线与 `RunMeta.Params` 投递（G1-QT-20）。
+- **⑤ 验收（真退出码）**：`go build ./... && go vet ./... && go test ./... -count=1` → **EXIT=0**（12 个包全绿）；`go run ./tools/check_api_surface` → 443/443；`go run ./tools/check_surface_freeze` → 426 行一致；`go run ./tools/check_contract_shape` → 绿；`go run ./tools/check_release_matrix` → **EXIT=0**。
+  - **破坏验证**：删掉 `validateStrategyParams` 里的 `isScalarValue` 拒收分支 → `go test ./engine -run TestRunSpec_ValidateRejectsNestedStrategyParams` **EXIT=1**（4 条子用例全部点名失败）；逐字节还原后 `sha256=4d190be7b2b2809c67871f6c052bc560f362f6a109e1aa7aed1522b1b44e7f3e` 与改坏前一致，全套测试回到 EXIT=0。
+- **⑥ 边界**：只改契约形状与形状校验；请求字段的消费、未知键拒绝、`RunMeta.Params` 接线归 core G1-QT-20。版本取 `v0.4.0`（新增导出符号 = MINOR，README 规则表）。
+
+### QT-41b ④ 错误族契约腿 · 编译 / 资产四哨兵 [P1] ✅ 完成（2026-10-24）
+
+- **① 目标**：跨仓消费方（agent 生成闭环 / core 取 artifact / orchestration 终态）能 `errors.Is` 识别编译与资产管线的四类失败，不必 import 资产服务实现包。
+- **② 上下文**：实测来源 `tellurion-strategy:internal/asset/errors.go:29-60`（`ErrSourceTooLarge` / `ErrArtifactTooLarge` / `ErrCompileUnavailable` / `ErrCompileFailed` 已存在）；同类先例 `engine/execution_errors.go`（QT-10）。
+- **③ 要求（全部落地）**：四哨兵迁入 `engine/execution_errors.go`，**名字与语义（含错误文案）不改**；迁入判据 = 跨仓消费方必须能识别；**资产服务私有哨兵不迁**（`ErrStrategyNotFound` / `ErrStrategyExists` / `ErrVersionNotFound` / `ErrInvalidTransition` / `ErrJobNotFound` 等）。
+- **④ 约束与非目标**：不迁私有哨兵；不改四条的文案 / 身份；不在本仓实现编译或资产逻辑；不改 strategy 仓（其别名切换归 G13 通知腿）。
+- **⑤ 验收**：`TestCompileFamilySentinelsStayDistinctAndSurviveWrapping` 钉住四条互不命中 + 包装后仍可判定；全套 `go test ./... -count=1` EXIT=0；导出面 439 → 443。
+- **⑥ 边界**：只落哨兵；compile 服务实现、asset 状态机与 wire code 映射留在 `tellurion-strategy`。
+
 ### QT-05 · S1 契约层与工具层落地（代码直接写进两个新仓）[P0] 🔶 本仓侧已完成并已推（`fbe9a2d`）；下游腿（③-③④⑤⑦⑨）待 core/agent 执行
 
 > **迁入说明（2026-10-21）**：本单自 core 仓 `tellurion:docs/TASKS.md`「S1」迁入（任务台账批量重分布：S1 双仓落点，主单落本仓）。六字段正文逐字保留、不改写；**kit 腿**拆分为 `tellurion-kit:docs/TASKS.md` 的 **QT-05-B**（③-② 的执行单，判据以本单为准）；core 侧留同号指针，core 侧改动（③-③/④/⑥/⑦/⑨）随本单执行。执行顺序（W0 全绿后的 S1）见 core `tellurion:docs/TASKS.md` 执行顺序总览。

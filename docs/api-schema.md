@@ -1,7 +1,7 @@
 ---
 status: active
-last-verified: 2026-10-22
-verified-by: QT-05 ③-① 落码后订正（§1.1 port 状态与承载路径、§1.2 「只搬不改名」已落地；符号本体住本仓 `engine/`）
+last-verified: 2026-10-24
+verified-by: QT-20 / QT-41b ④ 契约腿（§1.2 增 `StrategyRef`/`StrategyParams`/`BacktestParams.Params` 的只增不改说明；§1.3 增编译 / 资产四哨兵族与「私有哨兵不迁」判据）；QT-05 ③-① 落码后订正（§1.1 port 状态与承载路径、§1.2 「只搬不改名」已落地；符号本体住本仓 `engine/`）
 ---
 
 # API Schema — tellurion-contracts
@@ -43,8 +43,15 @@ verified-by: QT-05 ③-① 落码后订正（§1.1 port 状态与承载路径、
 >
 > **S1 只搬不改名（已落地，2026-10-22）**：W0 已结束，承载类型未改名——`BacktestRequest` / `BacktestResponse` 就是 `RunSpec` / `ResultSpec` 的 Go 符号，符号本体今天住本仓 `engine/`（core 侧旧包保留到 sed 落地）。
 > 看到本仓里没有 `type RunSpec struct` 不是缺漏——这是当前刻意的状态；今后改名属破坏性变更（MAJOR）。
+>
+> **QT-20 增量（2026-10-24，只增不改）**：`BacktestRequest` 增两个**可选**字段——
+> `StrategyRef`（wire 形态 = `ParseStrategyRef` / `StrategyRef.String()` 的 `id` / `id@hash`，
+> **不新增第二种引用形状**）与 `StrategyParams`（**浅层对象**，值为标量；嵌套键在
+> `ValidateRunSpec` 拒绝）。`domain.BacktestParams` 增 `Params`（**生效参数**，字段名对齐
+> core `RunMeta.Params`）。**未知键清单不在这里**：它属于 core 的策略 manifest（J2），
+> 契约层只做形状 / 类型校验；合并（defaults ⊕ 覆写）与取值域归执行侧。
 
-### 1.3 哨兵错误（QT-10 的三分法）
+### 1.3 哨兵错误（QT-10 的三分法 + QT-41b 编译族）
 
 | 错误 | 含义 | 消费方行为 |
 |---|---|---|
@@ -56,6 +63,21 @@ verified-by: QT-05 ③-① 落码后订正（§1.1 port 状态与承载路径、
 > ⚠️ **但归类（③-②）与状态映射（③-③）在 core**：provider 侧把底层错误包成哪一类、`RunBacktest` 在哪条分支终止 run，
 > 都是 core 的改动，今天还没做——所以 §2 前两条对生产者是**验收标准**，对消费方（`errors.Is` + 兜底类）才是现状。
 > 与本节含义配对的新稳定 Code：`CodeDataGapSkipped`（`data_gap_skipped`）走既有 `invalid_reasons` 通道，**不是第四种状态**。
+
+**编译 / 资产族（QT-41b ④，✅ 2026-10-24 已落本仓）**：
+
+| 错误 | 含义 | 消费方行为 |
+|---|---|---|
+| `ErrCompileFailed` | 源码编译失败（诊断可检索） | 反馈给生成方 / 模型；不可当「服务挂了」重试 |
+| `ErrCompileUnavailable` | 资产服务未配置编译端口 | 配置错 / 可重试；与上一条分开，否则模型会对着坏配置反复改源码 |
+| `ErrSourceTooLarge` | 上传源码超过 1 MiB | 不可重试，改输入 |
+| `ErrArtifactTooLarge` | artifact 超过 8 MiB blob 上限 | 不可重试（fail-loud，不截断） |
+
+> 迁入判据 = **跨仓消费方必须能识别**（agent 生成闭环 / core 取 artifact / orchestration 终态）。
+> 资产服务的**私有哨兵不迁**：`ErrStrategyNotFound` / `ErrStrategyExists` / `ErrVersionNotFound` /
+> `ErrInvalidTransition` / `ErrJobNotFound` 等描述的是服务自己的存储与状态机，跨仓调用方只看
+> HTTP status + wire code。四条名字与语义逐字取自 `tellurion-strategy:internal/asset/errors.go`，
+> 该仓升 pin 后改为本包别名（过渡态是同一语义的两处定义，不是两份真相）。
 
 ### 1.4 abi 常量
 

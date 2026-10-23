@@ -149,3 +149,44 @@ func TestCheckValidityNeverEmitsDataGapSkipped(t *testing.T) {
 		}
 	}
 }
+
+// QT-41b ④：编译 / 资产管线的跨仓错误族。
+//
+// 四条是**不同的消费决策**，身份必须互不命中：编译失败 → 反馈给模型；
+// 服务没配编译器 → 报配置错；源码超限 / 字节超限 → 不可重试，改输入或改上限。
+// 再用一条包装腿证明跨层 `%w` 之后仍认得出来（消费方分属 agent / core /
+// orchestration，不能要求它们 import 资产服务的实现包）。
+func TestCompileFamilySentinelsStayDistinctAndSurviveWrapping(t *testing.T) {
+	family := []struct {
+		name string
+		err  error
+	}{
+		{"ErrCompileFailed", ErrCompileFailed},
+		{"ErrCompileUnavailable", ErrCompileUnavailable},
+		{"ErrSourceTooLarge", ErrSourceTooLarge},
+		{"ErrArtifactTooLarge", ErrArtifactTooLarge},
+	}
+	for _, a := range family {
+		for _, b := range family {
+			if a.name == b.name {
+				if !errors.Is(a.err, b.err) {
+					t.Fatalf("%s 必须匹配自身", a.name)
+				}
+				continue
+			}
+			if errors.Is(a.err, b.err) {
+				t.Fatalf("%s 不能匹配 %s —— 四种消费决策不同，串了就分不出该重试还是该改输入", a.name, b.name)
+			}
+		}
+		wrapped := fmt.Errorf("asset service: %w", a.err)
+		if !errors.Is(wrapped, a.err) {
+			t.Fatalf("%s 包装后必须仍可 errors.Is 判定", a.name)
+		}
+		// 反证：包装后不得命中同族别条。
+		for _, b := range family {
+			if b.name != a.name && errors.Is(wrapped, b.err) {
+				t.Fatalf("%s 包装后误命中 %s", a.name, b.name)
+			}
+		}
+	}
+}

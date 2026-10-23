@@ -205,6 +205,27 @@ type BacktestRequest struct {
 	// 非空）在 ValidateRunSpec，违例 400。
 	Signals []SignalWeight `json:"signals,omitempty"`
 
+	// StrategyRef 是本次运行引用的策略资产（QT-20）。wire 形态与
+	// ParseStrategyRef / StrategyRef.String() **互逆**：`id`（latest）或
+	// `id@hash`（artifact_hash / version_hash，形态不可自证，settle 由解析侧
+	// 查表决定）。**不新增第二种引用形状**——解析与还原只有 provenance.go
+	// 那一处实现。
+	//
+	// 空值 = 未指定：走既有的 `Strategy` 注册表键路径，存量请求行为不变。
+	// 这里只做**形状**校验（ValidateRunSpec 调 ParseStrategyRef）；「这个 id
+	// 存不存在 / 该解析成哪个 hash」是资产服务的业务，不属契约层。
+	StrategyRef string `json:"strategy_ref,omitempty"`
+
+	// StrategyParams 是本次运行对策略参数的覆写（QT-20）。生效参数 =
+	// manifest 的 params_defaults ⊕ 本字段（浅合并），合并与未知键拒绝都在
+	// 执行侧完成——**未知键清单属于 core 的策略 manifest（J2），本包不建
+	// 第二份清单**。
+	//
+	// 只接受**浅层对象**：值的类型必须是标量（string / number / bool / null）。
+	// 嵌套对象或数组在 ValidateRunSpec 被拒——嵌套会让「同参」的语义依赖
+	// 各调用方的遍历顺序，也让 params_hash 的编码失去唯一定义。
+	StrategyParams map[string]any `json:"strategy_params,omitempty"`
+
 	// RunID 让**进程内**调用方（job 服务）把 run 身份对齐到 backtest_jobs.id，
 	// 这样 `quant.run_provenance ⋈ backtest_jobs` 才是一条真 join（QT-63 ⑤）。
 	//
