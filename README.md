@@ -81,8 +81,9 @@ go run ./tools/check_pr_body          # 仅 PR 事件用（stdin 传 PR 正文�
 <!-- matrix:begin -->
 | 契约版本 | 状态 | 支持的 core（`tellurion`） | 支持的 agent（`tellurion-agent`） |
 |---|---|---|---|
+| `v0.2` | 已发版（2026-10-23） | `v0.2.0`（QT-62 wasm 腿随同批切 pin；QT-16 契约腿同批收编） | `v0.2.0`（`replace tellurion` 在册期间与 core 同批升） |
 | `v0.1` | 已发版（2026-10-23） | `v0.1.1`（QT-07 ⑤ 切 pin；`v0.1.0` 为 S2-b 首版） | `v0.1.1`（同批切；`replace tellurion` 在册期间与 core 同批升） |
-| `main`（未发版） | 开发基线，**不做兼容承诺** | 已切 `v0.1.0` | 已切 `v0.1.0` |
+| `main`（未发版） | 开发基线，**不做兼容承诺** | 已切 `v0.2.0` | 已切 `v0.2.0` |
 <!-- matrix:end -->
 
 首个版本 `v0.1.0` 已于 **2026-10-23** 打在 `main` 上并 push（QT-07 ③-S2-a）；`v0.1.1` 同日发出，唯一目的（PATCH 级，导出面零变化）是把 `conformance/` 语料**打进 tag** —— `v0.1.0` 打在语料落地之前，下游按它取语料必然落空。0.x 阶段按上面的规则允许 breaking，但每一处都在 `CHANGELOG.md` 留了账。使用方一律 `require v0.1.1`，**不写 `replace`**（ADR-D31 / D29 §9 C1）。

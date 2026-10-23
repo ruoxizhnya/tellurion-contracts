@@ -283,8 +283,10 @@ engine/ErrEmitSourcesMixed = errors.New("abi: emit_signal and emit_target2 used 
 engine/ErrFillTimingMismatch = errors.New("kernels filled at different fill_timing calibers (caliber mismatch, not a result mismatch)")
 engine/ErrFillTimingMissing = errors.New("fill_timing is required: known values are next_open | same_close")
 engine/ErrFillTimingUnknown = errors.New("fill_timing is not a known caliber: known values are next_open | same_close")
+engine/ErrHostRegionDataUnprovable = errors.New("abi: host region overlap cannot be disproved from the artifact bytes")
 engine/ErrHostRegionInvalid = errors.New("abi: host region declaration is invalid")
 engine/ErrHostRegionMissing = errors.New("abi: host region exports are missing")
+engine/ErrHostRegionOverlapsData = errors.New("abi: host region overlaps the module's own static data")
 engine/ErrImportNotWhitelisted = errors.New("abi: import outside the env whitelist")
 engine/ErrImportSignatureMismatch = errors.New("abi: host import signature does not match the frozen contract")
 engine/ErrKernelNotRegistered = errors.New("kernel not registered")
@@ -342,6 +344,7 @@ engine/HostI32 HostValueType
 engine/HostI64
 engine/HostRegionAlignment = 8
 engine/HostRegionDeclaration struct{ParamsPtr uint32; ScratchPtr uint32; ScratchSize uint32}
+engine/HostRegionDeclaration.CheckAgainstStaticData(StaticDataImage) error
 engine/HostRegionDeclaration.Validate(uint32) error
 engine/HostRegionExports() []string
 engine/HostValueType uint8
@@ -382,6 +385,8 @@ engine/RunSpecInput.MustHash() string
 engine/ScopeMarket StrategyScope
 engine/ScopeSymbol StrategyScope
 engine/SignalWeight struct{Symbol string; Weight float64; AsOf string}
+engine/StaticDataImage struct{Segments []StaticDataSegment; Unprovable string}
+engine/StaticDataSegment struct{Offset uint32; Length uint32}
 engine/StatusCompleted = "completed"
 engine/StatusFailed = "failed"
 engine/StatusInvalid = "invalid"

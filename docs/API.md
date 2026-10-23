@@ -579,6 +579,9 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `HostRegionExports` | func | **frozen** | 三个必须存在的导出名；缺失 → `ErrHostRegionMissing` |
 | `HostRegionDeclaration` | type | **frozen** | 宿主内存区声明（params ptr / scratch ptr / scratch size） |
 | `HostRegionDeclaration.Validate` | method | **frozen** | 对齐、最小地址、最小尺寸逐条校验；不合法 → `ErrHostRegionInvalid` |
+| `HostRegionDeclaration.CheckAgainstStaticData` | method | stable | QT-62：宿主区 × 模块静态数据（Data section 活动段并集）重叠判定；重叠 → `ErrHostRegionOverlapsData`，图像不可证 → `ErrHostRegionDataUnprovable`。零长段不算重叠；区间算术 uint64 不绕回 |
+| `StaticDataSegment` | type | stable | QT-62：模块 Data section 里一个活动段的常量区间（`Offset` / `Length`，uint32） |
+| `StaticDataImage` | type | stable | QT-62：从 artifact 字节解出的静态数据布局；`Unprovable` 非空 = 存在无法证明不重叠的段，调用方必须 fail-closed，不许当空图放行 |
 | `ValidateParamsWrite` | func | stable | 写 params 前的边界校验：`paramsLen < 0` 或 `paramsLen > min(MaxParamsBytes, scratch_ptr−params_ptr)` → `ErrParamsTooLarge`。**截断是明确禁止的**（截断等于让策略读到半个 JSON）；阈值本身是 frozen 常量 |
 | `ErrAbiVersionUnknown` | var | stable | 见 §5.4（abi / artifact 校验族） |
 | `ErrAbiVersionMismatch` | var | stable | 见 §5.4 |
@@ -588,6 +591,8 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `ErrImportSignatureMismatch` | var | stable | 见 §5.4 |
 | `ErrHostRegionMissing` | var | stable | 见 §5.4 |
 | `ErrHostRegionInvalid` | var | stable | 见 §5.4 |
+| `ErrHostRegionOverlapsData` | var | stable | QT-62：宿主区落在模块自己的静态数据上 |
+| `ErrHostRegionDataUnprovable` | var | stable | QT-62：无法从 artifact 字节证明宿主区不踩模块数据（被动段 / 非常量 offset / 非零 memory index）——读不懂即拒绝 |
 | `ErrParamsTooLarge` | var | stable | 见 §5.4 |
 | `ErrScopeUnknown` | var | stable | 见 §5.4 |
 | `ErrScopeMarketV1` | var | stable | 见 §5.4；解禁要立 ADR（D25） |

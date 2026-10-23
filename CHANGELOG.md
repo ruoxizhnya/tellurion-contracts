@@ -9,6 +9,15 @@
 
 （暂无）
 
+## [v0.2.0] - 2026-10-23
+
+MINOR 发版：两个只增不改的契约腿随同一 tag 分发，导出面 429 → 435（+6：1 个 frozen 常量 + 2 类型 + 1 方法 + 2 哨兵错误），冻结基线同步重生成（412 → 418 行）。无破坏性变更。
+
+### 新增（MINOR 级：加导出符号）
+
+- **QT-16 契约腿（2026-10-23）**：新增 `engine/DomainRunIdentityHash`（const，**frozen**）——检查点身份复合域标签 `"tellurion.run_identity_hash.v1"`，覆盖 `{run_universe_hash, scope, shard_key, param_effective_hash}` 四分量（p0-round2-review N3 冻结设计 + w1-repo-ownership §2.5 裁决：常量住 contracts，计算函数留 core `pkg/strategy`，消费方只有 core）。
+- **QT-62 契约腿（2026-10-23）**：新增宿主区 × 模块静态数据重叠判定族（5 个符号，全部 stable）——`StaticDataSegment` / `StaticDataImage` / `HostRegionDeclaration.CheckAgainstStaticData` / `ErrHostRegionOverlapsData` / `ErrHostRegionDataUnprovable`。权威定则：模块静态数据 = Data section（id=11）活动段并集、宿主区 = 三个导出 global 的声明，两者都出自 artifact 自身 ⇒ 相交即拒绝，不重排地址、不缩区间；`Unprovable` 非空必须 fail-closed（读不懂 ≠ 没风险）。零长段不算重叠，区间算术 uint64 不绕回。QT-01 的冻结面（符号名 / i32 类型 / 下界 / 对齐 / 上限）一字未动。
+
 ## [v0.1.1] - 2026-10-23
 
 QT-09 的随仓交付物随 tag 分发（本节内容自 `[Unreleased]` 搬入）。**版本取 PATCH（`v0.1.0` → `v0.1.1`）**：本批全部是仓内自查工具 / 示例 / 语料，**导出面零变化**（仍 429/429，冻结基线 412 行），下游 import 的任何符号的形状与语义都没动。`conformance/` 虽是新包，但刻意零导出符号（见 `conformance/cases.go` 头注释），它不改变兼容面 —— 它改变的是**发布物**：`v0.1.0` 的 tag 树里 `conformance/` 命中 0 个文件，而 core（`tellurion:pkg/conformance`）与 agent（`tellurion-agent:internal/conformance`）两侧的腿按 pin 的版本读同一份 `cases.json` 且约定定位失败一律 `t.Fatalf`，所以下游升 tag 之前必须先把语料打进去（C1）。
