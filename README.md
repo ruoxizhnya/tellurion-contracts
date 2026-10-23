@@ -81,7 +81,7 @@ go run ./tools/check_pr_body          # 仅 PR 事件用（stdin 传 PR 正文�
 <!-- matrix:begin -->
 | 契约版本 | 状态 | 支持的 core（`tellurion`） | 支持的 agent（`tellurion-agent`） |
 |---|---|---|---|
-| `v0.1` | 已发版（2026-10-23） | `v0.1.0`（QT-07 S2-b 切 tag；C2 切 `v0.1.1`） | `v0.1.0`（同上） |
+| `v0.1` | 已发版（2026-10-23） | `v0.1.1`（QT-07 ⑤ 切 pin；`v0.1.0` 为 S2-b 首版） | `v0.1.1`（同批切；`replace tellurion` 在册期间与 core 同批升） |
 | `main`（未发版） | 开发基线，**不做兼容承诺** | 已切 `v0.1.0` | 已切 `v0.1.0` |
 <!-- matrix:end -->
 
