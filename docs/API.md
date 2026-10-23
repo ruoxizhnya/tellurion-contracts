@@ -482,6 +482,7 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `DomainCalendarHash` | const | **frozen** | `"tellurion.calendar_hash.v1"` |
 | `DomainAnchorDigestsHash` | const | **frozen** | `"tellurion.adjustment_anchor_digests.v1"` |
 | `DomainParamsHash` | const | **frozen** | `"tellurion.params_hash.v1"`：**生效参数**的独立指纹，与 `run_spec_hash` 里那份**不同域**（只比参数时别误命中换了区间/票池的 run） |
+| `DomainRunIdentityHash` | const | **frozen** | `"tellurion.run_identity_hash.v1"`（QT-16）：检查点身份复合域，覆盖 `{run_universe_hash, scope, shard_key, param_effective_hash}` 四分量；计算函数在 core `pkg/strategy`（消费方只有 core，不进本仓） |
 | `ArtifactHash` | func | stable | 字节码 sha256（hex），**刻意不加域标签**：要能被编译服务 / 缓存 / 外部工具独立算出且逐字节相同（内容寻址）。执行与结果以它为真相（N7） |
 | `UniverseHash` | func | stable | 票池**集合**指纹（排序 + 去重）：`["A","B"]` 与 `["B","A"]` 同 hash |
 | `CalendarHash` | func | stable | 交易日轴指纹，**保序**（`[d1,d2]` ≠ `[d2,d1]`）。Axis 必须进 dataset hash，否则解释不了「同 hash 不同结果」 |

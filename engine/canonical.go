@@ -51,6 +51,13 @@ const (
 	// 前者要能单独回答「参数是不是同一组」，两者混用会让「只比参数」的查询
 	// 误命中一批换了区间/票池的 run。
 	DomainParamsHash = "tellurion.params_hash.v1"
+	// DomainRunIdentityHash 是 QT-16 检查点身份的域：run_identity_hash 覆盖
+	// {run_universe_hash, scope, shard_key, param_effective_hash} 四分量（复合
+	// 身份，能回答「这份检查点字节属于哪个实例」）。与 DomainUniverseHash /
+	// DomainParamsHash 都不同域——后两者是单一分量指纹，混用会让「只比票池 /
+	// 只比参数」的查询误命中整批换了分量的 run（w1-repo-ownership §2.5 裁决：
+	// 常量住 contracts，计算函数留 core 消费方）。
+	DomainRunIdentityHash = "tellurion.run_identity_hash.v1"
 )
 
 // NewCanonical 开启一段新的编码，先写入域标签。

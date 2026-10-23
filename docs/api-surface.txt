@@ -263,6 +263,7 @@ engine/DomainAnchorDigestsHash = "tellurion.adjustment_anchor_digests.v1"
 engine/DomainCalendarHash = "tellurion.calendar_hash.v1"
 engine/DomainDatasetSnapshotHash = "tellurion.dataset_snapshot_hash.v1"
 engine/DomainParamsHash = "tellurion.params_hash.v1"
+engine/DomainRunIdentityHash = "tellurion.run_identity_hash.v1"
 engine/DomainRunSpecHash = "tellurion.run_spec_hash.v1"
 engine/DomainUniverseHash = "tellurion.universe_hash.v1"
 engine/EmitSource uint8
