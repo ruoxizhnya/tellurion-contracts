@@ -23,6 +23,8 @@ verified-by: QT-05 ③-① 本仓侧落码完成（`fees` 13 + `domain/market` 4
 ```bash
 go run ./tools/check_api_surface            # CI 同款；不一致即退出码 1
 go run ./tools/check_api_surface -list      # 只打印实际导出面，用来生成登记行
+go run ./tools/check_surface_freeze         # 形状指纹 ↔ docs/api-surface.txt；任何一行增删改即退出码 1
+go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/字段后必须与登记表同一 PR）
 ```
 
 | 项 | 口径 |
@@ -38,6 +40,10 @@ go run ./tools/check_api_surface -list      # 只打印实际导出面，用来�
 > ⚠️ **覆盖面限制（如实登记，别把它当全知护栏）**：内嵌接口（`type P interface { Base; Extra() }`）的**继承来的**方法名不在扫描粒度内——
 > 那些方法本来就属于已登记的 `Base`，不是新符号。真要新增方法，新增的那个会被扫到。
 > 结构体字段同理：字段增删**不触发**本护栏，它们由 core 侧的 SPEC 合规测试与 `resultspec_test.go` 那类字段级钉子管（见 §5）。
+
+> **第二道门（surface 冻结）**：`tools/check_surface_freeze` 比对 `docs/api-surface.txt` 的形状指纹
+> （函数签名 / 结构体字段 / 接口方法 / 底层类型 / const·var）。任何一行增删改都红——**结构体字段的增删在这里也会咬人**，
+> 正好补上上一段说的覆盖面空白。新增符号必须**先登记本表、再 `-update` 基线**，两道门都过才算一次契约变更。
 
 **登记表的形状**（§4 区内，一个包一个小节，小节标题里的反引号目录名就是包路径）：
 

@@ -1,7 +1,7 @@
 ---
 status: active
-last-verified: 2026-10-22
-verified-by: QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；推送回写（2026-10-22：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`，`go get` 实测可解析，CI 429/429；§8 #4 登记为 X1a 待办）
+last-verified: 2026-10-23
+verified-by: QT-09 本仓侧交接（2026-10-23：② examples/ + ④ PR 模板/check_pr_body + ⑤ check_contract_shape + surface 冻结 check_surface_freeze/api-surface.txt，全部接进 CI）；QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；推送回写（2026-10-22：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`，`go get` 实测可解析，CI 429/429；§8 #4 登记为 X1a 待办）
 ---
 
 # TASKS — tellurion-contracts 未完成项
@@ -138,6 +138,7 @@ verified-by: QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 +
 | QT-05 | S1：把 `pkg/domain` + `pkg/backtest/contracts` 搬进本仓 | **已迁入本仓「一、本仓任务」**（2026-10-21；core `tellurion:docs/TASKS.md` 留同号指针；kit 腿见 `tellurion-kit:docs/TASKS.md` QT-05-B） |
 | QT-07 | S2：打 `v0.1.0` 并把下游伪版本换成 tag | `tellurion:docs/TASKS.md` |
 | QT-19 | 版本策略 / 兼容矩阵 / CHANGELOG 规则 | `tellurion:docs/TASKS.md` |
+| QT-09 | 跨仓护栏（surface 冻结 / 契约形状 / PR 模板 / examples） | `tellurion:docs/TASKS.md`（主单）；**本仓侧交接（2026-10-23）**：② `examples/`（`market.Provider` / `EngineRunner` 最小用法）、④ `.github/PULL_REQUEST_TEMPLATE.md` + `tools/check_pr_body`（仅 PR 事件）、⑤ `tools/check_contract_shape`（`*Config`/`*Options`/`*Impl` 与 DB import 即红）、surface 冻结 `tools/check_surface_freeze` + `docs/api-surface.txt`；四条判据见各工具头部注释，全部接进 CI |
 | QT-40（T2） | `dataprotocol` 要不要独立成包、何时迁 | 单在 `tellurion-data:docs/TASKS.md`（QT-40 的接口对表待办 T2）；**落点与两条读法登记在本仓** `docs/API.md` §8 待裁 **#4**。⇒ **已登记为 X1a 待办（2026-10-22）**：X1a 开工前必须在 §8 #4 挑定 (a)/(b) 并写回 §8 #4 + `tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md` §4.1 注 ②；X1a 的施工序在 `tellurion-data:docs/TASKS.md` 施工序表 |
 
 ---

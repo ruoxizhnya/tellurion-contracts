@@ -7,7 +7,14 @@
 
 ## [Unreleased]
 
-暂无未发版改动。
+### 变更（PATCH 级：仓内自查工具、示例与文档，不改导出面）
+
+- **QT-09（2026-10-23，本仓侧）**：新增三条随仓护栏与一份冻结基线，导出面零变化（仍 429/429）：
+  - ⑤ `tools/check_contract_shape`：`domain/` `engine/` `fees/` 出现导出的 `*Config`/`*Options`/`*Impl` 形状名、或任何非测试源文件 import 数据库/驱动包即红；扫不到 Go 包或三条契约根目录缺任一同样红。ADR-0002 的在册例外做成**显式白名单**（逐符号写理由）。
+  - surface 冻结：`tools/check_surface_freeze` + `docs/api-surface.txt`（412 行形状指纹：函数签名 / 结构体字段 / 接口方法 / 底层类型 / const·var）。改签名、改字段、增删符号都红；`-update` 重生成。与 `check_api_surface` 组成「登记 + 基线」双门。
+  - ④ `.github/PULL_REQUEST_TEMPLATE.md`（四个必填段落）+ `tools/check_pr_body`（只在 `pull_request` 事件跑，其他事件由 CI `if:` 显式跳过）。
+  - ② `examples/marketprovider` / `examples/enginerunner`：两个跨仓 port 的最小可编译用法（`package main`，不计入导出面），清单见 `examples/README.md`。
+  - 以上全部接进 `.github/workflows/ci.yml`；README 快速开始、AGENTS、docs/README 的变更触发表同步。
 
 ## [v0.1.0] - 2026-10-23
 

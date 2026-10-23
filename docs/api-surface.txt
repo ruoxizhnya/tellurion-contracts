@@ -1,0 +1,412 @@
+domain/(*ActionEngine).ApplyAll(time.Time, []Position, map[string]float64, []CorporateAction) ([]Position, float64, []ApplyOutcome)
+domain/(*ActionEngine).IsApplied(CorporateAction) bool
+domain/(*ActionEngine).MarkApplied(CorporateAction)
+domain/(*BonusShare).Apply(Position, float64) (Position, float64)
+domain/(*BonusShare).Description() string
+domain/(*BonusShare).ExDate() time.Time
+domain/(*BonusShare).PayDate() time.Time
+domain/(*BonusShare).RecordDate() time.Time
+domain/(*BonusShare).Symbol() string
+domain/(*BonusShare).Type() ActionType
+domain/(*CashDividend).Apply(Position, float64) (Position, float64)
+domain/(*CashDividend).Description() string
+domain/(*CashDividend).ExDate() time.Time
+domain/(*CashDividend).PayDate() time.Time
+domain/(*CashDividend).RecordDate() time.Time
+domain/(*CashDividend).Symbol() string
+domain/(*CashDividend).Type() ActionType
+domain/(*CorporateActionSplit).Apply(Position, float64) (Position, float64)
+domain/(*CorporateActionSplit).Description() string
+domain/(*CorporateActionSplit).ExDate() time.Time
+domain/(*CorporateActionSplit).PayDate() time.Time
+domain/(*CorporateActionSplit).RecordDate() time.Time
+domain/(*CorporateActionSplit).Symbol() string
+domain/(*CorporateActionSplit).Type() ActionType
+domain/(*Placement).Apply(Position, float64) (Position, float64)
+domain/(*Placement).Description() string
+domain/(*Placement).ExDate() time.Time
+domain/(*Placement).PayDate() time.Time
+domain/(*Placement).RecordDate() time.Time
+domain/(*Placement).Symbol() string
+domain/(*Placement).Type() ActionType
+domain/(*RightsIssue).Apply(Position, float64) (Position, float64)
+domain/(*RightsIssue).ApplyPaid(Position, float64) (Position, float64)
+domain/(*RightsIssue).Description() string
+domain/(*RightsIssue).ExDate() time.Time
+domain/(*RightsIssue).ExRefPrice(float64) float64
+domain/(*RightsIssue).PayDate() time.Time
+domain/(*RightsIssue).RecordDate() time.Time
+domain/(*RightsIssue).Symbol() string
+domain/(*RightsIssue).Type() ActionType
+domain/ActionBonusShare ActionType
+domain/ActionCashDividend ActionType
+domain/ActionEngine struct{appliedLog map[string]bool}
+domain/ActionPlacement ActionType
+domain/ActionRegister RegistrationAction
+domain/ActionRightsIssue ActionType
+domain/ActionRollback RegistrationAction
+domain/ActionSplit ActionType
+domain/ActionType string
+domain/ApplyOutcome struct{Action CorporateAction; Position ApplyResult}
+domain/ApplyResult struct{Action CorporateAction; Symbol string; OldPos Position; NewPos Position; CashDelta float64; Applied bool; SkipReason string}
+domain/BacktestParams struct{StrategyName string; StockPool []string; StartDate time.Time; EndDate time.Time; InitialCapital float64; RiskFreeRate float64; LookbackDays int; FillTiming string; Kernel string; IndexCode string}
+domain/BacktestResult struct{StartDate time.Time; EndDate time.Time; TotalReturn float64; AnnualReturn float64; SharpeRatio float64; SortinoRatio float64; MaxDrawdown float64; MaxDrawdownDate time.Time; WinRate float64; TotalTrades int; WinTrades int; LoseTrades int; AvgHoldingDays float64; CalmarRatio float64; PortfolioValues []PortfolioValue; Trades []Trade; UniverseMaxSize *int; InvalidReasons []string}
+domain/BonusShare struct{SymbolValue string; ExDateValue time.Time; RecordValue time.Time; PayValue time.Time; BonusPer10 float64}
+domain/BuiltinFactorDefinitions []FactorDefinition
+domain/BuiltinFactorHypotheses []FactorHypothesis
+domain/BuiltinHypothesisFor(FactorType) (FactorHypothesis, bool)
+domain/CaliberRank FactorCaliber
+domain/CaliberRaw FactorCaliber
+domain/CaliberZScore FactorCaliber
+domain/CashDividend struct{SymbolValue string; ExDateValue time.Time; RecordValue time.Time; PayValue time.Time; CashPerShare float64}
+domain/CorporateAction interface{Type func() ActionType; Symbol func() string; ExDate func() time.Time; RecordDate func() time.Time; PayDate func() time.Time; Apply func(Position, float64) (Position, float64); Description func() string}
+domain/CorporateActionSplit struct{SymbolValue string; ExDateValue time.Time; RecordValue time.Time; PayValue time.Time; SplitRatio float64}
+domain/DefaultExecutionConfig() ExecutionConfig
+domain/Direction string
+domain/DirectionClose Direction
+domain/DirectionHold Direction
+domain/DirectionLong Direction
+domain/DirectionShort Direction
+domain/Dividend = market.Dividend
+domain/ETFConstituent struct{ETFCode string; Symbol string; Weight float64; ObsDate time.Time; Source string; AsOf time.Time}
+domain/ExecutionConfig struct{OrderType OrderType; SlippageModel string; CommissionRate float64; MinCommission float64; InitialCapital float64; SlippageRate float64; ImpactSigma float64; ImpactLiquidityFactor float64}
+domain/FactorCacheEntry struct{ID int64; Symbol string; TradeDate time.Time; FactorName FactorType; RawValue float64; ZScore float64; Percentile float64; Citation json.RawMessage}
+domain/FactorCaliber string
+domain/FactorCaliber.Valid() bool
+domain/FactorContractLiabilityRatio FactorType
+domain/FactorDefinition struct{Name FactorType; Kernel FactorKernel; Formula string; Validity string; CodeRef string; Caliber FactorCaliber; InputFields []string; EffectiveFrom string; Lookahead string; Lookback int}
+domain/FactorDefinition.Validate() error
+domain/FactorDefinition.VersionHash() string
+domain/FactorGrossMarginTrend FactorType
+domain/FactorGrowth FactorType
+domain/FactorHypothesis struct{FactorName FactorType; SourceKind string; Hypothesis string; Reference string}
+domain/FactorInventoryTurnoverDelta FactorType
+domain/FactorKernel string
+domain/FactorKernel.Valid() bool
+domain/FactorMarketActivity FactorType
+domain/FactorMiningRecord struct{FactorName FactorType; VersionHash string; SourceKind string; Generator string; Generation int; Rationale string; NumTrials int; FailedTrials int; SandboxHash string; Admitted bool; RejectReason string; OverfitRawP float64; OverfitAdjP float64; OverfitFlag bool; OOSInSample float64; OOSOutSample float64; OOSPass bool; CreatedAt time.Time}
+domain/FactorMiningRecord.Validate() error
+domain/FactorMomentum FactorType
+domain/FactorOCFToNetProfit FactorType
+domain/FactorOutput struct{Factor string; Date time.Time; Symbol string; Value *float64; Caliber FactorCaliber; Frequency market.Frequency; VisibleAt time.Time}
+domain/FactorQuality FactorType
+domain/FactorROEDuPontLeverage FactorType
+domain/FactorRegistration struct{Definition FactorDefinition; VersionHash string; Registrar string; Status RegistrationStatus; RegisteredAt time.Time; RolledBackAt *time.Time; RolledBackBy string; RollbackReason string}
+domain/FactorRegistration.Validate() error
+domain/FactorReturn struct{ID int64; FactorName FactorType; TradeDate time.Time; Quintile int; AvgReturn float64; CumulativeReturn float64; TopMinusBot float64}
+domain/FactorSize FactorType
+domain/FactorSourceAI = "ai_hypothesis"
+domain/FactorSourceAdHoc = "ad_hoc"
+domain/FactorSourceLiterature = "literature"
+domain/FactorSourceSupplyChain = "supply_chain"
+domain/FactorType string
+domain/FactorValue FactorType
+domain/FactorVolatility FactorType
+domain/Fundamental = market.Fundamental
+domain/FundamentalData = market.FundamentalData
+domain/FundamentalsDetailRow struct{TsCode string; EndDate time.Time; AnnDate time.Time; FieldCode string; RawFieldName string; Value *float64; Unit string; Source string; FetchedAt time.Time; SnapshotURI string}
+domain/ICEntry struct{ID int64; FactorName FactorType; TradeDate time.Time; IC float64; PValue float64; TopIC float64}
+domain/IndexConstituent = market.IndexConstituent
+domain/IndexDaily = market.IndexDaily
+domain/IndustryVitality struct{IndustryCode string; Metric string; ObsDate time.Time; Value float64; Unit string; Source string; AsOf time.Time}
+domain/KernelCode FactorKernel
+domain/KernelFormula FactorKernel
+domain/KernelLeaf FactorKernel
+domain/KernelPending FactorKernel
+domain/MacroSeries struct{Indicator string; Freq string; ObsDate time.Time; Value float64; Unit string; Source string; AsOf time.Time}
+domain/MarketActivity struct{Symbol string; TradeDate time.Time; TurnoverRate *float64; TurnoverRateF *float64; VolumeRatio *float64; Source string; AsOf time.Time}
+domain/MarketDataProvider = market.Provider
+domain/MarketRegime struct{Trend string; Volatility string; Sentiment float64; Timestamp time.Time}
+domain/NewActionEngine() *ActionEngine
+domain/NewBonusShare(string, time.Time, time.Time, time.Time, float64) *BonusShare
+domain/NewCashDividend(string, time.Time, time.Time, time.Time, float64) *CashDividend
+domain/NewPlacement(string, time.Time, time.Time, time.Time, float64, float64) *Placement
+domain/NewRightsIssue(string, time.Time, time.Time, time.Time, float64, float64) *RightsIssue
+domain/NewSplit(string, time.Time, time.Time, time.Time, float64) *CorporateActionSplit
+domain/OHLCV = market.OHLCV
+domain/Order struct{ID string; Symbol string; Direction Direction; OrderType OrderType; Quantity float64; LimitPrice float64; ExecAlgo string; ExecSlices int; ExecProfile []float64; StopPrice float64; TrailAmount float64; TrailPercent float64; HighWaterMark float64; Timestamp time.Time; FilledQty float64; FillPrice float64; Status string; Notes string}
+domain/OrderType string
+domain/OrderTypeLimit OrderType
+domain/OrderTypeMarket OrderType
+domain/OrderTypeStop OrderType
+domain/OrderTypeTrailing OrderType
+domain/ParseFactorType(string) (FactorType, bool)
+domain/Placement struct{SymbolValue string; ExDateValue time.Time; RecordValue time.Time; PayValue time.Time; NewShares float64; PricePerShare float64}
+domain/Portfolio struct{Cash float64; Positions map[string]Position; TotalValue float64; DailyReturn float64; UpdatedAt time.Time}
+domain/PortfolioValue struct{Date time.Time; TotalValue float64; Cash float64; Positions float64}
+domain/Position struct{Symbol string; Quantity float64; AvgCost float64; CurrentPrice float64; MarketValue float64; UnrealizedPnL float64; RealizedPnL float64; Weight float64; EntryDate time.Time; BuyDate time.Time; QuantityToday float64; QuantityYesterday float64; Metadata map[string]any}
+domain/PositionSize struct{Size float64; Weight float64; StopLoss float64; TakeProfit float64; RiskScore float64}
+domain/RegistrationAction string
+domain/RegistrationActive RegistrationStatus
+domain/RegistrationAuditEntry struct{Name FactorType; VersionHash string; Action RegistrationAction; Actor string; Reason string; Detail string; At time.Time}
+domain/RegistrationRolledBack RegistrationStatus
+domain/RegistrationStatus string
+domain/RegistrationStatus.Valid() bool
+domain/RelationIndustryMember = "industry_member"
+domain/RightsIssue struct{SymbolValue string; ExDateValue time.Time; RecordValue time.Time; PayValue time.Time; RightsPer10 float64; RightsPricePerShare float64}
+domain/RiskManager interface{CalculatePosition func(context.Context, Signal, *Portfolio, *MarketRegime, float64, []OHLCV) (PositionSize, error); DetectRegime func(context.Context, []OHLCV) (*MarketRegime, error); CheckStopLoss func(context.Context, []Position, map[string]float64) ([]StopLossEvent, error)}
+domain/RiskMetrics struct{Volatility float64; Beta float64; SharpeRatio float64; SortinoRatio float64; MaxDrawdown float64; MaxDrawdownDate time.Time; VaR95 float64; CVaR95 float64}
+domain/SWIndustryNode struct{Code string; ParentCode string; Level int; Name string; IsLeaf bool; Source string; AsOf time.Time}
+domain/ScreenFilters struct{PE_min *float64; PE_max *float64; PB_min *float64; PB_max *float64; PS_min *float64; PS_max *float64; ROE_min *float64; ROA_min *float64; DebtToEquity_max *float64; GrossMargin_min *float64; NetMargin_min *float64; MarketCap_min *float64}
+domain/ScreenRequest struct{Filters ScreenFilters; Date string; Limit int}
+domain/ScreenResult struct{TsCode string; PE *float64; PB *float64; PS *float64; ROE *float64; ROA *float64; DebtToEquity *float64; GrossMargin *float64; NetMargin *float64; MarketCap *float64}
+domain/Sector struct{SectorCode string; SectorName string; Category string; TradeDate time.Time; ChangePct *float64; LeadingSymbol string; Source string}
+domain/Signal struct{Symbol string; Date time.Time; Direction Direction; Strength float64; CompositeScore float64; Factors map[string]float64; Metadata map[string]any; LimitPrice float64; OrderType OrderType; ExecAlgo string; ExecSlices int; ExecProfile []float64}
+domain/Split = market.Split
+domain/Stock = market.Stock
+domain/StockIndustry struct{Symbol string; Industry string}
+domain/StockSector struct{Symbol string; SectorCode string; SectorName string; Source string}
+domain/StopLossEvent struct{Symbol string; Type string; Price float64; Quantity float64; Reason string}
+domain/StrategyConfig struct{ID int64; StrategyID string; Name string; Description string; StrategyType string; Params string; IsActive bool; CreatedAt time.Time; UpdatedAt time.Time}
+domain/SupplyChainEdge struct{Upstream string; Downstream string; Relation string; Weight float64; Source string; AsOf time.Time}
+domain/TargetPosition struct{Symbol string; TargetQty float64; ActualQty float64; PendingQty float64; LastUpdated time.Time}
+domain/Trade struct{ID string; Symbol string; Direction Direction; Quantity float64; Price float64; Commission float64; TransferFee float64; StampTax float64; Timestamp time.Time; PendingQty float64; FilledQty float64}
+domain/WalkForwardParams struct{TrainDays int; TestDays int; StepDays int; MinTrainDays int}
+domain/WalkForwardReport struct{StrategyID string; Universe string; Windows []*WalkForwardResult; AvgTestSharpe float64; AvgTestReturn float64; AvgTestMaxDD float64; AvgDegradation float64; PassRate float64; OverallPass bool; StdTestSharpe float64; StdDegradation float64; OverfitScore float64; ProbNoOverfit float64; StabilityScore float64}
+domain/WalkForwardResult struct{WindowIndex int; TrainStart string; TrainEnd string; TestStart string; TestEnd string; TrainResult *BacktestResult; TestResult *BacktestResult; TrainSharpe float64; TestSharpe float64; TestReturn float64; TestMaxDrawdown float64; OOSvsTrain float64}
+domain/market/AsiaShanghai = time.FixedZone("Asia/Shanghai", 8*60*60)
+domain/market/DailyVisibleAt(time.Time) time.Time
+domain/market/Dividend struct{ID int64; Symbol string; AnnDate time.Time; RecDate time.Time; PayDate time.Time; DivAmt float64; StkDiv float64; StkRatio float64; CashRatio float64}
+domain/market/Freq15m Frequency
+domain/market/Freq1d Frequency
+domain/market/Freq1m Frequency
+domain/market/FreqSpecDaily FrequencySpec
+domain/market/FreqSpecEvent FrequencySpec
+domain/market/FreqSpecIntraday FrequencySpec
+domain/market/Frequency string
+domain/market/Frequency.IntradayMinutes() (int, bool)
+domain/market/Frequency.IsIntraday() bool
+domain/market/Frequency.String() string
+domain/market/Frequency.Valid() bool
+domain/market/FrequencySpec string
+domain/market/FrequencySpec.String() string
+domain/market/FrequencySpec.Valid() bool
+domain/market/Fundamental struct{Symbol string; Date time.Time; AnnDate *time.Time; PE *float64; PB *float64; PS *float64; ROE *float64; ROA *float64; DebtToEquity *float64; GrossMargin *float64; NetMargin *float64; Revenue *float64; NetProfit *float64; TotalAssets *float64; TotalLiab *float64}
+domain/market/FundamentalData struct{ID int; TsCode string; TradeDate time.Time; AnnDate time.Time; EndDate time.Time; PE *float64; PB *float64; PS *float64; ROE *float64; ROA *float64; DebtToEquity *float64; GrossMargin *float64; NetMargin *float64; Revenue *float64; NetProfit *float64; TotalAssets *float64; TotalLiab *float64; CreatedAt time.Time}
+domain/market/IndexConstituent struct{ID int64; IndexCode string; Symbol string; InDate time.Time; OutDate time.Time; Weight float64}
+domain/market/IndexDaily struct{Code string; TradeDate time.Time; Open *float64; High *float64; Low *float64; Close float64; PreClose *float64; Change *float64; PctChg *float64; Volume float64; Turnover *float64; Source string; AsOf time.Time}
+domain/market/IntradayVisibleAt(time.Time, int) time.Time
+domain/market/KnownFrequencies() []Frequency
+domain/market/KnownFrequencySpecs() []FrequencySpec
+domain/market/KnownTimeSemantics() []TimeSemantics
+domain/market/OHLCV struct{Symbol string; Date time.Time; Open float64; High float64; Low float64; Close float64; Volume float64; Turnover float64; TradeDays int; Frequency Frequency; VisibleAt time.Time; LimitUp bool; LimitDown bool}
+domain/market/OHLCV.VisibleBy(time.Time) bool
+domain/market/ParseFrequency(string) (Frequency, error)
+domain/market/ParseFrequencySpec(string) (FrequencySpec, error)
+domain/market/ParseTimeSemantics(string) (TimeSemantics, error)
+domain/market/Provider interface{GetOHLCV func(context.Context, string, time.Time, time.Time) ([]OHLCV, error); GetFundamental func(context.Context, string, time.Time) (*Fundamental, error); GetStocks func(context.Context, string) ([]Stock, error); GetLatestPrice func(context.Context, string) (float64, error); GetIndexConstituents func(context.Context, string) ([]string, error)}
+domain/market/Split struct{ID int64; Symbol string; TradeDate time.Time; AnnDate time.Time; StkDivRatio float64; CashDivRatio float64; Currency string}
+domain/market/Stock struct{Symbol string; Name string; Exchange string; Industry string; MarketCap float64; ListDate time.Time; Status string; DelistDate *time.Time}
+domain/market/TimeSemantics string
+domain/market/TimeSemantics.RequiresExpression() bool
+domain/market/TimeSemantics.String() string
+domain/market/TimeSemantics.Valid() bool
+domain/market/VisibleAfterClose TimeSemantics
+domain/market/VisibleCustom TimeSemantics
+domain/market/VisibleNextOpen TimeSemantics
+domain/market/VisibleOnAnnouncementDay TimeSemantics
+engine/(*Canonical).Float(string, float64) *Canonical
+engine/(*Canonical).Hex() (string, error)
+engine/(*Canonical).Int(string, int64) *Canonical
+engine/(*Canonical).MustHex() string
+engine/(*Canonical).Sequence(string, []string) *Canonical
+engine/(*Canonical).Str(string, string) *Canonical
+engine/(*Canonical).SymbolSet(string, []string) *Canonical
+engine/(*Canonical).Time(string, time.Time) *Canonical
+engine/(*Canonical).Value(string, any) *Canonical
+engine/(*EngineRegistry).Names() []string
+engine/(*EngineRegistry).Register(string, EngineRunner)
+engine/(*EngineRegistry).Resolve(string) (EngineRunner, error)
+engine/(*MarketRouter).Markets() []string
+engine/(*MarketRouter).ResolveKernel(string) (string, error)
+engine/Action int32
+engine/Action.Direction() (domain.Direction, error)
+engine/Action.Valid() bool
+engine/ActionClose Action
+engine/ActionHold Action
+engine/ActionLong Action
+engine/ActionShort Action
+engine/Actions() []Action
+engine/AdjustmentAnchorDigestsHash([]string) string
+engine/ArtifactHash([]byte) string
+engine/BacktestRequest struct{Strategy string; StockPool []string; IndexCode string; StartDate string; EndDate string; InitialCapital float64; RiskFreeRate float64; Kernel string; FillTiming string; EngineParams map[string]any; Signals []SignalWeight; RunID string}
+engine/BacktestRequest.EffectiveFillTiming() FillTiming
+engine/BacktestRequest.EffectiveKernel() string
+engine/BacktestRequest.ValidateRunSpec() error
+engine/BacktestResponse struct{ID string; Status string; Strategy string; StrategyGitHash string; StartDate string; EndDate string; TotalReturn float64; AnnualReturn float64; SharpeRatio float64; SortinoRatio float64; MaxDrawdown float64; MaxDrawdownDate string; WinRate float64; TotalTrades int; WinTrades int; LoseTrades int; AvgHoldingDays float64; CalmarRatio float64; StartedAt string; CompletedAt string; Error string; PortfolioValues []domain.PortfolioValue; Trades []domain.Trade; StockPool []string; InitialCapital float64; FillTiming string; InvalidReasons []string; UniverseMaxSize *int; KnownBias []string}
+engine/BacktestRunner interface{RunBacktest func(context.Context, string, []string, string, string) (*domain.BacktestResult, error)}
+engine/BarEmission struct{SymbolIdx int32; Source EmitSource}
+engine/CalendarHash([]time.Time) string
+engine/Canonical struct{buf []byte; err error}
+engine/CheckEmitSources([]BarEmission) error
+engine/CheckSignalBudget(int, int32) error
+engine/CheckStateBudget(int, int) error
+engine/CheckValidity(*domain.BacktestResult) []InvalidReason
+engine/CompareKernelCalibers(KernelCaliber, KernelCaliber) error
+engine/DatasetSnapshotInput struct{Universe []string; Window DateRange; Frequency string; DataVersion string; Calendar []time.Time; AdjustmentBasis string}
+engine/DatasetSnapshotInput.Hash() string
+engine/DateRange struct{Start time.Time; End time.Time}
+engine/DefaultFillTiming = FillTimingNextOpen
+engine/DefaultKernel = "go"
+engine/DefaultMinCommission = fees.DefaultMinCommission
+engine/DefaultNewStockDays = 60
+engine/DefaultPriceLimitNew = 0.20
+engine/DefaultPriceLimitNormal = 0.10
+engine/DefaultPriceLimitST = 0.10
+engine/DefaultPriceLimitSTBefore = 0.05
+engine/DefaultShortSellingRate = 0.106
+engine/DefaultStampTaxRate = fees.DefaultStampTaxRate
+engine/DefaultStampTaxRateBefore = fees.DefaultStampTaxRateBefore
+engine/DefaultTradingConfig() TradingConfig
+engine/DefaultTransferFeeRate = fees.DefaultTransferFeeRate
+engine/DomainAnchorDigestsHash = "tellurion.adjustment_anchor_digests.v1"
+engine/DomainCalendarHash = "tellurion.calendar_hash.v1"
+engine/DomainDatasetSnapshotHash = "tellurion.dataset_snapshot_hash.v1"
+engine/DomainParamsHash = "tellurion.params_hash.v1"
+engine/DomainRunSpecHash = "tellurion.run_spec_hash.v1"
+engine/DomainUniverseHash = "tellurion.universe_hash.v1"
+engine/EmitSource uint8
+engine/EmitSource.String() string
+engine/EmitSourceSignal EmitSource
+engine/EmitSourceTarget
+engine/EngineRegistry struct{mu sync.RWMutex; runners map[string]EngineRunner}
+engine/EngineRunner interface{RunBacktest func(context.Context, BacktestRequest) (*BacktestResponse, error)}
+engine/ErrAbiFamilyMissing = errors.New("abi: module imports neither the v1 nor the v2 host family")
+engine/ErrAbiFamilyMixed = errors.New("abi: module mixes the v1 and v2 host families")
+engine/ErrAbiVersionMismatch = errors.New("abi: declared abi_version contradicts the import section")
+engine/ErrAbiVersionUnknown = errors.New("abi: unsupported abi_version")
+engine/ErrActionIllegal = errors.New("abi: illegal signal action")
+engine/ErrCanonicalUnsupported = fmt.Errorf("provenance: value is not canonically encodable")
+engine/ErrEmitSourceUnknown = errors.New("abi: unknown emit source")
+engine/ErrEmitSourcesMixed = errors.New("abi: emit_signal and emit_target2 used for the same bar and symbol")
+engine/ErrFillTimingMismatch = errors.New("kernels filled at different fill_timing calibers (caliber mismatch, not a result mismatch)")
+engine/ErrFillTimingMissing = errors.New("fill_timing is required: known values are next_open | same_close")
+engine/ErrFillTimingUnknown = errors.New("fill_timing is not a known caliber: known values are next_open | same_close")
+engine/ErrHostRegionInvalid = errors.New("abi: host region declaration is invalid")
+engine/ErrHostRegionMissing = errors.New("abi: host region exports are missing")
+engine/ErrImportNotWhitelisted = errors.New("abi: import outside the env whitelist")
+engine/ErrImportSignatureMismatch = errors.New("abi: host import signature does not match the frozen contract")
+engine/ErrKernelNotRegistered = errors.New("kernel not registered")
+engine/ErrMarketNotRegistered = errors.New("market not registered")
+engine/ErrParamsTooLarge = errors.New("abi: strategy params exceed the frozen budget")
+engine/ErrScopeMarketV1 = errors.New("abi: scope=market requires abi v2")
+engine/ErrScopeUnknown = errors.New("abi: unknown or missing strategy scope")
+engine/ErrSignalBudgetExceeded = errors.New("abi: per-bar signal budget exceeded")
+engine/ErrStateBudgetExceeded = errors.New("abi: host-side state budget exceeded")
+engine/ErrStrategyRefMalformed = fmt.Errorf("provenance: malformed strategy_ref")
+engine/ErrStrengthOutOfRange = errors.New("abi: signal strength out of range")
+engine/ErrTargetWeightOutOfRange = errors.New("abi: target weight out of range")
+engine/ExportHostParamsPtr = "__host_params_ptr"
+engine/ExportHostScratchPtr = "__host_scratch_ptr"
+engine/ExportHostScratchSize = "__host_scratch_size"
+engine/FieldClose FieldID
+engine/FieldHigh FieldID
+engine/FieldID int32
+engine/FieldID.Valid() bool
+engine/FieldIDs() []FieldID
+engine/FieldLow FieldID
+engine/FieldOpen FieldID
+engine/FieldVolume FieldID
+engine/FillTiming string
+engine/FillTiming.KnownBiases() []string
+engine/FillTiming.String() string
+engine/FillTiming.Valid() bool
+engine/FillTimingNextOpen FillTiming
+engine/FillTimingSameClose FillTiming
+engine/HostABIContract(string) (HostFnContract, bool)
+engine/HostABIContracts() []HostFnContract
+engine/HostAbiV1 HostAbiVersion
+engine/HostAbiV2 HostAbiVersion
+engine/HostAbiVersion int32
+engine/HostAbiVersion.String() string
+engine/HostAbiVersion.Valid() bool
+engine/HostAbiVersionFromName(string) (HostAbiVersion, error)
+engine/HostF64
+engine/HostFnContract struct{Name string; Since HostAbiVersion; Params []HostValueType; Results []HostValueType; Semantics string; Traps []string}
+engine/HostFnContract.Signature() string
+engine/HostFnCount() int
+engine/HostFnEmitSignal = "emit_signal"
+engine/HostFnEmitTarget2 = "emit_target2"
+engine/HostFnGetBar = "get_bar"
+engine/HostFnGetBar2 = "get_bar2"
+engine/HostFnGetCrossSection = "get_cross_section"
+engine/HostFnGetDate2 = "get_date2"
+engine/HostFnGetSeriesLen = "get_series_len"
+engine/HostFnGetSeriesLen2 = "get_series_len2"
+engine/HostFnGetState = "get_state"
+engine/HostFnGetSymbolCount = "get_symbol_count"
+engine/HostFnLog = "log"
+engine/HostFnSetState = "set_state"
+engine/HostI32 HostValueType
+engine/HostI64
+engine/HostRegionAlignment = 8
+engine/HostRegionDeclaration struct{ParamsPtr uint32; ScratchPtr uint32; ScratchSize uint32}
+engine/HostRegionDeclaration.Validate(uint32) error
+engine/HostRegionExports() []string
+engine/HostValueType uint8
+engine/HostValueType.String() string
+engine/InvalidEmptyUniverse = "empty_universe"
+engine/InvalidExecAlgoAttachFailed = "exec_algo_attach_failed"
+engine/InvalidExecAlgoUnknownStyle = "exec_algo_unknown_style"
+engine/InvalidGarbageMetric = "garbage_metric"
+engine/InvalidReason struct{Code string; Detail string}
+engine/InvalidReasonCodes([]InvalidReason) []string
+engine/InvalidZeroStartDate = "zero_start_date"
+engine/InvalidZeroTrades = "zero_trades"
+engine/KernelCaliber struct{Kernel string; FillTiming string}
+engine/KnownBiasSameCloseFill = "same_close_fill"
+engine/KnownEngineParams(string) []string
+engine/MarketRouter struct{markets map[string]string}
+engine/MaxInstanceStateBytes = 4 << 20
+engine/MaxParamsBytes = 4096
+engine/MaxScratchPerBar = 256 << 10
+engine/MaxSignalsPerBar(int32) int32
+engine/MaxStateKeys = 4096
+engine/MaxStateValueBytes = 64 << 10
+engine/MinHostParamsPtr = MaxParamsBytes
+engine/MinHostScratchSize = MaxStateValueBytes
+engine/NewCanonical(string) *Canonical
+engine/NewEngineRegistry() *EngineRegistry
+engine/NewMarketRouter(map[string]string) (*MarketRouter, error)
+engine/NewMarketRouterFromConfig(map[string]string) (*MarketRouter, error)
+engine/ParamsHash(map[string]any) (string, error)
+engine/ParseStrategyRef(string) (StrategyRef, error)
+engine/PriceLimitConfig struct{Normal float64; ST float64; STBefore float64; New float64}
+engine/ResolveFillTiming(string) (FillTiming, error)
+engine/ResolveRunTarget(*MarketRouter, string, string) (string, error)
+engine/ResolveScope(HostAbiVersion, StrategyScope) (StrategyScope, error)
+engine/RunSpecInput struct{Start time.Time; End time.Time; InitialCapital float64; RiskFreeRate float64; StrategyArtifactHash string; StrategyVersionHash string; StrategyParamsEffective map[string]any; StockPool []string; IndexCode string; Universe []string; Frequency string; FillTiming FillTiming; Kernel string; EngineVersion string; Fees map[string]float64; Slippage float64; CostModel string; LotSize int64; TPlus string; PriceLimitRule string; RiskRulesHash string; DatasetSnapshotHash string; AdjustmentAnchorDigests []string; Seed int64}
+engine/RunSpecInput.Hash() (string, error)
+engine/RunSpecInput.MustHash() string
+engine/ScopeMarket StrategyScope
+engine/ScopeSymbol StrategyScope
+engine/SignalWeight struct{Symbol string; Weight float64; AsOf string}
+engine/StatusCompleted = "completed"
+engine/StatusFailed = "failed"
+engine/StatusInvalid = "invalid"
+engine/StrategyRef struct{ID string; Hash string}
+engine/StrategyRef.IsLatest() bool
+engine/StrategyRef.String() string
+engine/StrategyRefSeparator = "@"
+engine/StrategyScope string
+engine/StrategyScope.Valid() bool
+engine/TradingConfig struct{StampTaxRate float64; StampTaxRateBefore float64; MinCommission float64; TransferFeeRate float64; PriceLimit PriceLimitConfig; NewStockDays int}
+engine/TradingConfig.WithDefaults() TradingConfig
+engine/TradingDaysPerYear = 252
+engine/UniverseHash([]string) string
+engine/ValidateParamsWrite(int, HostRegionDeclaration) error
+engine/ValidateStrength(float64) error
+engine/ValidateTargetWeight(float64) error
+fees/(*AShareFees).ApplyDefaults()
+fees/AShareFees struct{CommissionRate float64; StampTaxRate float64; TransferFeeRate float64; MinCommission float64; SlippageRate float64}
+fees/AShareFees.Validate() error
+fees/DefaultAShareFees() AShareFees
+fees/DefaultCommissionRate = 0.0003
+fees/DefaultMinCommission = 5.0
+fees/DefaultSlippageRate = 0.0001
+fees/DefaultStampTaxRate = 0.0005
+fees/DefaultStampTaxRateBefore = 0.001
+fees/DefaultTransferFeeRate = 0.00001
+fees/FixedSlippageRate = 0.001
+fees/StampTaxCutDate = time.Date(2023, 8, 28, 0, 0, 0, 0, time.UTC)
+fees/StampTaxRateFor(time.Time, float64, float64) float64

@@ -45,5 +45,24 @@ jobs:
       - name: 版本纪律核对（CT-02 护栏：矩阵 ↔ CHANGELOG ↔ tag 不一致即红）
         run: go run ./tools/check_release_matrix
 
+      - name: 契约形状核对（QT-09 ⑤：*Config/*Options/*Impl 命名与 DB/驱动 import 即红）
+        run: go run ./tools/check_contract_shape
+
+      - name: 导出面签名冻结（QT-09：形状指纹与 docs/api-surface.txt 不一致即红）
+        run: go run ./tools/check_surface_freeze
+
+      # PR 正文只在 pull_request 事件里有意义。其他事件（push / workflow_dispatch）由 if
+      # 显式跳过并打印原因；真正的核对步骤不会以「跳过」冒充「通过」。
+      - name: PR 模板核对不适用（显式跳过）
+        if: github.event_name != 'pull_request'
+        run: echo "跳过 tools/check_pr_body：当前事件是 ${GITHUB_EVENT_NAME}，该护栏只在 pull_request 事件核对 PR 正文。"
+
+      - name: PR 模板必填项核对（仅 pull_request 事件）
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s' "$PR_BODY" | go run ./tools/check_pr_body
+
       - name: Test
         run: go test ./... -count=1

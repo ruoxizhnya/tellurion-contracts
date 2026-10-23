@@ -16,9 +16,13 @@ go vet ./...
 go test ./...
 go run ./tools/check_api_surface      # 导出面与 docs/API.md 登记区一一对应（CI 同款，CT-01 护栏）
 go run ./tools/check_release_matrix   # 版本规则表 + 兼容矩阵 ↔ CHANGELOG ↔ tag（CI 同款，CT-02 护栏）
+go run ./tools/check_contract_shape   # 无 *Config/*Options/*Impl 形状名、无 DB/驱动 import（CI 同款，QT-09 ⑤）
+go run ./tools/check_surface_freeze   # 导出面形状 ↔ docs/api-surface.txt 逐行一致（CI 同款，QT-09 冻结）
 ```
 
-- 前三条是 R1/R2 的判据：**单独 checkout 就能绿**；后两条是本仓的两条随仓护栏（CI 同款步骤）。
+- 前三条是 R1/R2 的判据：**单独 checkout 就能绿**；后四条是本仓的随仓护栏（CI 同款步骤）。
+- 导出面签名改了：先登记 `docs/API.md` §4，再 `go run ./tools/check_surface_freeze -update`；只改基线不登记，`check_api_surface` 会挡住新增符号。
+- PR 正文模板（`.github/PULL_REQUEST_TEMPLATE.md`）的四段必填项由 `tools/check_pr_body` 在 `pull_request` 事件里核对，其他事件显式跳过。
 - 若某一步需要别的仓的源码目录才过，那是**边界画错了**——停下来修边界，**不要**加 `replace ../xxx` 绕过。
 - 本机同时改多个仓时可用 `go.work` 联调，但**它不入库**（`.gitignore` 已挡）。
 - **私有化前提**：本仓一旦被设为 private，构建与全部 CI 环境必须配 `GOPRIVATE=github.com/ruoxizhnya/*` **加** git 凭证（PAT / SSH），否则 `go get` 走公共 proxy 必然拉不到（风险注见 `tellurion:docs/design/qt-decoupling/repo-inventory.md` §1.1/§5；现状 12 仓全 public）。细则与发版流程在 `README.md`「拉取前提」「发版流程」。

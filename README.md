@@ -14,9 +14,15 @@
 | `engine/` | **已落地的库包**：四契约（`BacktestRequest` / `BacktestResponse` / `SignalWeight` / `EngineRunner`）+ 内核路由 + 成交口径 + canonical/provenance hash + 三类哨兵 + abi 常量，共 194 个导出符号。**目录名 `engine/`、包名仍是 `contracts`**（调用点前缀不变） |
 | `docs/` | 本仓文档：台账 / 边界 / 决策 / 归档 —— 从这里进：`docs/README.md` |
 | `docs/API.md` | 导出面清单（符号 × 稳定性 × 错误语义）；登记区由 CI 核对 |
+| `docs/api-surface.txt` | 导出面**形状指纹**冻结基线（一行一个导出符号的签名/字段/底层类型），由 `tools/check_surface_freeze` 比对；改签名 = 改这份基线，必须进评审 |
 | `CHANGELOG.md` | 版本账本：每个发版一节，breaking 逐条写明「旧 → 新」 |
 | `tools/check_api_surface/` | 导出面 AST 扫描护栏（`go run ./tools/check_api_surface`） |
 | `tools/check_release_matrix/` | 版本纪律护栏：矩阵 ↔ CHANGELOG ↔ tag 三件套不一致即红（`go run ./tools/check_release_matrix`） |
+| `tools/check_contract_shape/` | 契约形状护栏：`domain/` `engine/` `fees/` 出现 `*Config`/`*Options`/`*Impl` 形状名或任何 DB/驱动 import 即红（`go run ./tools/check_contract_shape`；例外只认 [`adr/0002`](docs/adr/0002-config-族的边界处置.md) 登记的那几个） |
+| `tools/check_surface_freeze/` | 导出面签名冻结护栏：形状指纹与 `docs/api-surface.txt` 任何一行增删改即红（`go run ./tools/check_surface_freeze`；`-update` 重生成基线） |
+| `tools/check_pr_body/` | PR 模板必填段核对（仅 `pull_request` 事件，CI 用 `if:` 控制） |
+| `examples/` | 跨仓 port 的**最小可编译用法**（`market.Provider` / `EngineRunner`），只演示调用形状、不进导出面；清单见 `examples/README.md` |
+| `.github/PULL_REQUEST_TEMPLATE.md` | 契约仓 PR 模板：使用方 / 变更类型与 bump / 登记区与冻结基线 / Config·DB 确认，四段必填 |
 | `AGENTS.md` | 本仓入口（构建、边界、禁止、依赖版本、拉取前提） |
 | `doc.go` | 根包（仅 `doc.go`，无导出符号；代码一律住子包） |
 
@@ -28,9 +34,12 @@ go vet ./...
 go test ./...
 go run ./tools/check_api_surface      # 导出面 ↔ docs/API.md 登记区一一对应
 go run ./tools/check_release_matrix   # 版本规则表 + 兼容矩阵 ↔ CHANGELOG ↔ tag
+go run ./tools/check_contract_shape   # 无 *Config/*Options/*Impl 形状名、无 DB/驱动 import
+go run ./tools/check_surface_freeze   # 导出面形状 ↔ docs/api-surface.txt 逐行一致
+go run ./tools/check_pr_body          # 仅 PR 事件用（stdin 传 PR 正文；本地无正文应报错，不是通过）
 ```
 
-本仓**单独 checkout 就能跑通**上面五条。需要别的仓源码才过 → 边界错了，不是加 `replace` 能解决的问题。
+本仓**单独 checkout 就能跑通**上面前七条。需要别的仓源码才过 → 边界错了，不是加 `replace` 能解决的问题。
 
 ## 边界
 
@@ -82,8 +91,8 @@ go run ./tools/check_release_matrix   # 版本规则表 + 兼容矩阵 ↔ CHANG
 ```bash
 # 1. 先在 CHANGELOG.md 把本次改动记进对应版本节（标题格式 ## [vX.Y.Z] - YYYY-MM-DD）
 # 2. 再更新 README 兼容矩阵：新的 vX.Y 序列加一行，同序列的补丁版改那一行
-# 3. 导出面有增删改 → 同步 docs/API.md §4 登记区
-go run ./tools/check_api_surface && go run ./tools/check_release_matrix   # 两条都绿才继续
+# 3. 导出面有增删改 → 同步 docs/API.md §4 登记区，再 go run ./tools/check_surface_freeze -update 重生成 docs/api-surface.txt
+go run ./tools/check_api_surface && go run ./tools/check_surface_freeze && go run ./tools/check_release_matrix   # 三条都绿才继续
 git tag -a v0.1.0 -m "v0.1.0: feat <一句话>"
 git push origin main && git push origin v0.1.0
 ```
