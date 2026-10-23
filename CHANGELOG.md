@@ -9,6 +9,17 @@
 
 （暂无）
 
+## [v0.3.0] - 2026-10-23
+
+MINOR 发版：QT-10 的契约腿（策略执行错误分级，**只增不改**），导出面 435 → 439（+4：3 个哨兵 `var` + 1 个 **frozen** `const`），冻结基线同步重生成（418 → 422 行，`git diff --numstat` 实测 **+4 / −0**）。无破坏性变更。
+
+### 新增（MINOR 级：加导出符号）
+
+- **QT-10 ③-① 契约腿（2026-10-23）**：新增 `engine/execution_errors.go` 的三类执行错误哨兵 **`ErrDataGap` / `ErrStrategyFault` / `ErrContractBreach`**（3 个 `var`，均 stable，`errors.Is` 可判 + `%w` 保链），与 `engine/validity.go` 的稳定 Code **`CodeDataGapSkipped`**（`const`，**frozen**，`data_gap_skipped`）。语义：数据缺口 → 跳过当天 + 写 `invalid_reasons`、run 继续、终态 `invalid`；策略故障（wasm trap / 非法信号 / 预算超限 / artifact 校验失败）与契约违规（前视 / 未知参数 / abi 不符）→ **终止 run**、`status=failed`。落点在本仓的理由是生产者（provider / wasm 宿主）与消费者（引擎 / job / AI 管线）分属不同模块，哨兵必须在两侧之间可 import 且不成环（`errors/` 不独立成包按 [`adr/0003`](docs/adr/0003-哨兵与-abi-不独立成包.md)）。
+  - ⚠️ **`status` 仍是冻结三值**（`completed` / `invalid` / `failed`）：本单只落**映射规则**与一个新 Code，**没有也不引入第四值**（QT-10 ④、QT-63 ④ 两处明文）。钉子：`TestResultSpecStatusSetStaysThreeValued`；另有一条 `TestCheckValidityNeverEmitsDataGapSkipped` 证明新 Code 走既有通道、不由纯函数伪造产出。
+  - **版本取 MINOR（`v0.3.0`）而非派工原文的 `v0.2.1`，理由登记在此**：本仓 README 版本规则表明写「新增导出符号 = MINOR」，同型先例是上面的 `v0.2.0`（+6 符号记 MINOR）；PATCH 那一行写的是「文档 / 注释 / 无行为修正」，套不上。派工另要求「兼容矩阵加 `v0.2.1` 行」——**实测不可执行**：矩阵按版本**序列** `vX.Y` 建行（QT-19 ③-③），注入那一行后 `go run ./tools/check_release_matrix` 当场红「矩阵里序列 v0.2 有多行」（EXIT=1，已逐字节还原）。两条合起来按规则表落到 `v0.3.0` + 新增 `v0.3` 序列行。护栏不核 bump 档位，所以这一条只能靠账来拦。
+  - **未随本单落（如实）**：① **归类腿**（QT-10 ③-②：底层错误往哪一类包）与**状态映射腿**（③-③：`RunBacktest` 在哪条分支 `EndRun`）在 **core**，今天 core 的 provider 仍可能返回未分类 error——`docs/API.md` §3 与 `docs/api-schema.md` §1.3 的注已按此改成「对生产者是验收标准、对消费方才是现状」；② `session_terminated` 今天定义在 core `pkg/sandbox/wasm/replay.go:42`（QT-15 落沙箱层时自带），**未迁本仓**，收编与否归 core 侧裁决（登记见 `docs/API.md` §5.3）。
+
 ## [v0.2.0] - 2026-10-23
 
 MINOR 发版：两个只增不改的契约腿随同一 tag 分发，导出面 429 → 435（+6：1 个 frozen 常量 + 2 类型 + 1 方法 + 2 哨兵错误），冻结基线同步重生成（412 → 418 行）。无破坏性变更。

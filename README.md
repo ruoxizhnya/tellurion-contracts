@@ -1,6 +1,6 @@
 # tellurion-contracts
 
-> module: `github.com/ruoxizhnya/tellurion-contracts` ｜ 状态：**S1 落码已完成（QT-05 ③-①，2026-10-22：`fees/` + `domain/market/` + `domain/` + `engine/` 四个包，429 个导出符号）／已发版 `v0.1.0`（QT-07 ③-S2-a）与 `v0.1.1`（2026-10-23，把 `conformance/` 语料打进 tag）**
+> module: `github.com/ruoxizhnya/tellurion-contracts` ｜ 状态：**S1 落码已完成（QT-05 ③-①，2026-10-22：`fees/` + `domain/market/` + `domain/` + `engine/` 四个包，当时 429 个导出符号）／已发版至 `v0.3.0`（2026-10-23 一天四版：`v0.1.0` S2-b 首版 → `v0.1.1` 把 `conformance/` 语料打进 tag → `v0.2.0` 429→435 → `v0.3.0` 435→439，QT-10 三类执行错误哨兵）**
 
 跨仓唯一缝隙：**port 接口 · DTO/值对象（含 domain）· 四个引擎契约 · 哨兵错误 · abi 常量**。所有跨边界的东西只能住这里。
 
@@ -81,12 +81,13 @@ go run ./tools/check_pr_body          # 仅 PR 事件用（stdin 传 PR 正文�
 <!-- matrix:begin -->
 | 契约版本 | 状态 | 支持的 core（`tellurion`） | 支持的 agent（`tellurion-agent`） |
 |---|---|---|---|
+| `v0.3` | 已发版（2026-10-23） | 待切 `v0.3.0`（QT-10 ③-②/③-③ 的归类与映射腿在 core，G2 第 2 步） | 待切 `v0.3.0`（G9 第 4 步；`replace tellurion` 在册期间与 core 同批升） |
 | `v0.2` | 已发版（2026-10-23） | `v0.2.0`（QT-62 wasm 腿随同批切 pin；QT-16 契约腿同批收编） | `v0.2.0`（`replace tellurion` 在册期间与 core 同批升） |
 | `v0.1` | 已发版（2026-10-23） | `v0.1.1`（QT-07 ⑤ 切 pin；`v0.1.0` 为 S2-b 首版） | `v0.1.1`（同批切；`replace tellurion` 在册期间与 core 同批升） |
 | `main`（未发版） | 开发基线，**不做兼容承诺** | 已切 `v0.2.0` | 已切 `v0.2.0` |
 <!-- matrix:end -->
 
-首个版本 `v0.1.0` 已于 **2026-10-23** 打在 `main` 上并 push（QT-07 ③-S2-a）；`v0.1.1` 同日发出，唯一目的（PATCH 级，导出面零变化）是把 `conformance/` 语料**打进 tag** —— `v0.1.0` 打在语料落地之前，下游按它取语料必然落空。0.x 阶段按上面的规则允许 breaking，但每一处都在 `CHANGELOG.md` 留了账。使用方一律 `require v0.1.1`，**不写 `replace`**（ADR-D31 / D29 §9 C1）。
+首个版本 `v0.1.0` 已于 **2026-10-23** 打在 `main` 上并 push（QT-07 ③-S2-a）；`v0.1.1` 同日发出，唯一目的（PATCH 级，导出面零变化）是把 `conformance/` 语料**打进 tag** —— `v0.1.0` 打在语料落地之前，下游按它取语料必然落空。0.x 阶段按上面的规则允许 breaking，但每一处都在 `CHANGELOG.md` 留了账。使用方一律 `require` 兼容矩阵里最新那一行（今天 `v0.3.0`），**不写 `replace`**（ADR-D31 / D29 §9 C1）。
 
 ## 发版流程
 
