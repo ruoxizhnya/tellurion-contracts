@@ -52,9 +52,10 @@ verified-by: QT-05 ③-① 落码后订正（§1.1 port 状态与承载路径、
 | `ErrStrategyFault` | 策略故障（trap / 非法信号 / 预算超限） | **终止 run**，`status=failed` |
 | `ErrContractBreach` | 契约违规（前视 / 未知参数 / abi 不符） | **终止 run**，`status=failed` |
 
-> ⬜ **这三条哨兵今天源码里不存在**：core 全仓 `*.go` 里三个名字合计 **1 处命中**（`pkg/backtest/contracts/abi.go:646`
-> 的一条注释，且不含 `ErrDataGap`），**定义 0 处**。由 `tellurion:docs/TASKS.md` QT-10 ③-① 在契约层落。
-> 别当已存在的符号去 import；符号级现状与迁入落点在 `API.md` §5.4。
+> ✅ **三条哨兵已落本仓**（2026-10-23，QT-10 ③-①）：`engine/execution_errors.go`，符号级现状见 `API.md` §5.4。
+> ⚠️ **但归类（③-②）与状态映射（③-③）在 core**：provider 侧把底层错误包成哪一类、`RunBacktest` 在哪条分支终止 run，
+> 都是 core 的改动，今天还没做——所以 §2 前两条对生产者是**验收标准**，对消费方（`errors.Is` + 兜底类）才是现状。
+> 与本节含义配对的新稳定 Code：`CodeDataGapSkipped`（`data_gap_skipped`）走既有 `invalid_reasons` 通道，**不是第四种状态**。
 
 ### 1.4 abi 常量
 

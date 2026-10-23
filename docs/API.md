@@ -1,7 +1,7 @@
 ---
 status: active
-last-verified: 2026-10-22
-verified-by: QT-05 ③-① 本仓侧落码完成（`fees` 13 + `domain/market` 46 + `domain` 176 + `engine` 194 = 429 个符号已登记，护栏 429/429 绿）；§8 待裁 #1（errors//abi/，ADR-0003）、#2（`*Config` 族，ADR-0002）、#3（fees 整包）均已裁决；#4（dataprotocol 时机）已登记为 X1a 待办（2026-10-22 推送回写：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）
+last-verified: 2026-10-23
+verified-by: QT-10 ③-① 契约腿（2026-10-23：三类执行错误哨兵 `ErrDataGap`/`ErrStrategyFault`/`ErrContractBreach` 落 `engine/execution_errors.go` + `CodeDataGapSkipped` 落 `engine/validity.go`，导出面 435 → 439；§3 的「三类还不存在」注、§5.3 Code 行、§5.4 三分法三行随之从 ⬜ 改 ✅，归类腿（③-②）仍在 core）；QT-05 ③-① 本仓侧落码完成（`fees` 13 + `domain/market` 46 + `domain` 176 + `engine` 194 = 429 个符号当时已登记，护栏 429/429 绿）；§8 待裁 #1（errors//abi/，ADR-0003）、#2（`*Config` 族，ADR-0002）、#3（fees 整包）均已裁决；#4（dataprotocol 时机）已登记为 X1a 待办（2026-10-22 推送回写：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）
 ---
 
 # API — 导出面规格（本仓有哪些符号、各自稳不稳定、错了怎么判）
@@ -89,8 +89,10 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 5. **`status` 三值不是错误**：`completed` / `invalid` / `failed` 是**结果属性**，走响应字段不走 error。调用方唯一判据是 `status`——**禁止**用 `id` 是否存在、HTTP 200 之类间接信号推断成功（这条在 core 的 SPEC 冻结节里，本节只指路）。
 6. **`invalid_reasons` 的取值是稳定 Code**（见 §5.3）：`Code` 给机器判读、`Detail` 给人读且可改。按 `Detail` 判断 = 违反第 1 条。
 
-> 第 3、4 条说的三类（`ErrDataGap` / `ErrStrategyFault` / `ErrContractBreach`）**今天还不存在**（§5.4 标 ⬜，QT-10 ③-① 才落）。
-> 落码前 provider 侧返回的是未分类 error——所以这两条现在是**验收标准**，不是现状描述。
+> 第 3、4 条说的三类（`ErrDataGap` / `ErrStrategyFault` / `ErrContractBreach`）**已于 2026-10-23 落在
+> `engine/execution_errors.go`**（QT-10 ③-①，§5.4 已改标 ✅）。
+> ⚠️ 但**分类包装（QT-10 ③-②）在 core**：provider 侧把底层错误归入哪一类，是本仓之外的改动。
+> 在它落地前，跨边界透出的仍是未分类 error——第 3、4 条对**生产者**依然是验收标准，只有对**消费方**的判据（`errors.Is` + 兜底类）今天可用。
 
 ---
 
@@ -464,6 +466,7 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `InvalidGarbageMetric` | const | **frozen** | `garbage_metric`（NaN / Inf 等） |
 | `InvalidExecAlgoUnknownStyle` | const | **frozen** | `exec_algo_unknown_style` |
 | `InvalidExecAlgoAttachFailed` | const | **frozen** | `exec_algo_attach_failed` |
+| `CodeDataGapSkipped` | const | **frozen** | QT-10 ③-④：`data_gap_skipped`——`ErrDataGap` 跳天的落账 Code，走**既有** `invalid_reasons` 通道。⚠️ 它是 Code 不是状态：`status` 三值仍是 frozen（§5.3） |
 | `Canonical` | type | stable | 确定性编码器（链式 API，错误在内部累积，`Hex` 时一次性返回）。输出是 hash 的字节基础：**编码顺序写死，改顺序 = 所有历史 hash 失效** |
 | `NewCanonical` | func | stable | 开启一段编码，先写域标签（`Domain*Hash`） |
 | `Canonical.Str` | method | stable | 字符串字段 |
@@ -603,6 +606,9 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `ErrEmitSourceUnknown` | var | stable | 见 §5.4 |
 | `ErrSignalBudgetExceeded` | var | stable | 见 §5.4 |
 | `ErrStateBudgetExceeded` | var | stable | 见 §5.4 |
+| `ErrDataGap` | var | stable | QT-10 ③-① 三分法之首：数据缺口 → **跳过当天** + `invalid_reasons` 写 `CodeDataGapSkipped`，run 继续、终态 `invalid`。三类里唯一不终止 run 的（§5.4） |
+| `ErrStrategyFault` | var | stable | QT-10：策略故障（wasm trap / 非法信号 / 预算超限 / artifact 校验失败）→ **终止 run** `status=failed` + `error`；禁止降级成「跳过这天继续」（§5.4） |
+| `ErrContractBreach` | var | stable | QT-10：契约违规（前视 / 未知参数 / abi 不符）→ **终止 run** `status=failed`；同时是「无法归类」的兜底类（§3.4） |
 
 <!-- surface:end -->
 
@@ -649,7 +655,8 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `StatusInvalid` | `invalid` | `invalid_reasons` **必填**、`error` 必空；指标照常给出，但**不得**当成功观测 | 同上 |
 | `StatusFailed` | `failed` | `error` **必填**、`invalid_reasons` 空 | 同上 |
 | `InvalidEmptyUniverse` 等 `Invalid*` 常量 | `empty_universe` / `zero_trades` / `zero_start_date` / `garbage_metric` / `exec_algo_unknown_style` / `exec_algo_attach_failed` | 稳定 Code；`InvalidReason.Detail` 才可改。新增 Code = 契约变更 | SPEC §「status 三值语义」的 Code 列表 |
-| （QT-10 待落）| `data_gap_skipped` / `session_terminated` | ⬜ **今天源码里没有**。QT-10 ③-④ 把它俩映射进上面三值（不引入第四值），agent 侧消费口径见 `tellurion-agent:docs/TASKS.md` REV-01-A | `tellurion:docs/TASKS.md` QT-10 ③-④ |
+| `CodeDataGapSkipped` | `data_gap_skipped` | ✅ **已落（2026-10-23，QT-10 ③-①）**。生产者：core 在 `ErrDataGap` 跳天分支上挂进 `invalid_reasons`；映射是 `status=invalid`，**不是第四值** | `tellurion:docs/TASKS.md` QT-10 ③-④ |
+| （QT-15 的 Code，**未迁本仓**）| `session_terminated` | ⬜ 本仓源码里没有。今天它定义在 **core** `pkg/sandbox/wasm/replay.go:42`（`CodeSessionTerminated`，QT-15 落沙箱层时自带），映射同为 `status=invalid`。要不要收进本仓与 `CodeDataGapSkipped` 同处，属 core 侧收编时的裁决，**不在 QT-10 ③-① 范围内** | `tellurion:docs/TASKS.md` QT-15 ⑤、`tellurion-agent:docs/TASKS.md` REV-01-A |
 
 > **禁止第四值**已两次明文（QT-10 ③-④、QT-63 ④）。`Failures[]` 只作诊断明细，**不是状态来源**——status 的唯一透传点是 `Engine.ResponseFromState`。
 
@@ -657,9 +664,10 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 
 | 族 | 符号 | 稳定性 | 消费方行为 |
 |---|---|---|---|
-| 三分法（**QT-10 待落，源码里今天没有**） | `ErrDataGap` | ⬜ 目标 | 跳过当天 + 写 `invalid_reasons`（`data_gap_skipped`），run 继续 |
-| 三分法 | `ErrStrategyFault` | ⬜ 目标 | **终止 run** → `status=failed` + `error`；不得当可重试的成功 |
-| 三分法 | `ErrContractBreach` | ⬜ 目标 | **终止 run** → `status=failed`；同时是「无法归类」的兜底类（§3.4） |
+| 三分法（**QT-10 ③-①，✅ 2026-10-23 已落在 `engine/execution_errors.go`**） | `ErrDataGap` | stable | 跳过当天 + 写 `invalid_reasons`（`CodeDataGapSkipped`），run 继续、终态 `invalid`。三类里唯一不终止 run 的 |
+| 三分法 | `ErrStrategyFault` | stable | **终止 run** → `status=failed` + `error`；不得当可重试的成功 |
+| 三分法 | `ErrContractBreach` | stable | **终止 run** → `status=failed`；同时是「无法归类」的兜底类（§3.4） |
+| ↑ 上面两行的**归类**（`ErrDataGap` 与两类的分界、provider 侧往哪一类包）在 core 执行（QT-10 ③-②/③-③）。本仓只保证：三类互斥、`errors.Is` 可判、`%w` 保链——钉子是 `execution_errors_test.go` 的六条 | — | — | 归类今天还没人做：core 的 provider 仍可能返回未分类 error（§3 的注） |
 | 内核路由 | `ErrKernelNotRegistered`、`ErrMarketNotRegistered` | stable（✅ 已在 `engine/`） | 请求期 400；异步 job 终态 `failed`。**零静默回退** |
 | 成交口径 | `ErrFillTimingMissing`、`ErrFillTimingUnknown`、`ErrFillTimingMismatch` | stable | 引擎永远不猜口径；口径不符是错误不是结果差异 |
 | abi / artifact 校验 | `ErrAbiVersionUnknown`、`ErrAbiVersionMismatch`、`ErrAbiFamilyMissing`、`ErrAbiFamilyMixed`、`ErrImportNotWhitelisted`、`ErrImportSignatureMismatch`、`ErrHostRegionMissing`、`ErrHostRegionInvalid`、`ErrParamsTooLarge`、`ErrScopeUnknown`、`ErrScopeMarketV1` | stable（✅ 已在 `engine/`；`errors/` 不独立成包见 §8 #1） | 归 `ErrContractBreach` 语义：装载期拦下，不进 run |

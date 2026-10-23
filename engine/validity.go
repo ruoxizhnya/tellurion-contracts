@@ -153,3 +153,17 @@ const (
 	// Σ子单量不等 / Schedule 非法 / 其他），信号被拒、交易消失。
 	InvalidExecAlgoAttachFailed = "exec_algo_attach_failed"
 )
+
+// QT-10 ③-④：数据缺口跳天的稳定 Code（与上面两组 Code 同一通道，不是新的状态）。
+//
+// 与 `Invalid*` 那六条的分工：那六条说的是「跑完了，但结果不可信」，本条说的是
+// 「有交易日因为 `ErrDataGap` 被跳过了」——来由不同，落账通道相同（都进
+// `BacktestResponse.InvalidReasons`），所以消费方不需要新增读法。
+//
+// ⚠️ **它不是第四种状态**。`ResultSpec` 的三值 `completed / invalid / failed`
+// 是冻结面（`StatusCompleted` 等），本条只规定映射：
+// `ErrDataGap` 跳天 → `status=invalid` + 本 Code；`ErrStrategyFault` /
+// `ErrContractBreach` → `status=failed` + `error`（见 execution_errors.go）。
+// 加 Code 是契约变更（走版本），加状态是破坏冻结面（走 core「维护本文件」节的
+// 冻结 schema 变更评审）——两者不能混着做。
+const CodeDataGapSkipped = "data_gap_skipped"

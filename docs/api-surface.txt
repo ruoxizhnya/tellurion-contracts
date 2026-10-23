@@ -242,6 +242,7 @@ engine/CheckEmitSources([]BarEmission) error
 engine/CheckSignalBudget(int, int32) error
 engine/CheckStateBudget(int, int) error
 engine/CheckValidity(*domain.BacktestResult) []InvalidReason
+engine/CodeDataGapSkipped = "data_gap_skipped"
 engine/CompareKernelCalibers(KernelCaliber, KernelCaliber) error
 engine/DatasetSnapshotInput struct{Universe []string; Window DateRange; Frequency string; DataVersion string; Calendar []time.Time; AdjustmentBasis string}
 engine/DatasetSnapshotInput.Hash() string
@@ -278,6 +279,8 @@ engine/ErrAbiVersionMismatch = errors.New("abi: declared abi_version contradicts
 engine/ErrAbiVersionUnknown = errors.New("abi: unsupported abi_version")
 engine/ErrActionIllegal = errors.New("abi: illegal signal action")
 engine/ErrCanonicalUnsupported = fmt.Errorf("provenance: value is not canonically encodable")
+engine/ErrContractBreach = errors.New("contract breach")
+engine/ErrDataGap = errors.New("data gap: required input is unavailable")
 engine/ErrEmitSourceUnknown = errors.New("abi: unknown emit source")
 engine/ErrEmitSourcesMixed = errors.New("abi: emit_signal and emit_target2 used for the same bar and symbol")
 engine/ErrFillTimingMismatch = errors.New("kernels filled at different fill_timing calibers (caliber mismatch, not a result mismatch)")
@@ -296,6 +299,7 @@ engine/ErrScopeMarketV1 = errors.New("abi: scope=market requires abi v2")
 engine/ErrScopeUnknown = errors.New("abi: unknown or missing strategy scope")
 engine/ErrSignalBudgetExceeded = errors.New("abi: per-bar signal budget exceeded")
 engine/ErrStateBudgetExceeded = errors.New("abi: host-side state budget exceeded")
+engine/ErrStrategyFault = errors.New("strategy fault")
 engine/ErrStrategyRefMalformed = fmt.Errorf("provenance: malformed strategy_ref")
 engine/ErrStrengthOutOfRange = errors.New("abi: signal strength out of range")
 engine/ErrTargetWeightOutOfRange = errors.New("abi: target weight out of range")
