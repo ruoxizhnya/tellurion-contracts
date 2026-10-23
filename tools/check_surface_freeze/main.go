@@ -31,6 +31,7 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -47,7 +48,7 @@ type options struct {
 	root     string
 	baseline string
 	update   bool
-	out      *os.File
+	out      io.Writer
 }
 
 type packageDir struct {

@@ -47,6 +47,7 @@ verified-by: CT-02 结案（版本纪律三件套进导航与变更触发表）
 | 建表 / 加列 / 加索引 / 改主键 | `db-schema.md`（+ 结构级变更立 ADR） |
 | 新增 / 修改 / 废弃接口 | `api-schema.md`（错误码与幂等两节要一起看） |
 | 新增 / 改名 / 删除**导出符号** | `API.md` §4 登记区（`go run ./tools/check_api_surface` 当场红，不是提醒） |
+| 增删改 `conformance/cases.json` 的用例或期望值 | 三仓同测：本仓 `go test ./conformance`、core `pkg/conformance`、agent `internal/conformance`（core 侧编排 `make contracts-conformance`）。期望值必须来自契约仓实现，不许按某一侧实现反推 |
 | 改导出符号的**签名 / 字段 / 底层类型** | `docs/api-surface.txt` 冻结基线（`go run ./tools/check_surface_freeze -update` 重生成；不 update 就红）。与上一行是两道门：新增符号要同时过登记表与基线 |
 | **发版**（打 tag） | `README.md` 兼容矩阵那一行 + `CHANGELOG.md` 那一节（`go run ./tools/check_release_matrix` 当场红；口径源头在 `tellurion:docs/TASKS.md` QT-19 ③） |
 | 新增数据源、改聚合口径、改顺序 | `dataflow.md` |

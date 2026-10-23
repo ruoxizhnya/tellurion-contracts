@@ -18,9 +18,11 @@ go run ./tools/check_api_surface      # 导出面与 docs/API.md 登记区一一
 go run ./tools/check_release_matrix   # 版本规则表 + 兼容矩阵 ↔ CHANGELOG ↔ tag（CI 同款，CT-02 护栏）
 go run ./tools/check_contract_shape   # 无 *Config/*Options/*Impl 形状名、无 DB/驱动 import（CI 同款，QT-09 ⑤）
 go run ./tools/check_surface_freeze   # 导出面形状 ↔ docs/api-surface.txt 逐行一致（CI 同款，QT-09 冻结）
+go test ./conformance                 # 跨仓契约语料的自检腿（QT-09 ③；core/agent 侧读同一份 cases.json）
 ```
 
-- 前三条是 R1/R2 的判据：**单独 checkout 就能绿**；后四条是本仓的随仓护栏（CI 同款步骤）。
+- 前三条是 R1/R2 的判据：**单独 checkout 就能绿**；后五条是本仓的随仓护栏（CI 同款步骤）。
+- `conformance/cases.json` 是跨仓契约一致性的**唯一真相**：改用例或期望值要三仓同测，且期望值只能来自本仓实现（不许按某一侧反推）。本包刻意零导出符号，别往里加导出类型/函数。
 - 导出面签名改了：先登记 `docs/API.md` §4，再 `go run ./tools/check_surface_freeze -update`；只改基线不登记，`check_api_surface` 会挡住新增符号。
 - PR 正文模板（`.github/PULL_REQUEST_TEMPLATE.md`）的四段必填项由 `tools/check_pr_body` 在 `pull_request` 事件里核对，其他事件显式跳过。
 - 若某一步需要别的仓的源码目录才过，那是**边界画错了**——停下来修边界，**不要**加 `replace ../xxx` 绕过。

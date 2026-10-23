@@ -15,6 +15,8 @@
   - ④ `.github/PULL_REQUEST_TEMPLATE.md`（四个必填段落）+ `tools/check_pr_body`（只在 `pull_request` 事件跑，其他事件由 CI `if:` 显式跳过）。
   - ② `examples/marketprovider` / `examples/enginerunner`：两个跨仓 port 的最小可编译用法（`package main`，不计入导出面），清单见 `examples/README.md`。
   - 以上全部接进 `.github/workflows/ci.yml`；README 快速开始、AGENTS、docs/README 的变更触发表同步。
+- **QT-09 ③（2026-10-23，本仓侧）**：新增 `conformance/` —— 跨仓契约一致性语料 `cases.json`（33 条 / 9 kind）+ 契约侧自检腿。同一组用例分别喂给契约仓、core（`tellurion:pkg/conformance`）与 agent（`tellurion-agent:internal/conformance`），任一侧默认值或语义漂移即红（历史漂移点：agent 曾把滑点写成 0.001、佣金写成 0.00025）。语料是唯一真相，三侧各自读同一份 JSON（不共享加载器，解析漂移也在比对范围内）。本包**零导出符号**，导出面仍 429/429、冻结基线仍 412 行。
+- **工具单测（2026-10-23）**：`tools/check_contract_shape` / `check_surface_freeze` / `check_pr_body` 各补一组表驱动单测（33 个用例），逐条红腿独立断言 + 破坏自证；三个工具的 `options.out` 由 `*os.File` 改为 `io.Writer`（零行为变化）以便注入 `bytes.Buffer`。
 
 ## [v0.1.0] - 2026-10-23
 

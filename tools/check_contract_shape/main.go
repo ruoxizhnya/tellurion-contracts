@@ -23,6 +23,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -75,7 +76,7 @@ var dbImportPrefixes = []string{
 
 type options struct {
 	root string
-	out  *os.File
+	out  io.Writer
 }
 
 type sourceFile struct {

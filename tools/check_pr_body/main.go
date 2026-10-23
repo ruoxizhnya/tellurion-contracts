@@ -46,7 +46,7 @@ var (
 
 type options struct {
 	bodyFile string
-	out      *os.File
+	out      io.Writer
 }
 
 func main() {

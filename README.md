@@ -22,6 +22,7 @@
 | `tools/check_surface_freeze/` | 导出面签名冻结护栏：形状指纹与 `docs/api-surface.txt` 任何一行增删改即红（`go run ./tools/check_surface_freeze`；`-update` 重生成基线） |
 | `tools/check_pr_body/` | PR 模板必填段核对（仅 `pull_request` 事件，CI 用 `if:` 控制） |
 | `examples/` | 跨仓 port 的**最小可编译用法**（`market.Provider` / `EngineRunner`），只演示调用形状、不进导出面；清单见 `examples/README.md` |
+| `conformance/` | 跨仓契约一致性语料（`cases.json`，33 条 / 9 kind）+ 契约侧自检腿：同一组用例分别喂给契约、core、agent 三侧，任一侧语义漂移即红。本包**刻意零导出符号**（导出会撞登记区与冻结基线），理由见 `conformance/cases.go` 头注释 |
 | `.github/PULL_REQUEST_TEMPLATE.md` | 契约仓 PR 模板：使用方 / 变更类型与 bump / 登记区与冻结基线 / Config·DB 确认，四段必填 |
 | `AGENTS.md` | 本仓入口（构建、边界、禁止、依赖版本、拉取前提） |
 | `doc.go` | 根包（仅 `doc.go`，无导出符号；代码一律住子包） |

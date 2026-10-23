@@ -1,0 +1,374 @@
+[
+  {
+    "id": "stamp-tax/pre-cut",
+    "kind": "stamp_tax_rate_for",
+    "sides": ["contracts"],
+    "input": {"as_of": "2023-08-27T00:00:00Z"},
+    "expect": {"rate": 0.001}
+  },
+  {
+    "id": "stamp-tax/cut-day",
+    "kind": "stamp_tax_rate_for",
+    "sides": ["contracts"],
+    "input": {"as_of": "2023-08-28T00:00:00Z"},
+    "expect": {"rate": 0.0005}
+  },
+  {
+    "id": "stamp-tax/zero-asof",
+    "kind": "stamp_tax_rate_for",
+    "sides": ["contracts"],
+    "input": {"as_of": ""},
+    "expect": {"rate": 0.0005}
+  },
+  {
+    "id": "stamp-tax/override-before",
+    "kind": "stamp_tax_rate_for",
+    "sides": ["contracts"],
+    "input": {"as_of": "2023-01-02T00:00:00Z", "current": 0.0002, "before": 0.0008},
+    "expect": {"rate": 0.0008}
+  },
+  {
+    "id": "stamp-tax/override-current",
+    "kind": "stamp_tax_rate_for",
+    "sides": ["contracts"],
+    "input": {"as_of": "2023-08-28T00:00:00Z", "current": 0.0002, "before": 0.0008},
+    "expect": {"rate": 0.0002}
+  },
+  {
+    "id": "stamp-tax/negative-fallback",
+    "kind": "stamp_tax_rate_for",
+    "sides": ["contracts"],
+    "input": {"as_of": "2020-01-02T00:00:00Z", "current": -1, "before": -1},
+    "expect": {"rate": 0.001}
+  },
+
+  {
+    "id": "fee-defaults/defaults",
+    "kind": "fee_defaults",
+    "sides": ["contracts"],
+    "input": {"base": "defaults"},
+    "expect": {
+      "commission_rate": 0.0003,
+      "stamp_tax_rate": 0.0005,
+      "transfer_fee_rate": 0.00001,
+      "min_commission": 5,
+      "slippage_rate": 0.0001
+    }
+  },
+  {
+    "id": "fee-defaults/apply-zero",
+    "kind": "fee_defaults",
+    "sides": ["contracts"],
+    "input": {"base": "zero", "apply_defaults": true},
+    "expect": {
+      "commission_rate": 0.0003,
+      "stamp_tax_rate": 0.0005,
+      "transfer_fee_rate": 0.00001,
+      "min_commission": 5,
+      "slippage_rate": 0.0001
+    }
+  },
+  {
+    "id": "fee-defaults/apply-partial",
+    "kind": "fee_defaults",
+    "sides": ["contracts"],
+    "input": {"base": "zero", "apply_defaults": true, "fees": {"commission_rate": 0.0001}},
+    "expect": {
+      "commission_rate": 0.0001,
+      "stamp_tax_rate": 0.0005,
+      "transfer_fee_rate": 0.00001,
+      "min_commission": 5,
+      "slippage_rate": 0.0001
+    }
+  },
+  {
+    "id": "fee-defaults/apply-negative-untouched",
+    "kind": "fee_defaults",
+    "sides": ["contracts"],
+    "input": {
+      "base": "zero",
+      "apply_defaults": true,
+      "fees": {
+        "commission_rate": -0.1,
+        "stamp_tax_rate": -0.2,
+        "transfer_fee_rate": -0.3,
+        "min_commission": -4,
+        "slippage_rate": -0.5
+      }
+    },
+    "expect": {
+      "commission_rate": -0.1,
+      "stamp_tax_rate": -0.2,
+      "transfer_fee_rate": -0.3,
+      "min_commission": -4,
+      "slippage_rate": -0.5
+    }
+  },
+
+  {
+    "id": "daily-visible-at/2024-01-02",
+    "kind": "daily_visible_at",
+    "sides": ["contracts"],
+    "input": {"trade_date": "2024-01-02T00:00:00Z"},
+    "expect": {"visible_at": "2024-01-02T15:00:00+08:00"}
+  },
+  {
+    "id": "daily-visible-at/2023-12-29",
+    "kind": "daily_visible_at",
+    "sides": ["contracts"],
+    "input": {"trade_date": "2023-12-29T00:00:00Z"},
+    "expect": {"visible_at": "2023-12-29T15:00:00+08:00"}
+  },
+
+  {
+    "id": "intraday-visible-at/15m-0930",
+    "kind": "intraday_visible_at",
+    "sides": ["contracts"],
+    "input": {"bar_start": "2024-01-02T09:30:00+08:00", "minutes": 15},
+    "expect": {"visible_at": "2024-01-02T09:45:00+08:00"}
+  },
+  {
+    "id": "intraday-visible-at/1m-1000",
+    "kind": "intraday_visible_at",
+    "sides": ["contracts"],
+    "input": {"bar_start": "2024-01-02T10:00:00+08:00", "minutes": 1},
+    "expect": {"visible_at": "2024-01-02T10:01:00+08:00"}
+  },
+  {
+    "id": "intraday-visible-at/zero-minutes",
+    "kind": "intraday_visible_at",
+    "sides": ["contracts"],
+    "input": {"bar_start": "2024-01-02T09:30:00+08:00", "minutes": 0},
+    "expect": {"visible_at": "2024-01-02T09:30:00+08:00"}
+  },
+
+  {
+    "id": "visible-by/exact",
+    "kind": "visible_by",
+    "sides": ["contracts"],
+    "input": {"visible_at": "2024-01-02T09:45:00+08:00", "as_of": "2024-01-02T09:45:00+08:00"},
+    "expect": {"visible": true}
+  },
+  {
+    "id": "visible-by/one-ns-early",
+    "kind": "visible_by",
+    "sides": ["contracts"],
+    "input": {"visible_at": "2024-01-02T09:45:00+08:00", "as_of": "2024-01-02T09:44:59.999999999+08:00"},
+    "expect": {"visible": false}
+  },
+  {
+    "id": "visible-by/after",
+    "kind": "visible_by",
+    "sides": ["contracts"],
+    "input": {"visible_at": "2024-01-02T09:45:00+08:00", "as_of": "2024-01-02T10:00:00+08:00"},
+    "expect": {"visible": true}
+  },
+  {
+    "id": "visible-by/zero-visible-at",
+    "kind": "visible_by",
+    "sides": ["contracts"],
+    "input": {"visible_at": "", "as_of": "2024-01-02T10:00:00+08:00"},
+    "expect": {"visible": false}
+  },
+
+  {
+    "id": "time-semantics/announcement-day",
+    "kind": "time_semantics",
+    "sides": ["contracts"],
+    "input": {"value": "announcement_day"},
+    "expect": {"ok": true, "semantics": "announcement_day"}
+  },
+  {
+    "id": "time-semantics/after-close",
+    "kind": "time_semantics",
+    "sides": ["contracts"],
+    "input": {"value": "after_close"},
+    "expect": {"ok": true, "semantics": "after_close"}
+  },
+  {
+    "id": "time-semantics/next-open",
+    "kind": "time_semantics",
+    "sides": ["contracts"],
+    "input": {"value": "next_open"},
+    "expect": {"ok": true, "semantics": "next_open"}
+  },
+  {
+    "id": "time-semantics/custom",
+    "kind": "time_semantics",
+    "sides": ["contracts"],
+    "input": {"value": "custom"},
+    "expect": {"ok": true, "semantics": "custom"}
+  },
+  {
+    "id": "time-semantics/unknown",
+    "kind": "time_semantics",
+    "sides": ["contracts"],
+    "input": {"value": "close"},
+    "expect": {"ok": false}
+  },
+  {
+    "id": "time-semantics/empty",
+    "kind": "time_semantics",
+    "sides": ["contracts"],
+    "input": {"value": ""},
+    "expect": {"ok": false}
+  },
+  {
+    "id": "time-semantics/uppercase",
+    "kind": "time_semantics",
+    "sides": ["contracts"],
+    "input": {"value": "CUSTOM"},
+    "expect": {"ok": false}
+  },
+
+  {
+    "id": "run-spec-hash/golden-baseline",
+    "kind": "run_spec_hash",
+    "sides": ["contracts", "core", "agent"],
+    "input": {
+      "start": "2024-01-02",
+      "end": "2025-12-31",
+      "initial_capital": 1000000,
+      "risk_free_rate": 0.02,
+      "strategy_artifact_hash": "a1b2c3d4e5f60718293a4b5c6d7e8f9011223344556677889900aabbccddeeff",
+      "strategy_version_hash": "00112233445566778899aabbccddeeff0123456789abcdef0123456789abcdef",
+      "strategy_params": {"lookback": 20, "top_n": 30, "rebalance": "monthly"},
+      "stock_pool": ["600000.SH", "000001.SZ"],
+      "index_code": "000300.SH",
+      "universe": ["600000.SH", "000001.SZ", "300750.SZ"],
+      "frequency": "1d",
+      "fill_timing": "next_open",
+      "kernel": "go",
+      "engine_version": "0.1.0",
+      "fees": {"stamp_tax": 0.0005, "commission": 0.00025, "min_commission": 5},
+      "slippage": 0.001,
+      "cost_model": "asw",
+      "lot_size": 100,
+      "t_plus": "t+1",
+      "price_limit_rule": "main_board_10pct",
+      "risk_rules_hash": "ffeeddccbbaa99887766554433221100ffeeddccbbaa99887766554433221100",
+      "dataset_snapshot_hash": "3fa92d73d559fc5d7ebd75ffa95a2f993b1e3fed29483419faf37d243b078b85",
+      "adjustment_anchor_digests": ["600000.SH|2024-01-02|d1", "000001.SZ|2024-01-02|d2"],
+      "seed": 0
+    },
+    "expect": {"hash": "d7ea72c64600660be1af01f203734fbd278e558f3a9b62294e707a4db78cef8f"}
+  },
+  {
+    "id": "run-spec-hash/golden-slippage-0.002",
+    "kind": "run_spec_hash",
+    "sides": ["contracts", "core", "agent"],
+    "input": {
+      "start": "2024-01-02",
+      "end": "2025-12-31",
+      "initial_capital": 1000000,
+      "risk_free_rate": 0.02,
+      "strategy_artifact_hash": "a1b2c3d4e5f60718293a4b5c6d7e8f9011223344556677889900aabbccddeeff",
+      "strategy_version_hash": "00112233445566778899aabbccddeeff0123456789abcdef0123456789abcdef",
+      "strategy_params": {"lookback": 20, "top_n": 30, "rebalance": "monthly"},
+      "stock_pool": ["600000.SH", "000001.SZ"],
+      "index_code": "000300.SH",
+      "universe": ["600000.SH", "000001.SZ", "300750.SZ"],
+      "frequency": "1d",
+      "fill_timing": "next_open",
+      "kernel": "go",
+      "engine_version": "0.1.0",
+      "fees": {"stamp_tax": 0.0005, "commission": 0.00025, "min_commission": 5},
+      "slippage": 0.002,
+      "cost_model": "asw",
+      "lot_size": 100,
+      "t_plus": "t+1",
+      "price_limit_rule": "main_board_10pct",
+      "risk_rules_hash": "ffeeddccbbaa99887766554433221100ffeeddccbbaa99887766554433221100",
+      "dataset_snapshot_hash": "3fa92d73d559fc5d7ebd75ffa95a2f993b1e3fed29483419faf37d243b078b85",
+      "adjustment_anchor_digests": ["600000.SH|2024-01-02|d1", "000001.SZ|2024-01-02|d2"],
+      "seed": 0
+    },
+    "expect": {"hash": "422c504db432e552392446ea13ebc1f4b15f2e4994521f34cf217ac0cd65b576"}
+  },
+
+  {
+    "id": "trade-fees/buy-min-commission",
+    "kind": "trade_fees",
+    "sides": ["core"],
+    "input": {
+      "initial_capital": 1000000,
+      "commission_rate": 0.0003,
+      "slippage_rate": 0,
+      "stamp_tax_rate": 0.0005,
+      "stamp_tax_rate_before": 0.001,
+      "transfer_fee_rate": 0.00001,
+      "min_commission": 5,
+      "symbol": "600000.SH",
+      "direction": "long",
+      "quantity": 1000,
+      "price": 10,
+      "timestamp": "2024-01-02T10:00:00Z"
+    },
+    "expect": {"commission": 5, "transfer_fee": 0.1, "stamp_tax": 0}
+  },
+  {
+    "id": "trade-fees/sell-post-cut",
+    "kind": "trade_fees",
+    "sides": ["core"],
+    "input": {
+      "initial_capital": 1000000,
+      "commission_rate": 0.0003,
+      "slippage_rate": 0,
+      "stamp_tax_rate": 0.0005,
+      "stamp_tax_rate_before": 0.001,
+      "transfer_fee_rate": 0.00001,
+      "min_commission": 5,
+      "symbol": "600000.SH",
+      "direction": "short",
+      "quantity": 1000,
+      "price": 10,
+      "timestamp": "2024-01-03T10:00:00Z"
+    },
+    "expect": {"commission": 5, "transfer_fee": 0.1, "stamp_tax": 5}
+  },
+  {
+    "id": "trade-fees/sell-pre-cut",
+    "kind": "trade_fees",
+    "sides": ["core"],
+    "input": {
+      "initial_capital": 1000000,
+      "commission_rate": 0.0003,
+      "slippage_rate": 0,
+      "stamp_tax_rate": 0.0005,
+      "stamp_tax_rate_before": 0.001,
+      "transfer_fee_rate": 0.00001,
+      "min_commission": 5,
+      "symbol": "600000.SH",
+      "direction": "short",
+      "quantity": 1000,
+      "price": 10,
+      "timestamp": "2023-08-25T10:00:00Z"
+    },
+    "expect": {"commission": 5, "transfer_fee": 0.1, "stamp_tax": 10}
+  },
+
+  {
+    "id": "fee-defaults-yaml/generate",
+    "kind": "fee_defaults_via_yaml",
+    "sides": ["agent"],
+    "input": {"strategy_type": "momentum", "strategy_name": "momentum-conformance", "description": "conformance corpus"},
+    "expect": {"commission_rate": 0.0003, "slippage_rate": 0.0001}
+  },
+  {
+    "id": "fee-defaults-yaml/generate-with-options",
+    "kind": "fee_defaults_via_yaml",
+    "sides": ["agent"],
+    "input": {
+      "strategy_type": "momentum",
+      "strategy_name": "momentum-conformance-opts",
+      "description": "conformance corpus",
+      "options": {
+        "start_date": "2022-01-01",
+        "end_date": "2023-01-01",
+        "initial_capital": 500000,
+        "rebalance_freq": "weekly"
+      }
+    },
+    "expect": {"commission_rate": 0.0003, "slippage_rate": 0.0001}
+  }
+]
