@@ -22,6 +22,7 @@ verified-by: QT-05 ③-① 落码完成本仓侧（§2 订正「只依赖 kit」
   engine/     四契约：RunSpec→BacktestRequest / SignalSpec→SignalWeight /
               ResultSpec→BacktestResponse / EngineRunner + MarketRouter（✅ 2026-10-22 已落地，194 个导出符号）
               + 三类哨兵与 abi 常量：**已裁决不独立成包**，随本包走（[`adr/0003`](adr/0003-哨兵与-abi-不独立成包.md)）
+  dataprotocol/  数据面共享协议：UnifiedDataPoint（七字段）+ DataType 取值集（✅ 2026-10-24 新建，18 个导出符号）
   fees/       费率 / 滑点 / 成本模型的**定义**（算钱留在 core）
 ```
 
@@ -39,6 +40,7 @@ verified-by: QT-05 ③-① 落码完成本仓侧（§2 订正「只依赖 kit」
 | `domain/` | 跨边界值对象（信号 / 订单 / 组合 / 公司行为 / 因子名册 / 回测结果）+ `domain/market` 的兼容别名 | 不做计算、不读配置；**部署配置形状不进来**（[`adr/0002`](adr/0002-config-族的边界处置.md)：零引用的 5 个 `*Config` 已删，core-only 的 2 个标 experimental 待回收） |
 | `domain/market/` | 行情值对象 + 频率/时间语义词表 + `Provider` 接口 | 不做计算；`OHLCV`/`Fundamental` 的字段集与 core `docs/SPEC.md` 互锁（加字段 = core 侧红），见 `docs/API.md` §4 |
 | `engine/` | 回测四契约 + 路由接口 + **三类哨兵 + abi 常量**（同一包、`package contracts`） | 不含引擎实现；不把哨兵 / abi 拆成独立包（[`adr/0003`](adr/0003-哨兵与-abi-不独立成包.md)：拆了没有调用点能少 import 一个包） |
+| `dataprotocol/` | 数据面共享协议：`UnifiedDataPoint`（七字段，含 `VisibleAt`）+ `DataType*` 取值集 + 去重坐标 | 零 I/O、零时钟（无构造器，`IngestTime` 由调用方注入）；不放聚合器 / 端口；不重复 `TimeSemantics`（住 `domain/market`）；迁移期 core / data 的副本由各自单删除（见 `docs/API.md` §5.5） |
 | `fees/` | 成本模型的形状 | 不算钱（成交额 × 费率、最低佣金兜底在 core 的 tracker / mock_trader；本包实测零算术，见 `docs/API.md` §8 #3 的裁决依据） |
 
 ## 4. 三份契约（功能的边界就在这三份文件里）
@@ -81,3 +83,4 @@ tellurion-contracts
 | S1（QT-05） | `pkg/domain` + `pkg/backtest/contracts` 搬入本仓，core/agent 改 `require` 伪版本 | 🔶 **本仓侧已完成并已推（2026-10-22，6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）**：`fees/` ✅（13）、`domain/market/` ✅（46）、`domain/` ✅（176，5 个零引用部署配置按 [`adr/0002`](adr/0002-config-族的边界处置.md) 不迁）、`engine/` ✅（194，哨兵/abi 按 [`adr/0003`](adr/0003-哨兵与-abi-不独立成包.md) 不拆包）——导出面 429/429，两条护栏绿；仓外空模块 `go get github.com/ruoxizhnya/tellurion-contracts@fbe9a2d` 实测解析为 `v0.0.0-20261022191510-fbe9a2d0df17`。**剩下的是下游那条腿（core/agent 切依赖，③-③④⑤⑦⑨）**，由下游仓执行，③-④ 仍禁 `replace`。窗口期内 core 的 `pkg/domain` 与本仓的 `domain/` **并存（双份真相）**，两边都不许改，直到 core 侧 sed 落地并删掉旧包 |
 | S2（QT-07） | 打 `v0.1.0`，下游换 tag | ✅ `v0.1.0` 已打在 `main` 上并 push（2026-10-23）；`v0.1.1` 同日发出（把 `conformance/` 语料打进 tag，PATCH 级）。下游升 pin（C2）待执行 |
 | QT-19 | 版本规则表 + 兼容矩阵 + CHANGELOG | ✅ 已随 CT-02 落地（2026-10-22，护栏 `tools/check_release_matrix` 进 CI） |
+| QT-40 X1a | `dataprotocol/` 新包（`UnifiedDataPoint` 收编；§8 #4 选 (a) 先迁） | ✅ 已落（2026-10-24，`v0.6.0`）：导出面 447 → 465，冻结基线 430 → 448 行；**下游腿未做**——core 删两份副本、data 镜像改 import 归各自仓的单 |

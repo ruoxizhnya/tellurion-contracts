@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-10-24
-verified-by: G4 执行组（2026-10-24：core / agent / data / strategy 四仓升 pin `v0.5.0`；`check_contract_pin` GREEN 6 pin、conformance 2/2 零跳过；施工记录见「一、本仓任务」）+ G2 执行组（2026-10-24：QT-22 契约腿 `StrategyVersionInput` 六项 + `DomainStrategyVersionHash`，`v0.5.0` 已发版；施工记录见「一、本仓任务」）+ G0 执行组（2026-10-24：QT-20 契约腿 + QT-41b ④ 错误族，`v0.4.0` 已发；施工记录见「一、本仓任务」）+ G0D 裁决材料（QT-22 / QT-40 X1a / 服务 DTO 三份，只出材料、0 代码）；QT-09 本仓侧交接（2026-10-23：② examples/ + ③ conformance 语料与契约侧自检腿 + ④ PR 模板/check_pr_body + ⑤ check_contract_shape + surface 冻结 check_surface_freeze/api-surface.txt，全部接进 CI；三条工具另补表驱动单测）；QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；推送回写（2026-10-22：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`，`go get` 实测可解析，CI 429/429；§8 #4 登记为 X1a 待办）
+verified-by: QT-40 X1a 契约腿（2026-10-24：新增 `dataprotocol/` 包 —— `UnifiedDataPoint` 七字段（含 `VisibleAt`）+ `ToJSON`/`DeduplicateKey` + 15 个 `DataType*` 常量；无构造器、不读时钟；`v0.6.0` 已打 tag（**待 push**）；施工记录见「一、本仓任务」）+ G4 执行组（2026-10-24：core / agent / data / strategy 四仓升 pin `v0.5.0`；`check_contract_pin` GREEN 6 pin、conformance 2/2 零跳过；施工记录见「一、本仓任务」）+ G2 执行组（2026-10-24：QT-22 契约腿 `StrategyVersionInput` 六项 + `DomainStrategyVersionHash`，`v0.5.0` 已发版；施工记录见「一、本仓任务」）+ G0 执行组（2026-10-24：QT-20 契约腿 + QT-41b ④ 错误族，`v0.4.0` 已发；施工记录见「一、本仓任务」）+ G0D 裁决材料（QT-22 / QT-40 X1a / 服务 DTO 三份，只出材料、0 代码）；QT-09 本仓侧交接（2026-10-23：② examples/ + ③ conformance 语料与契约侧自检腿 + ④ PR 模板/check_pr_body + ⑤ check_contract_shape + surface 冻结 check_surface_freeze/api-surface.txt，全部接进 CI；三条工具另补表驱动单测）；QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；推送回写（2026-10-22：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`，`go get` 实测可解析，CI 429/429；§8 #4 登记为 X1a 待办）
 ---
 
 # TASKS — tellurion-contracts 未完成项
@@ -72,6 +72,23 @@ verified-by: G4 执行组（2026-10-24：core / agent / data / strategy 四仓�
 - **④ 约束与非目标**：不迁私有哨兵；不改四条的文案 / 身份；不在本仓实现编译或资产逻辑；不改 strategy 仓（其别名切换归 G13 通知腿）。
 - **⑤ 验收**：`TestCompileFamilySentinelsStayDistinctAndSurviveWrapping` 钉住四条互不命中 + 包装后仍可判定；全套 `go test ./... -count=1` EXIT=0；导出面 439 → 443。
 - **⑥ 边界**：只落哨兵；compile 服务实现、asset 状态机与 wire code 映射留在 `tellurion-strategy`。
+
+### QT-40 X1a 契约腿 · `dataprotocol` 包（`UnifiedDataPoint` 收编）[P1] ✅ 完成（2026-10-24，`v0.6.0`）
+
+- **① 目标**：把已在三处漂移的 `UnifiedDataPoint` 收成唯一共享形状，让 data 与 core 都只 import 一份。
+- **② 上下文**：裁决材料 [`design/qt40-x1a-dataprotocol-decision-material.md`](design/qt40-x1a-dataprotocol-decision-material.md) 实测**三份形状已在漂**（data 镜像有 `VisibleAt`、core source 有 `DeduplicateKey()`、core 构造器读墙钟而 data 注入时钟）。**2026-10-24 用户裁决走 (a) 先迁**。
+- **③ 要求**：① 新增 `dataprotocol/` 包：`UnifiedDataPoint` 七字段（含 `VisibleAt`）+ `ToJSON` + `DeduplicateKey`；**不带构造器、不读时钟**；② `TimeSemantics` 不重复定义（已随 QT-05 住 `domain/market`）；③ `DataType` 先保持 `string` + 常量，具名化等 X1b schema 冻结；④ `Aggregator` 接口**不落**（今天无实现、无消费方）；⑤ 同批登记 `docs/API.md` §4 与 `docs/api-surface.txt`，按 MINOR 发版。
+- **④ 约束与非目标**：不在契约包放 I/O 或时钟；不改 wire 语义；不替 data 服务裁决 aggregator 形状；不删 core / data 的副本（那属下游单）。
+- **⑤ 验收**：`check_api_surface` / `check_surface_freeze` / `check_contract_shape` 全绿；`DeduplicateKey()` 与 core 现实现（`tellurion:pkg/data/source/unified.go:70-72`）向量同结果；`VisibleAt` 在类型里（缺则 data 迁移无意义）。
+- **⑥ 边界**：只出契约类型与登记；core 删两份副本归 core 单，data 镜像改 import 归 data 单。
+- **施工记录（2026-10-24）**：
+  - 落码：`dataprotocol/dataprotocol.go` —— `UnifiedDataPoint` 七字段（字段顺序与 data 镜像一致，`VisibleAt` 末位）+ `ToJSON()` + `DeduplicateKey()`；15 个 `DataType*` 常量（与 core / data 现取值逐字一致）；**无构造器、无时钟**；`TimeSemantics` 未重复定义；`Aggregator` 未落。包注释写明三条边界（零 I/O / 不重复时间语义 / 不造空 port）。
+  - 向量：`dataprotocol_test.go` 钉死 core 的既有向量（`AAPL|global_ohlcv|2026-05-14T09:30:00Z`）+ 纳秒精度 + 时区归 UTC + Source 不入键 + DataType 区分；`TestVisibleAt_RoundTrips` 证明 `VisibleAt` 在类型里且不与 `TradeTime` 混淆；`ToJSON` 三条（正常 / nil→`null` / 不可序列化返错）。
+  - 登记：`docs/API.md` §4 新增 `dataprotocol/` 小节（18 行）、§5.5 记语义与迁移边界、§8 #4 落定为 (a)；`docs/api-surface.txt` 重生成（430 → 448 行）；`docs/ARCHITECTURE.md` §2/§3/§8 同步。
+  - 验收（真退出码）：`go build ./...` / `go vet ./...` / `go test ./... -count=1` 全 **0**；`check_api_surface` → **465/465**（14 个代码包 / 6 个登记包）；`check_surface_freeze` → 448 行一致；`check_contract_shape` → 绿；`check_release_matrix` → 绿。
+  - 破坏验证：把 `DeduplicateKey` 的 `TradeTime.UTC()` 改成 `TradeTime`（去掉时区归一）→ `go test ./dataprotocol -run TestDeduplicateKey_NormalizesToUTC` **EXIT=1**；逐字节还原后 `git diff` 为空、`go test ./dataprotocol` 回 **EXIT=0**。
+  - **未随本单落（如实）**：core 删 `pkg/data/source/unified.go` / `pkg/storage/bulk_insert.go` 两份副本、data 镜像改 import、storage 列布局的对表测试 —— 都归各自仓的单；`tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md` §4.1 注 ② 的回写归 core 侧协调者（本仓不改 core 文档）。在那之前三份形状仍并存。
+  - **已知护栏缺口（如实）**：`tools/check_contract_shape` 的 `contractRoots` 仍是 `domain/` / `engine/` / `fees/` 三根，**`dataprotocol/` 今天不在它的命名 / DB 红线上**。纳入要同步改它的夹具与「缺根红」期望（现有一批用例只造三根），属独立工具单，未在本单顺手改——不要以为「四条护栏绿」等于新包也被形状红线覆盖。
 
 ### G0D · QT-22 / QT-40 X1a / 服务 DTO 三份裁决材料 [P0] ✅ 完成（2026-10-24）
 
@@ -204,7 +221,7 @@ verified-by: G4 执行组（2026-10-24：core / agent / data / strategy 四仓�
 | QT-07 | S2：打 `v0.1.0` 并把下游伪版本换成 tag | `tellurion:docs/TASKS.md` |
 | QT-19 | 版本策略 / 兼容矩阵 / CHANGELOG 规则 | `tellurion:docs/TASKS.md` |
 | QT-09 | 跨仓护栏（surface 冻结 / 契约形状 / PR 模板 / examples / 契约测试） | `tellurion:docs/TASKS.md`（主单）；**本仓侧交接（2026-10-23）**：② `examples/`（`market.Provider` / `EngineRunner` 最小用法）、③ `conformance/`（`cases.json` 33 条 / 9 kind + 契约侧自检腿；core `pkg/conformance` 与 agent `internal/conformance` 读同一份语料，core 侧编排 `make contracts-conformance`，未 checkout 的侧显式 skip 不算通过）、④ `.github/PULL_REQUEST_TEMPLATE.md` + `tools/check_pr_body`（仅 PR 事件）、⑤ `tools/check_contract_shape`（`*Config`/`*Options`/`*Impl` 与 DB import 即红）、surface 冻结 `tools/check_surface_freeze` + `docs/api-surface.txt`；四条判据见各工具头部注释，全部接进 CI |
-| QT-40（T2） | `dataprotocol` 要不要独立成包、何时迁 | 单在 `tellurion-data:docs/TASKS.md`（QT-40 的接口对表待办 T2）；**落点与两条读法登记在本仓** `docs/API.md` §8 待裁 **#4**。⇒ **已登记为 X1a 待办（2026-10-22）**：X1a 开工前必须在 §8 #4 挑定 (a)/(b) 并写回 §8 #4 + `tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md` §4.1 注 ②；X1a 的施工序在 `tellurion-data:docs/TASKS.md` 施工序表 |
+| QT-40（T2） | `dataprotocol` 要不要独立成包、何时迁 | 单在 `tellurion-data:docs/TASKS.md`（QT-40 的接口对表待办 T2）；本仓侧 **X1a 契约腿已落（2026-10-24，`v0.6.0`）**：§8 #4 定 (a)、(a) 的形状与本仓落点见 `docs/API.md` §4/§5.5。`tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md` §4.1 注 ② 的回写归 core 侧协调者；core / data 的删副本与改 import 归各自单 |
 
 ---
 

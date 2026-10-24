@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-10-24
-verified-by: QT-22 契约腿（2026-10-24：`engine/provenance.go` 增 `StrategyVersionInput` 六字段 + `Hash()`/`MustHash()`，`engine/canonical.go` 增 `DomainStrategyVersionHash` = `tellurion.strategy_version_hash.v1`；集合 = `strategy_id + carrier + abi_version + scope + entry + source`，**不含** `capability`、**不含** `params_defaults`（后者若进必须升 v2）；导出面 443 → 447，冻结基线同步 +4 行）；QT-20 契约腿（2026-10-24：`BacktestRequest` 增可选 `StrategyRef`（wire 形态 = `ParseStrategyRef`/`String()` 的 `id`/`id@hash`）与 `StrategyParams`（浅层对象，嵌套键在 `ValidateRunSpec` 拒绝）；`domain.BacktestParams` 增生效参数 `Params`（对齐 core `RunMeta.Params`）；未知键清单不复制进本仓，归 core manifest（J2）；导出符号数不变 439，冻结基线 +2 行字段形状）；QT-41b ④ 错误族契约腿（2026-10-24：`ErrCompileFailed`/`ErrCompileUnavailable`/`ErrSourceTooLarge`/`ErrArtifactTooLarge` 四哨兵迁入 `engine/execution_errors.go`，名字语义不改，资产服务私有哨兵不迁；导出面 439 → 443）；QT-10 ③-① 契约腿（2026-10-23：三类执行错误哨兵 `ErrDataGap`/`ErrStrategyFault`/`ErrContractBreach` 落 `engine/execution_errors.go` + `CodeDataGapSkipped` 落 `engine/validity.go`）；QT-05 ③-① 本仓侧落码完成（`fees` 13 + `domain/market` 46 + `domain` 176 + `engine` 194 = 429 个符号当时已登记）；§8 待裁 #1（errors//abi/，ADR-0003）、#2（`*Config` 族，ADR-0002）、#3（fees 整包）均已裁决；#4（dataprotocol 时机）已登记为 X1a 待办（2026-10-22 推送回写：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）
+verified-by: QT-40 X1a 契约腿（2026-10-24：新增 `dataprotocol/` 包 —— `UnifiedDataPoint` 七字段（含 `VisibleAt`）+ `ToJSON`/`DeduplicateKey` + 15 个 `DataType*` 常量；无构造器、不读时钟、不含 `Aggregator`；导出面 447 → 465，冻结基线 +18 行；§8 #4 按 (a) 先迁落定）；QT-22 契约腿（2026-10-24：`engine/provenance.go` 增 `StrategyVersionInput` 六字段 + `Hash()`/`MustHash()`，`engine/canonical.go` 增 `DomainStrategyVersionHash` = `tellurion.strategy_version_hash.v1`；集合 = `strategy_id + carrier + abi_version + scope + entry + source`，**不含** `capability`、**不含** `params_defaults`（后者若进必须升 v2）；导出面 443 → 447，冻结基线同步 +4 行）；QT-20 契约腿（2026-10-24：`BacktestRequest` 增可选 `StrategyRef`（wire 形态 = `ParseStrategyRef`/`String()` 的 `id`/`id@hash`）与 `StrategyParams`（浅层对象，嵌套键在 `ValidateRunSpec` 拒绝）；`domain.BacktestParams` 增生效参数 `Params`（对齐 core `RunMeta.Params`）；未知键清单不复制进本仓，归 core manifest（J2）；导出符号数不变 439，冻结基线 +2 行字段形状）；QT-41b ④ 错误族契约腿（2026-10-24：`ErrCompileFailed`/`ErrCompileUnavailable`/`ErrSourceTooLarge`/`ErrArtifactTooLarge` 四哨兵迁入 `engine/execution_errors.go`，名字语义不改，资产服务私有哨兵不迁；导出面 439 → 443）；QT-10 ③-① 契约腿（2026-10-23：三类执行错误哨兵 `ErrDataGap`/`ErrStrategyFault`/`ErrContractBreach` 落 `engine/execution_errors.go` + `CodeDataGapSkipped` 落 `engine/validity.go`）；QT-05 ③-① 本仓侧落码完成（`fees` 13 + `domain/market` 46 + `domain` 176 + `engine` 194 = 429 个符号当时已登记）；§8 待裁 #1（errors//abi/，ADR-0003）、#2（`*Config` 族，ADR-0002）、#3（fees 整包）均已裁决；#4（dataprotocol 时机）已登记为 X1a 待办（2026-10-22 推送回写：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）
 ---
 
 # API — 导出面规格（本仓有哪些符号、各自稳不稳定、错了怎么判）
@@ -11,7 +11,7 @@ verified-by: QT-22 契约腿（2026-10-24：`engine/provenance.go` 增 `Strategy
 > 符号级冲突以本文件为准（它由 CI 核对，`api-schema.md` 不核对符号名）；规则级冲突以 `api-schema.md` 为准。
 >
 > **现状口径（开工前必读）**：本仓的**库代码已全部落地**（QT-05 ③-①，2026-10-22）：`fees/`、`domain/market/`、`domain/`、`engine/` 四个包，
-> 447 个导出符号全部登记在 §4（QT-22 后，2026-10-24）。`tools/` 下的命令是 `package main`，不计入导出面。
+> 加 QT-40 X1a 的 `dataprotocol/`（2026-10-24）共五个包，465 个导出符号全部登记在 §4（QT-40 后，2026-10-24）。`tools/` 下的命令是 `package main`，不计入导出面。
 > **§5~§7 已从「目标面快照」变成「现行规格」**——它们的符号今天都在 §4 的登记表里，本节只是把冻结面 / 语义讲透。
 > ✅ **下游今天已可 `import` 本仓**：6 个 commit 已于 2026-10-22 推到 `origin/main`（该批 HEAD `fbe9a2d`；仓外空模块里 `go get github.com/ruoxizhnya/tellurion-contracts@fbe9a2d` 实测解析为 `v0.0.0-20261022191510-fbe9a2d0df17`）。
 > ⚠️ core / agent 切依赖那条腿（③-③④⑤⑦⑨）由下游仓执行；在它落地前，core 仍用自己那份 `pkg/domain` / `pkg/backtest/contracts`（双份真相窗口，见 `docs/ARCHITECTURE.md` §8）。
@@ -112,6 +112,34 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 
 > 本区没有行是事实：根包只放文档（`package contracts`），代码一律住子包。留这个小节是为了
 > 「根包新增导出符号」有路可登记——没有它，那条路是不存在的（CT-01 自审修的正是这一处）。
+
+### `dataprotocol/` — 包 `dataprotocol`（数据面共享协议形状；2026-10-24 QT-40 X1a 新建）
+
+> **不是冻结面**：七字段是今天三份副本（data 镜像 / core source / core storage）的交集再加 `VisibleAt`，语义见 §5.5。
+> 迁移期 core / data 仍各留副本，**删副本与改 import 归各自单**；契约侧的字段集从本表起是唯一共享定义。
+> **零 I/O、零时钟**：包内无构造器，`IngestTime` 必须由调用方注入（ADR-0004）。
+> `DataType*` 的**字面量就是表路由**：改一个值 = 数据静默落错表，不是改名问题。
+
+| 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
+|---|---|---|---|
+| `UnifiedDataPoint` | type | stable | 七字段：`Symbol` / `TradeTime` / `Source` / `DataType` / `Data` / `IngestTime` / `VisibleAt`。字段顺序与 data 镜像一致（位置化字面量按此书写）；`VisibleAt` 零值 = 闸门未填，**不得**当成 `TradeTime` 的替代 |
+| `UnifiedDataPoint.ToJSON` | method | stable | `json.Marshal(Data)`；`nil` Data → `null`；不可序列化的值原样返错（不吞、不替换成空对象） |
+| `UnifiedDataPoint.DeduplicateKey` | method | stable | `Symbol\|DataType\|TradeTime`（UTC，RFC3339Nano）。**Source 刻意不在键里**（fallback 链可能多源同一数据，留哪条由调用方裁决）；时区先归 UTC，同一时刻不同时区同键 |
+| `DataTypeOHLCDaily` | const | stable | `"ohlcv_daily"`：日线 OHLCV |
+| `DataTypeOHLCMinute` | const | stable | `"ohlcv_minute"`：分钟线 |
+| `DataTypeRealtime` | const | stable | `"realtime_quote"`：实时快照 |
+| `DataTypeCapitalFlow` | const | stable | `"capital_flow"`：资金流（同表多源口径靠 `Source` 区分，DBT-09） |
+| `DataTypeFundamental` | const | stable | `"fundamentals"`：基本面 |
+| `DataTypeSectors` | const | stable | `"sectors"`：板块列表 |
+| `DataTypeStockSector` | const | stable | `"stock_sector"`：个股 ↔ 板块归属 |
+| `DataTypeTopList` | const | stable | `"top_list"`：榜单（龙虎榜） |
+| `DataTypeLimitUpPool` | const | stable | `"limit_up_pool"`：涨停池 |
+| `DataTypeAnnounce` | const | stable | `"announcements"`：公告 |
+| `DataTypeNews` | const | stable | `"news"`：新闻 |
+| `DataTypeHotSearch` | const | stable | `"hot_search"`：热榜 |
+| `DataTypeGlobalOHLCV` | const | stable | `"global_ohlcv"`：海外行情 |
+| `DataTypeMacro` | const | stable | `"macro_series"`：宏观序列（落 `quant.macro_series`） |
+| `DataTypeDailyBasic` | const | stable | `"daily_basic"`：每日行情指标（落 `market_activity`；声明 `after_close`） |
 
 ### `fees/` — 包 `fees`（A 股费率模型的数据形状；2026-10-22 自 `tellurion:pkg/fees` 迁入，代码逐字、注释有订正）
 
@@ -683,6 +711,21 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | provenance / hash | `ErrCanonicalUnsupported`、`ErrStrategyRefMalformed` | stable | 输入身份不可 canonical 编码 → 当场失败，禁止退化成「猜一个 hash」 |
 | 策略编译 / 资产（**QT-41b ④，✅ 2026-10-24 已落在 `engine/execution_errors.go`**） | `ErrCompileFailed`、`ErrCompileUnavailable`、`ErrSourceTooLarge`、`ErrArtifactTooLarge` | stable | **跨仓消费方必须能识别**（agent 生成闭环 / core 取 artifact / orchestration 终态）：编译失败 → 反馈给模型；编译端口未配置 → 配置错 / 可重试；超限 → 不可重试。四条身份互斥，`errors.Is` 判定、`%w` 保链。**本仓（资产服务）私有哨兵不迁**（`ErrStrategyNotFound` / `ErrInvalidTransition` / `ErrJobNotFound` 等只看 wire code） |
 
+### 5.5 数据协议面（`dataprotocol/`，QT-40 X1a——✅ 2026-10-24 新建，**stable 不是 frozen**）
+
+| 判据 | 口径 | 证据 |
+|---|---|---|
+| 形状来源 | 三份已在漂的副本收成一份：data 镜像（带 `VisibleAt`、注入时钟）、core `source`（有 `DeduplicateKey`、构造器读墙钟）、core `storage`（因 import 成环另抄）。字段 = 三者并集，不多不少 | `tellurion-contracts:docs/design/qt40-x1a-dataprotocol-decision-material.md` §1 |
+| `VisibleAt` 必进 | 它是 data 写入路径依赖的字段；不进类型，data 就得继续留镜像，迁移等于没做 | 同上 §3 判据 2 |
+| 零时钟 / 零 I/O | 不提供构造器：`IngestTime` 由调用方注入，保证「同输入同字节」 | ADR-0004；同上 §3 判据 3 |
+| 不重复 `TimeSemantics` | 时间语义词表已住 `domain/market`，本包只承载点位本身 | `docs/API.md` §8 #4 |
+| 不落 `Aggregator` | 今天无实现、无消费方；接口随 X1b 定形，不许在契约仓造空 port | 同上 |
+| 去重坐标 | `Symbol\|DataType\|TradeTime(UTC, RFC3339Nano)`，`Source` 不入键；向量由 `dataprotocol_test.go` 钉死（与 core `pkg/data/source/unified.go` 同式） | `dataprotocol/dataprotocol_test.go` |
+
+> **迁移边界（如实）**：本仓只交付类型与登记。core 删两份副本、data 镜像改 import 是**各自仓的单**；
+> 在那之前三份形状仍并存，且 `storage` 的列布局与共享字段的**对表测试**尚未补（`bulk_insert_ddl_test.go` 只核表名）——
+> 这是 core 侧迁移单的验收项，不是本仓可以代做的。
+
 ---
 
 ## 6. 值对象面（`domain/`，S1 整包迁入——✅ 2026-10-22 已落）
@@ -732,7 +775,7 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | 1 | `errors/` 与 `abi/` 是否独立成包 | ✅ **已裁决（2026-10-22，落码时实测）：不独立成包，随 `engine/` 走**（[`adr/0003`](adr/0003-哨兵与-abi-不独立成包.md)）。<br>**据实测而非估计**：`contracts.Err*` 消费方 10 个文件（非测试 4 + 测试 6），`contracts.Host*` 消费方 4 个文件（全在 `tellurion:pkg/sandbox/wasm`）；**没有任何一个消费方只想要其中一组**——每个文件同时用到 ≥2 个其它 `contracts.*` 符号（最少 2、最多 35）。⇒ 拆包不会让任何调用点少 import 一个包。<br>**代价**：`engine/` 成为 10 文件 / 2542 行（非测试，本仓拷贝实测）、194 个导出符号的包（占本仓 429 的 45%）。判据是「包内是否有真实的独立演化需求」——今天没有；等有（例如 abi 要独立发给 artifact 加载器）再拆，拆包本身是可排期的独立变更。<br>⚠️ **旧估计已作废**：前期笔记里的「约 61 个 core 文件」没有来源，实测是 4+6；结论不变，理由从「改动太大」换成「改了没人受益」 |
 | 2 | `*Config` 命名族要不要进本仓 | ✅ **已裁决（2026-10-22，落码时实测）：[`adr/0002`](adr/0002-config-族的边界处置.md) 按「类型在边界上的角色」分三条，不按名字分**。<br>① **零引用的部署配置不迁**：`Config` / `DatabaseConfig` / `RedisConfig` / `ServiceConfig` / `TushareConfig` —— core 与 agent 实测 **0 引用**（连 core 自己都不用），且 `Config` 带 `Password`，描述的是 core 的部署 YAML。留在 core，由切换依赖那次 commit 一并删除（0 调用点）。本仓**已删除**它们（`domain/types.go`），支撑它们的恒真测试 `TestConfig_Types` 同删。<br>② **core-only 但随整包迁的两条按原名保留，标 experimental**：`StrategyConfig`（core 4 文件）、`ExecutionConfig`（core 21 文件）——进 ③-⑨ 回收清单；不就地改名的理由是它们本就要搬走（`StrategyConfig` → 最可能 `tellurion-strategy`；`ExecutionConfig` → 大概率回 core，因为执行留 core），改名是给即将搬走的类型付一次破坏性变更的账。<br>③ **冻结面伴生名保留**：`TradingConfig` / `PriceLimitConfig`（随 `engine/` 落地）已写在 SPEC 的 RunSpec 冻结文本里，改名 = 改冻结文本 + 弄红 core 的 `spec_drift_test.go`——冻结面优先于命名规范。<br>判据（以后照此判）：名字是否已在冻结文本 / 跨语言契约里 → 是则保留；否则看它是否 core-only 搭车 → 是则不迁或迁后回收；只有「长期留在本仓 + 名字泄漏实现细节」才改名（破坏性，走 ADR） |
 | 3 | `fees/` 的取舍 | ✅ **已裁决（2026-10-22，落码时实测）：整包迁入，`StampTaxRateFor` / `ApplyDefaults` / `Validate` 一起进**。<br>**裁决依据是「④ 那句在今天的源码里没有对应物」**：`tellurion:pkg/fees` 一共 2 个文件 533 行（非测试 1 文件 250 行），**零算术**——导出面只有 7 个常量 + 1 个日期 var + 1 个结构体 + 4 个纯函数（取档选择器 / 默认值构造 / 零值填充 / 区间校验），全是 ③-① 说的「费率/滑点/成本模型的定义与枚举」。真正算钱的两处都在 core：`tellurion:pkg/backtest/tracker/tracker.go:145`（成交额 × 费率 + 最低佣金兜底，并且是 `StampTaxRateFor` 的**唯一生产调用方**）与 `tellurion:pkg/live/mock_trader.go`。<br>**为什么不把 `StampTaxRateFor` 留 core**：它与 `StampTaxCutDate` 是一对——源码注释自己写着「This is the ONLY place the cut date may be compared」（削减日只许在这一个地方比较）。把常量放本仓、比较点放 core，等于把这条不变量拆到两个仓，以后改档期的人只会看到其中一半。<br>**代价**：本仓因此有一个「看起来像行为」的函数（`StampTaxRateFor`）。判据是它**不读任何状态、不做算术、只按日期在两个给定值里选一个**，属"取值集的定义"而非"算钱"；`ApplyDefaults`/`Validate` 同理（填零值 / 判区间）。真出现按费率算成本的函数，那才越界，按 ADR-0001 ② 打回 |
-| 4 | `dataprotocol` 是否独立成包（QT-40 对表 T2，2026-10-22 登记） | **落点已定名**：`contracts/dataprotocol`（包名 `dataprotocol`）——不叫 `data/`（包名要能自证「这是协议不是实现」，与 #1 的 `errors/`/`abi/` 之争同型），不叫 `dataset`（那是 X1b 的 aggregator 面，形状还没定）。依据 `tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md` §4.1 A 组注 ①。**要裁的是迁入时机，而且两份上游文档给的判据并不一致**：「只有单个仓使用的类型不许提前迁」对应的是 ①「本仓只放被 ≥2 个仓使用的类型」（[AGENTS.md](../AGENTS.md) §3 把它写成「只有单个仓使用的类型属泄漏」）；对表注 ② 与本仓下游的 `tellurion-data:docs/api-schema.md` §4 **原先都把它引成 ③**（③ 管的是 `Config`/`Options`/`Impl` 命名），两处引用已于 2026-10-22 同步订正。**但同一份 ADR 的「代价」节明写 S1 整包迁时接受 core-only 类型临时进来、输出一份清单、S2 后回收**，而本仓台账已把这条落成硬要求（`docs/TASKS.md` QT-05 ③-⑨：`screen`/`sector`/`supply_chain`/`macro`/`mining` 在 agent 侧各 0 命中，仍整包迁）。于是有两条都自洽的走法：(a) `dataprotocol` 不适用那条容忍（它是**名单外的新建包**，不是整包迁的附带品）⇒ 挂 X1b 第一 commit，`tellurion-data` 一 import，两个使用方立刻成立；(b) 把它当同类容忍处理，随 S1 一起落、进那份 core-only 清单（③-⑨ 那份名单今天不含它，选 (b) 就要把它加进去）。**X1a 待办已登记（2026-10-22）：X1a 开工前必须挑一条并写回本节（#4）+ `tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md` §4.1 注 ②**，别两份文档各按一条（现在的写法是注 ② 选 (a)、而它引的条款其实同时允许 (b)）；X1a 的施工序在 `tellurion-data:docs/TASKS.md` 施工序表。冻结前要先定形状的三处实测：① `UnifiedDataPoint` 今天有**两份同名同字段副本**（`tellurion:pkg/data/source/unified.go:16` 与 `pkg/storage/bulk_insert.go:17`，后者注释自述「storage 不能 import source（会成环）」）⇒ 进 contracts 后成环理由消失，**必须删副本改引用**，否则协议加一列时 `BulkInsert` 的列布局会静默少写一列（`bulk_insert_ddl_test.go` 只核「目标表在 DDL 里」，核不到字段）；② **没有 `DataType` 类型**——`ConnectorDeclaration.DataType` 与 `UnifiedDataPoint.DataType` 都是裸 `string`，取值集靠 `DataType*` 常量；③ **没有 `Aggregator` 接口**（§5.2 的 port 表里只有未定形的 `DataPort`，标着「⬜ 设计中，S1 不落」）：aggregator 今天只有 HTTP 形状，要么随 X1b 实现定、要么先不落 port，**不许在文档里造一个无实现的接口**（§8 已禁默认实现/mock 进本仓）。另：`TimeSemantics` 枚举定义在 `tellurion:pkg/domain/market/visibility.go:61`，**已随 QT-05 ③-① 整包迁入 `domain/market/`（2026-10-22，见 §4）**，`dataprotocol` 里**不再重复定义**——同一次迁移出现两份 `TimeSemantics`，等于把 #1 与 #4 合成一个真事故 |
+| 4 | `dataprotocol` 是否独立成包（QT-40 对表 T2，2026-10-22 登记） | ✅ **已裁决（2026-10-24，QT-40 X1a 落码）：走 (a) 先迁** —— 包已落地（七字段 + `ToJSON` / `DeduplicateKey` + 15 个 `DataType*` 常量；无构造器 / 无时钟 / 无 `Aggregator`，见 §4 + §5.5）。判据是「第二份独立实现已经存在」，不是「第二个 import」。**未随本单落（如实）**：core 删两份副本 / data 镜像改 import / storage 列布局对表测试，归各自仓的单。**以下是裁决前的材料（保留来历）**：**落点已定名**：`contracts/dataprotocol`（包名 `dataprotocol`）——不叫 `data/`（包名要能自证「这是协议不是实现」，与 #1 的 `errors/`/`abi/` 之争同型），不叫 `dataset`（那是 X1b 的 aggregator 面，形状还没定）。依据 `tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md` §4.1 A 组注 ①。**要裁的是迁入时机，而且两份上游文档给的判据并不一致**：「只有单个仓使用的类型不许提前迁」对应的是 ①「本仓只放被 ≥2 个仓使用的类型」（[AGENTS.md](../AGENTS.md) §3 把它写成「只有单个仓使用的类型属泄漏」）；对表注 ② 与本仓下游的 `tellurion-data:docs/api-schema.md` §4 **原先都把它引成 ③**（③ 管的是 `Config`/`Options`/`Impl` 命名），两处引用已于 2026-10-22 同步订正。**但同一份 ADR 的「代价」节明写 S1 整包迁时接受 core-only 类型临时进来、输出一份清单、S2 后回收**，而本仓台账已把这条落成硬要求（`docs/TASKS.md` QT-05 ③-⑨：`screen`/`sector`/`supply_chain`/`macro`/`mining` 在 agent 侧各 0 命中，仍整包迁）。于是有两条都自洽的走法：(a) `dataprotocol` 不适用那条容忍（它是**名单外的新建包**，不是整包迁的附带品）⇒ 挂 X1b 第一 commit，`tellurion-data` 一 import，两个使用方立刻成立；(b) 把它当同类容忍处理，随 S1 一起落、进那份 core-only 清单（③-⑨ 那份名单今天不含它，选 (b) 就要把它加进去）。**X1a 待办已由 QT-40 X1a 收口（2026-10-24）**：选 (a)；本仓 §4 / §5.5 已写回，`tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md` §4.1 注 ② 的回写归 core 侧协调者（本仓不改 core 文档）；X1a 的施工序在 `tellurion-data:docs/TASKS.md` 施工序表。冻结前要先定形状的三处实测：① `UnifiedDataPoint` 今天有**两份同名同字段副本**（`tellurion:pkg/data/source/unified.go:16` 与 `pkg/storage/bulk_insert.go:17`，后者注释自述「storage 不能 import source（会成环）」）⇒ 进 contracts 后成环理由消失，**必须删副本改引用**，否则协议加一列时 `BulkInsert` 的列布局会静默少写一列（`bulk_insert_ddl_test.go` 只核「目标表在 DDL 里」，核不到字段）；② **没有 `DataType` 类型**——`ConnectorDeclaration.DataType` 与 `UnifiedDataPoint.DataType` 都是裸 `string`，取值集靠 `DataType*` 常量；③ **没有 `Aggregator` 接口**（§5.2 的 port 表里只有未定形的 `DataPort`，标着「⬜ 设计中，S1 不落」）：aggregator 今天只有 HTTP 形状，要么随 X1b 实现定、要么先不落 port，**不许在文档里造一个无实现的接口**（§8 已禁默认实现/mock 进本仓）。另：`TimeSemantics` 枚举定义在 `tellurion:pkg/domain/market/visibility.go:61`，**已随 QT-05 ③-① 整包迁入 `domain/market/`（2026-10-22，见 §4）**，`dataprotocol` 里**不再重复定义**——同一次迁移出现两份 `TimeSemantics`，等于把 #1 与 #4 合成一个真事故 |
 
 ---
 

@@ -1,3 +1,21 @@
+dataprotocol/DataTypeAnnounce = "announcements"
+dataprotocol/DataTypeCapitalFlow = "capital_flow"
+dataprotocol/DataTypeDailyBasic = "daily_basic"
+dataprotocol/DataTypeFundamental = "fundamentals"
+dataprotocol/DataTypeGlobalOHLCV = "global_ohlcv"
+dataprotocol/DataTypeHotSearch = "hot_search"
+dataprotocol/DataTypeLimitUpPool = "limit_up_pool"
+dataprotocol/DataTypeMacro = "macro_series"
+dataprotocol/DataTypeNews = "news"
+dataprotocol/DataTypeOHLCDaily = "ohlcv_daily"
+dataprotocol/DataTypeOHLCMinute = "ohlcv_minute"
+dataprotocol/DataTypeRealtime = "realtime_quote"
+dataprotocol/DataTypeSectors = "sectors"
+dataprotocol/DataTypeStockSector = "stock_sector"
+dataprotocol/DataTypeTopList = "top_list"
+dataprotocol/UnifiedDataPoint struct{Symbol string; TradeTime time.Time; Source string; DataType string; Data map[string]interface{}; IngestTime time.Time; VisibleAt time.Time}
+dataprotocol/UnifiedDataPoint.DeduplicateKey() string
+dataprotocol/UnifiedDataPoint.ToJSON() ([]byte, error)
 domain/(*ActionEngine).ApplyAll(time.Time, []Position, map[string]float64, []CorporateAction) ([]Position, float64, []ApplyOutcome)
 domain/(*ActionEngine).IsApplied(CorporateAction) bool
 domain/(*ActionEngine).MarkApplied(CorporateAction)

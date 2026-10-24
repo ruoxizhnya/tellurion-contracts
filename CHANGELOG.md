@@ -9,6 +9,32 @@
 
 （暂无）
 
+## [v0.6.0] - 2026-10-24
+
+MINOR 发版：QT-40 X1a 新增 `dataprotocol/` 包（**只增不改**），导出面 447 → 465
+（+18：1 个 `type` + 2 个方法 + 15 个 `const`），冻结基线 430 → 448 行（`git diff --numstat` 实测 +18 / −0）。
+无破坏性变更；既有四个包一字未动。
+
+### 新增（MINOR 级：新包）
+
+- **QT-40 X1a 契约腿（2026-10-24）**：`dataprotocol/` —— 把三处**已在漂**的同名形状收成一份共享定义
+  （`tellurion-data:internal/ingest/point.go` 带 `VisibleAt`、`tellurion:pkg/data/source/unified.go`
+  有 `DeduplicateKey()`、`tellurion:pkg/storage/bulk_insert.go` 因 import 成环另抄一份）。
+  - `UnifiedDataPoint` **七字段**：`Symbol` / `TradeTime` / `Source` / `DataType` / `Data` / `IngestTime` / `VisibleAt`
+    （字段顺序与 data 镜像一致，`VisibleAt` 末位）。`Data` 是 `map[string]interface{}`（JSONB 逃生阀），
+    `DataType` 仍是裸 `string`（具名化会碰 wire，等 X1b 的 schema 冻结）。
+  - `ToJSON()` —— `json.Marshal(Data)`；`DeduplicateKey()` —— `Symbol|DataType|TradeTime`（UTC，RFC3339Nano），
+    **Source 不入键**（fallback 链可能多源同一数据，留哪条由调用方裁决）。
+  - 15 个 `DataType*` 常量：与 core / data 的现取值**逐字一致**；字面量就是表路由，改一个值 = 数据静默落错表。
+  - **不提供构造器、不读时钟**：`IngestTime` 必须由调用方注入（ADR-0004；core 版构造器读 `time.Now()` 是这次
+    不迁构造器的直接原因）。**不重复 `TimeSemantics`**（它住 `domain/market`）；**不落 `Aggregator`**
+    （今天无实现、无消费方，随 X1b 定形）。
+  - 裁决：`docs/API.md` §8 #4 定 **(a) 先迁**；判据是「第二份独立实现已经存在」，不是「第二个 import」。
+    形状与本包语义见 §4 / §5.5。向量由 `dataprotocol_test.go` 钉死（含 core 的既有向量
+    `AAPL|global_ohlcv|2026-05-14T09:30:00Z`）。
+  - **未随本单落（如实）**：core 删两份副本、data 镜像改 import、storage 列布局的对表测试，
+    都归各自仓的单；在那之前三份形状仍并存。本仓只交付类型、向量与登记。
+
 ## [v0.5.0] - 2026-10-24
 
 MINOR 发版：QT-22 把 `version_hash` 的 canonical 集合收进契约（**只增不改**），导出面 443 → 447
