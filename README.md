@@ -81,7 +81,7 @@ go run ./tools/check_pr_body          # 仅 PR 事件用（stdin 传 PR 正文�
 <!-- matrix:begin -->
 | 契约版本 | 状态 | 支持的 core（`tellurion`） | 支持的 agent（`tellurion-agent`） |
 |---|---|---|---|
-| `v0.5` | 已发版（2026-10-24） | 待切 `v0.5.0`（QT-22 是新增符号，core 不消费亦可；切换归 G13 通知腿） | 待切 `v0.5.0`（同批；`replace tellurion` 在册期间与 core 同批升） |
+| `v0.5` | 已发版（2026-10-24）；core / agent / data / strategy **四仓已切**（G4，2026-10-24 实测；agent 的 `replace tellurion` 在册期间与 core 同批升） | 已切 `v0.5.0`（`go.mod` 实测；QT-22 新增符号，core 暂无消费点） | 已切 `v0.5.0`（`go.mod` 实测；`replace tellurion` 在册不改） |
 | `v0.4` | 已发版（2026-10-24） | 已切 `v0.4.0`（G13，2026-10-24 实测；QT-20 的请求字段消费属 core G1，QT-41b 的错误族消费属 strategy 仓） | 已切 `v0.4.0`（G13 同批切，2026-10-24 实测；`replace tellurion` 在册期间与 core 同批升） |
 | `v0.3` | 已发版（2026-10-23） | 已切 `v0.3.0`（core `go.mod` 2026-10-24 实测） | 已切 `v0.3.0`（agent `go.mod` 2026-10-24 实测；`replace tellurion` 在册不改） |
 | `v0.2` | 已发版（2026-10-23） | `v0.2.0`（QT-62 wasm 腿随同批切 pin；QT-16 契约腿同批收编） | `v0.2.0`（`replace tellurion` 在册期间与 core 同批升） |

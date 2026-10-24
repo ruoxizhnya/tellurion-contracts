@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-10-24
-verified-by: G2 执行组（2026-10-24：QT-22 契约腿 `StrategyVersionInput` 六项 + `DomainStrategyVersionHash`，`v0.5.0` 已发版；施工记录见「一、本仓任务」）+ G0 执行组（2026-10-24：QT-20 契约腿 + QT-41b ④ 错误族，`v0.4.0` 已发；施工记录见「一、本仓任务」）+ G0D 裁决材料（QT-22 / QT-40 X1a / 服务 DTO 三份，只出材料、0 代码）；QT-09 本仓侧交接（2026-10-23：② examples/ + ③ conformance 语料与契约侧自检腿 + ④ PR 模板/check_pr_body + ⑤ check_contract_shape + surface 冻结 check_surface_freeze/api-surface.txt，全部接进 CI；三条工具另补表驱动单测）；QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；推送回写（2026-10-22：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`，`go get` 实测可解析，CI 429/429；§8 #4 登记为 X1a 待办）
+verified-by: G4 执行组（2026-10-24：core / agent / data / strategy 四仓升 pin `v0.5.0`；`check_contract_pin` GREEN 6 pin、conformance 2/2 零跳过；施工记录见「一、本仓任务」）+ G2 执行组（2026-10-24：QT-22 契约腿 `StrategyVersionInput` 六项 + `DomainStrategyVersionHash`，`v0.5.0` 已发版；施工记录见「一、本仓任务」）+ G0 执行组（2026-10-24：QT-20 契约腿 + QT-41b ④ 错误族，`v0.4.0` 已发；施工记录见「一、本仓任务」）+ G0D 裁决材料（QT-22 / QT-40 X1a / 服务 DTO 三份，只出材料、0 代码）；QT-09 本仓侧交接（2026-10-23：② examples/ + ③ conformance 语料与契约侧自检腿 + ④ PR 模板/check_pr_body + ⑤ check_contract_shape + surface 冻结 check_surface_freeze/api-surface.txt，全部接进 CI；三条工具另补表驱动单测）；QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；推送回写（2026-10-22：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`，`go get` 实测可解析，CI 429/429；§8 #4 登记为 X1a 待办）
 ---
 
 # TASKS — tellurion-contracts 未完成项
@@ -101,6 +101,21 @@ verified-by: G2 执行组（2026-10-24：QT-22 契约腿 `StrategyVersionInput` 
   - **对拍向量**：输入 `s1` / `wasm` / `on_bar/1` / `symbol` / `OnBar` / `x` → `0e6ad53637ce43742804fe325d97b6799372fe03319f1020fc26f0d748d68412`；`TestStrategyVersionInput_MatchesStrategyRepoEncoding` 逐行重建 strategy 侧编码断言同 hex。
   - **破坏验证**：删掉 `Hash()` 里的 `c.Str("source", in.Source)` → `go test ./engine -run 'TestGoldenVector_StrategyVersionHash|TestStrategyVersionInput_MatchesStrategyRepoEncoding|TestStrategyVersionHash_ChangesOnEveryDecidingInput'` **EXIT=1**（三条腿全部点名失败，实际 hex 变 `3112a2e7…`）；逐字节还原后 `engine/provenance.go` 的 `sha256=74E3A4BCEBADB8B002B4C055B8136D2EAF067E1E0AFAA259F79A7A86C9C4A90F` 与改坏前一致，`go test ./engine` 回到 EXIT=0。
 - **⑥ 边界**：只落契约类型、域标签、向量与登记；strategy 仓的本地常量改为本仓别名归 G4 / G13 通知腿；`v0.5.0` 的下游切换与 core 消费不在本仓。版本取 `v0.5.0`（新增导出符号 = MINOR，README 规则表）。
+
+### G4 · 跨仓发版协调：四仓升 pin `v0.5.0` [P0] ✅ 完成（2026-10-24）
+
+> 本单是**跨仓通知腿**：改动落在 core / agent / data / strategy 四仓的 `go.mod` / `go.sum` / `AGENTS.md` §4；本仓只回写兼容矩阵与这条指针，不镜像四仓台账正文。
+
+- **① 目标**：`v0.5.0` 发版后，core / agent / data / strategy 四仓把 `tellurion-contracts` pin 从 `v0.4.0` 升到 `v0.5.0`，并证明 pin 已合入、三侧 conformance 不漂移、矩阵三件套一致。
+- **② 上下文**：本仓 `v0.5.0`（`70d9040`，已 push `origin/main` + tag）；四仓 `go.mod` 实测原 pin 均为 `v0.4.0`；agent 的 `replace tellurion => ../tellurion` 在册（ADR-D31），必须与 core 同批升。
+- **③ 要求（全部落地）**：① 四仓 `go.mod` 升 `v0.5.0` + `go.sum` 同步（`GOPRIVATE=github.com/ruoxizhnya/*` + `GOPROXY=direct`，因 sumdb 对新 tag 尚未收录）；② 四仓 `AGENTS.md` §4 回写版本与说明；③ 跑 `tools/check_contract_pin.py` 与 `tools/check_contract_conformance.py`；④ 本仓 README 兼容矩阵 `v0.5` 行改「已切」。
+- **④ 约束与非目标**：不改四仓业务代码；不删 agent 的 `replace tellurion`（S3 才删）；不把四个仓的本地 commit push 出去（各仓另有未推提交）；不消费 QT-22 新符号（core / strategy 的收编腿另行立项）。
+- **⑤ 验收（真输出）**：
+  - `python tools/check_contract_pin.py` → **GREEN**：6 个 pin 全部是目标仓 `origin/main` 祖先；四仓 pin 实测 `v0.5.0` → `70d90404df46`（2026-10-24）。
+  - `python tools/check_contract_conformance.py` → core 通过 / agent 通过，**通过 2 / 失败 0 / 跳过 0**（语料 33 条 / 9 kind）。
+  - 四仓 `go build ./... && go vet ./... && go test ./... -count=1` → **BUILD/VET/TEST 全 0**（core 78 包、agent 22 包、data 8 包、strategy 6 包）。
+  - `go run ./tools/check_release_matrix` → 矩阵 ↔ CHANGELOG ↔ tag 一致（6 tag）。
+- **⑥ 边界**：只做版本 pin 与登记回写；QT-22 的 core 消费与 strategy 别名收编不在本单。
 
 ### QT-05 · S1 契约层与工具层落地（代码直接写进两个新仓）[P0] 🔶 本仓侧已完成并已推（`fbe9a2d`）；下游腿（③-③④⑤⑦⑨）待 core/agent 执行
 
