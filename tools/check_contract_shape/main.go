@@ -2,14 +2,14 @@
 //
 // 四条红向，缺一条就是假护栏：
 //
-//	命名红 —— domain/ / engine/ / fees/ 里出现导出的 `*Config` / `*Options` / `*Impl` 形状名
+//	命名红 —— domain/ / engine/ / fees/ / dataprotocol/ 里出现导出的 `*Config` / `*Options` / `*Impl` 形状名
 //	          （精确、前缀或后缀，如 TradingConfig / FillOptions / XxxImpl）。裁决见
 //	          docs/adr/0002-config-族的边界处置.md：这两类名字会把部署/实现细节写进契约。
 //	DB 红  —— 任何非测试源文件 import 数据库/驱动包。契约仓没有实现、没有 DB 访问，
 //	          一旦契约包 import 驱动，下游就被迫带上存储依赖。
 //	空扫红 —— 一个 Go 包都没扫到（目录被删空 / 改名）也算红。删掉检查对象让护栏变绿，
 //	          是这类扫描器最常见的失效方式。
-//	缺根红 —— domain/ / engine/ / fees/ 任一目录扫不到非测试 Go 文件同样红：整棵树被搬走
+//	缺根红 —— domain/ / engine/ / fees/ / dataprotocol/ 任一目录扫不到非测试 Go 文件同样红：整棵树被搬走
 //	          时「没扫到命中」与「什么都没扫」必须被区分开。
 //
 // 白名单是显式的、逐符号登记理由的：例外必须先在 ADR 里成立，再写在这里，不许在 commit
@@ -32,7 +32,8 @@ import (
 )
 
 // contractRoots 是三条红线的作用域（目录名，含其子包，如 domain/market）。
-var contractRoots = []string{"domain", "engine", "fees"}
+// 新增契约包必须加进来：不在作用域里的包，「没命中」不等于「干净」。
+var contractRoots = []string{"domain", "engine", "fees", "dataprotocol"}
 
 // ignoredDirs 与 check_api_surface 同口径：夹具与 vendored 代码不是本仓的承诺。
 var ignoredDirs = map[string]bool{
@@ -139,7 +140,7 @@ func run(opts options) error {
 	sort.Strings(red)
 	fmt.Fprintf(opts.out, "契约形状核对：%d 个包 / %d 个非测试文件 ｜ 白名单例外 %d 个\n", len(pkgs), len(files), len(allowedNames))
 	if len(red) == 0 {
-		fmt.Fprintln(opts.out, "✅ 无 *Config/*Options/*Impl 形状名，无 DB/驱动 import，三条契约根目录都在")
+		fmt.Fprintln(opts.out, "✅ 无 *Config/*Options/*Impl 形状名，无 DB/驱动 import，四条契约根目录都在")
 		return nil
 	}
 	for _, r := range red {
@@ -193,7 +194,7 @@ func scanGoFiles(root string) ([]sourceFile, *token.FileSet, error) {
 	return files, fset, nil
 }
 
-// inContractScope 判断目录是否落在 domain/ engine/ fees/ 及其子包里。
+// inContractScope 判断目录是否落在 domain/ engine/ fees/ dataprotocol/ 及其子包里。
 func inContractScope(dir string) bool {
 	for _, root := range contractRoots {
 		if dir == root || strings.HasPrefix(dir, root+"/") {

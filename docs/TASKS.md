@@ -88,7 +88,8 @@ verified-by: QT-40 X1a 契约腿（2026-10-24：新增 `dataprotocol/` 包 —�
   - 验收（真退出码）：`go build ./...` / `go vet ./...` / `go test ./... -count=1` 全 **0**；`check_api_surface` → **465/465**（14 个代码包 / 6 个登记包）；`check_surface_freeze` → 448 行一致；`check_contract_shape` → 绿；`check_release_matrix` → 绿。
   - 破坏验证：把 `DeduplicateKey` 的 `TradeTime.UTC()` 改成 `TradeTime`（去掉时区归一）→ `go test ./dataprotocol -run TestDeduplicateKey_NormalizesToUTC` **EXIT=1**；逐字节还原后 `git diff` 为空、`go test ./dataprotocol` 回 **EXIT=0**。
   - **未随本单落（如实）**：core 删 `pkg/data/source/unified.go` / `pkg/storage/bulk_insert.go` 两份副本、data 镜像改 import、storage 列布局的对表测试 —— 都归各自仓的单；`tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md` §4.1 注 ② 的回写归 core 侧协调者（本仓不改 core 文档）。在那之前三份形状仍并存。
-  - **已知护栏缺口（如实）**：`tools/check_contract_shape` 的 `contractRoots` 仍是 `domain/` / `engine/` / `fees/` 三根，**`dataprotocol/` 今天不在它的命名 / DB 红线上**。纳入要同步改它的夹具与「缺根红」期望（现有一批用例只造三根），属独立工具单，未在本单顺手改——不要以为「四条护栏绿」等于新包也被形状红线覆盖。
+  - ~~**已知护栏缺口（如实）**：`tools/check_contract_shape` 的 `contractRoots` 仍是 `domain/` / `engine/` / `fees/` 三根，**`dataprotocol/` 今天不在它的命名 / DB 红线上**。~~ **已关闭（2026-10-25，独立工具单）**：`contractRoots` 加入 `dataprotocol`（四根），夹具同步 —— 新增「dataprotocol 命名红」用例、「缺根红」期望改为 `fees/、dataprotocol/` 同时缺失，`greenFiles()` 与白名单用例补上第四根。`go test ./tools/check_contract_shape` 全绿；破坏验证见该单施工记录。
+  - **护栏补洞施工记录（2026-10-25，独立工具单）**：`contractRoots` 三根 → 四根（+ `dataprotocol`），工具头部注释 / 成功文案 / `inContractScope` 注释与 `README.md` 的工具说明同步。验收（真退出码）：`gofmt -l tools/check_contract_shape` → 空；`go test ./tools/check_contract_shape -count=1` → **EXIT=0**（11 个子用例全 PASS）；实仓 `go run ./tools/check_contract_shape` → `14 个包 / 43 个非测试文件`、`✅ 四条契约根目录都在`、**EXIT=0**。破坏验证：把 `dataprotocol` 从 `contractRoots` 临时删掉 → 新增的「dataprotocol 命名红」用例报「这条红腿必须报错，却绿了」+「缺根红」咬不到 `dataprotocol/`，**EXIT=1**；逐字节还原后 **EXIT=0**，`git diff` 只剩本单四处改动。
 
 ### G0D · QT-22 / QT-40 X1a / 服务 DTO 三份裁决材料 [P0] ✅ 完成（2026-10-24）
 

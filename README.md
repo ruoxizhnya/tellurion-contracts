@@ -18,7 +18,7 @@
 | `CHANGELOG.md` | 版本账本：每个发版一节，breaking 逐条写明「旧 → 新」 |
 | `tools/check_api_surface/` | 导出面 AST 扫描护栏（`go run ./tools/check_api_surface`） |
 | `tools/check_release_matrix/` | 版本纪律护栏：矩阵 ↔ CHANGELOG ↔ tag 三件套不一致即红（`go run ./tools/check_release_matrix`） |
-| `tools/check_contract_shape/` | 契约形状护栏：`domain/` `engine/` `fees/` 出现 `*Config`/`*Options`/`*Impl` 形状名或任何 DB/驱动 import 即红（`go run ./tools/check_contract_shape`；例外只认 [`adr/0002`](docs/adr/0002-config-族的边界处置.md) 登记的那几个） |
+| `tools/check_contract_shape/` | 契约形状护栏：`domain/` `engine/` `fees/` `dataprotocol/` 出现 `*Config`/`*Options`/`*Impl` 形状名或任何 DB/驱动 import 即红（`go run ./tools/check_contract_shape`；例外只认 [`adr/0002`](docs/adr/0002-config-族的边界处置.md) 登记的那几个） |
 | `tools/check_surface_freeze/` | 导出面签名冻结护栏：形状指纹与 `docs/api-surface.txt` 任何一行增删改即红（`go run ./tools/check_surface_freeze`；`-update` 重生成基线） |
 | `tools/check_pr_body/` | PR 模板必填段核对（仅 `pull_request` 事件，CI 用 `if:` 控制） |
 | `examples/` | 跨仓 port 的**最小可编译用法**（`market.Provider` / `EngineRunner`），只演示调用形状、不进导出面；清单见 `examples/README.md` |
