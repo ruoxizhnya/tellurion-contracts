@@ -81,7 +81,7 @@ go run ./tools/check_pr_body          # 仅 PR 事件用（stdin 传 PR 正文�
 <!-- matrix:begin -->
 | 契约版本 | 状态 | 支持的 core（`tellurion`） | 支持的 agent（`tellurion-agent`） |
 |---|---|---|---|
-| `v0.6` | 已打 tag（2026-10-24，**待 push**；push 后 `go get` 才可取）；下游**尚未切 pin** —— `dataprotocol` 今天无 core / agent 消费点 | 待切（core 删 `pkg/data/source/unified.go` / `pkg/storage/bulk_insert.go` 两份副本并改 import，归 core 单） | 未切（无消费点；`replace tellurion` 在册不改） |
+| `v0.6` | 已发版（2026-10-24，`main` + tag 已于 2026-10-25 推远端）；下游**尚未切 pin** —— `dataprotocol` 今天无 core / agent 消费点 | 待切（core 删 `pkg/data/source/unified.go` / `pkg/storage/bulk_insert.go` 两份副本并改 import，归 core 单） | 未切（无消费点；`replace tellurion` 在册不改） |
 | `v0.5` | 已发版（2026-10-24）；core / agent / data / strategy **四仓已切**（G4，2026-10-24 实测；agent 的 `replace tellurion` 在册期间与 core 同批升） | 已切 `v0.5.0`（`go.mod` 实测；QT-22 新增符号，core 暂无消费点） | 已切 `v0.5.0`（`go.mod` 实测；`replace tellurion` 在册不改） |
 | `v0.4` | 已发版（2026-10-24） | 已切 `v0.4.0`（G13，2026-10-24 实测；QT-20 的请求字段消费属 core G1，QT-41b 的错误族消费属 strategy 仓） | 已切 `v0.4.0`（G13 同批切，2026-10-24 实测；`replace tellurion` 在册期间与 core 同批升） |
 | `v0.3` | 已发版（2026-10-23） | 已切 `v0.3.0`（core `go.mod` 2026-10-24 实测） | 已切 `v0.3.0`（agent `go.mod` 2026-10-24 实测；`replace tellurion` 在册不改） |
