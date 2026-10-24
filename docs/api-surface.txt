@@ -266,6 +266,7 @@ engine/DomainDatasetSnapshotHash = "tellurion.dataset_snapshot_hash.v1"
 engine/DomainParamsHash = "tellurion.params_hash.v1"
 engine/DomainRunIdentityHash = "tellurion.run_identity_hash.v1"
 engine/DomainRunSpecHash = "tellurion.run_spec_hash.v1"
+engine/DomainStrategyVersionHash = "tellurion.strategy_version_hash.v1"
 engine/DomainUniverseHash = "tellurion.universe_hash.v1"
 engine/EmitSource uint8
 engine/EmitSource.String() string
@@ -404,6 +405,9 @@ engine/StrategyRef.String() string
 engine/StrategyRefSeparator = "@"
 engine/StrategyScope string
 engine/StrategyScope.Valid() bool
+engine/StrategyVersionInput struct{StrategyID string; Carrier string; ABIVersion string; Scope StrategyScope; Entry string; Source string}
+engine/StrategyVersionInput.Hash() (string, error)
+engine/StrategyVersionInput.MustHash() string
 engine/TradingConfig struct{StampTaxRate float64; StampTaxRateBefore float64; MinCommission float64; TransferFeeRate float64; PriceLimit PriceLimitConfig; NewStockDays int}
 engine/TradingConfig.WithDefaults() TradingConfig
 engine/TradingDaysPerYear = 252

@@ -40,6 +40,61 @@ func ArtifactHash(bytes []byte) string {
 	return sha256Hex(bytes)
 }
 
+// ─── version_hash：源码版本的人读标签 ──────────────────────────
+
+// StrategyVersionInput 是 version_hash 的**全部**决定性输入（QT-22 冻结的六项）。
+//
+// 集合已裁死，不许就地加项：
+//   - `strategy_id`：内容寻址的第一维，改 id = 新资产。
+//   - `carrier`：wasm / so / builtin 决定装载路径，换载体语义必变。
+//   - `abi_version`：host ABI 是执行语义的一部分（on_bar/1 vs /2）。
+//   - `scope`：同源码 market / symbol 行为不同。
+//   - `entry`：入口函数名换 = 不同字节语义。
+//   - `source`：源码本体；ArtifactHash 只覆盖编译产物，源码版本身份靠它。
+//
+// 刻意**不含** `capability`：它只参与市场路由，不改变源码语义；给同一份源码补一个
+// 能力声明不该变成新版本（否则产物字节没变却要重新 promote —— 错误方向）。
+// 也**不含** `params_defaults`：资产服务今天没有这个字段（零生产者），把空对象
+// 塞进 v1 只会让所有调用方传同一个空值；要加必须升 `v2` 域标签并走双标签过渡。
+//
+// ⚠️ 本类型与 `tellurion-strategy:internal/asset/hash.go` 的 `VersionInput`
+// **逐字段、逐顺序一致**（`Carrier` 在那边是命名类型，这里用其底层 string 承载；
+// 值域由资产服务校验），两个仓必须算出同一个 hex（对拍腿在
+// provenance_vector_test.go 的 TestStrategyVersionInput_MatchesStrategyRepoEncoding
+// 与固定向量）。
+type StrategyVersionInput struct {
+	StrategyID string
+	Carrier    string // "wasm" / "so" / "builtin" / "dsl" / "external"
+	ABIVersion string // "on_bar/1" / "on_bar/2"
+	Scope      StrategyScope
+	Entry      string
+	Source     string
+}
+
+// Hash 产出 version_hash。
+//
+// 全字段是字符串，编码不可能失败；仍返回 error 是为了与 RunSpecInput.Hash 同一
+// 调用形状，避免调用点各自写两套判错逻辑。
+func (in StrategyVersionInput) Hash() (string, error) {
+	c := NewCanonical(DomainStrategyVersionHash)
+	c.Str("strategy_id", in.StrategyID)
+	c.Str("carrier", in.Carrier)
+	c.Str("abi_version", in.ABIVersion)
+	c.Str("scope", string(in.Scope))
+	c.Str("entry", in.Entry)
+	c.Str("source", in.Source)
+	return c.Hex()
+}
+
+// MustHash 是给「输入已由上层校验过」的调用点用的便捷出口。
+func (in StrategyVersionInput) MustHash() string {
+	hex, err := in.Hash()
+	if err != nil {
+		panic(fmt.Sprintf("contracts: strategy_version_hash: %v", err))
+	}
+	return hex
+}
+
 // ─── 分量 hash：universe / calendar / 复权锚点 ──────────────────
 
 // UniverseHash 是票池**集合**的指纹（排序 + 去重后编码）。

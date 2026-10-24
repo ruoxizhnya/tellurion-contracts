@@ -6,7 +6,7 @@
 
 跨仓唯一缝隙：**port 接口 · DTO/值对象（含 domain）· 四个引擎契约 · 哨兵错误 · abi 常量**。所有跨边界的东西只能住这里。
 
-**状态**：S1 落代码已完成并已推（QT-05 ③-①，2026-10-22：`fees` / `domain/market` / `domain` / `engine` 四包、429 个导出符号）／2026-10-23 一天四版：`v0.1.0`（QT-07 首版）→ `v0.1.1`（把 `conformance/` 语料打进 tag）→ `v0.2.0`（429→435）→ `v0.3.0`（435→439，QT-10 三类执行错误哨兵）／`v0.4.0`（2026-10-24：QT-20 参数投递入口 `StrategyRef`/`StrategyParams` + `BacktestParams.Params`；QT-41b ④ 编译 / 资产四哨兵；439→443）——core / agent / data 已于 2026-10-24 由 **G13** 切至 `v0.4.0`（strategy 同日更早切；矩阵 `v0.4` 行已回写「已切」）
+**状态**：S1 落代码已完成并已推（QT-05 ③-①，2026-10-22：`fees` / `domain/market` / `domain` / `engine` 四包、429 个导出符号）／2026-10-23 一天四版：`v0.1.0`（QT-07 首版）→ `v0.1.1`（把 `conformance/` 语料打进 tag）→ `v0.2.0`（429→435）→ `v0.3.0`（435→439，QT-10 三类执行错误哨兵）／`v0.4.0`（2026-10-24：QT-20 参数投递入口 `StrategyRef`/`StrategyParams` + `BacktestParams.Params`；QT-41b ④ 编译 / 资产四哨兵；439→443）／`v0.5.0`（2026-10-24：QT-22 `version_hash` canonical 六项 `StrategyVersionInput` + `DomainStrategyVersionHash`；443→447）——core / agent 已于 2026-10-24 由 **G13** 切至 `v0.4.0`（strategy 同日更早切；矩阵 `v0.4` 行已回写「已切」；`v0.5.0` 的下游切换归同一通知腿，矩阵 `v0.5` 行如实标「待切」）
 
 ## 2. 构建 / 测试（必须单仓可跑）
 

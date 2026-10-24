@@ -51,6 +51,12 @@ const (
 	// 前者要能单独回答「参数是不是同一组」，两者混用会让「只比参数」的查询
 	// 误命中一批换了区间/票池的 run。
 	DomainParamsHash = "tellurion.params_hash.v1"
+	// DomainStrategyVersionHash 是 QT-22 冻结的 version_hash 域：策略源码版本的
+	// 人读标签，覆盖 {strategy_id, carrier, abi_version, scope, entry, source}
+	// 六项（见 StrategyVersionInput）。升版本 = 所有历史 version_hash 失效，
+	// 而 version_hash 同时是策略资产四张表的主键 / 唯一键 / 外键与 run_spec_hash
+	// 的分量 —— v2 必须走双标签过渡，不能就地改。
+	DomainStrategyVersionHash = "tellurion.strategy_version_hash.v1"
 	// DomainRunIdentityHash 是 QT-16 检查点身份的域：run_identity_hash 覆盖
 	// {run_universe_hash, scope, shard_key, param_effective_hash} 四分量（复合
 	// 身份，能回答「这份检查点字节属于哪个实例」）。与 DomainUniverseHash /

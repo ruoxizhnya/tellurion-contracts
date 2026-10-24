@@ -104,6 +104,7 @@ host API 的 abi 版本、内存区所有权、枚举上限。冻结集合是 **
 | `run_spec_hash` | 策略 + 参数 + 区间 + 票池 + 引擎配置 |
 | `dataset_snapshot_hash` | 票池 + 窗口 + 频率 + 数据版本 |
 | `artifact_hash` | 策略字节码本体 |
+| `version_hash` | 策略**源码版本**（QT-22：`strategy_id` + `carrier` + `abi_version` + `scope` + `entry` + `source` 六项，域 `tellurion.strategy_version_hash.v1`）。**不是**字节码身份（那是 `artifact_hash`），也不含 `capability` / `params_defaults` |
 
 ## 4. 版本与兼容
 

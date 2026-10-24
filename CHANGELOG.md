@@ -9,6 +9,33 @@
 
 （暂无）
 
+## [v0.5.0] - 2026-10-24
+
+MINOR 发版：QT-22 把 `version_hash` 的 canonical 集合收进契约（**只增不改**），导出面 443 → 447
+（+4：1 个 frozen `const` + 1 个 `type` + 2 个方法），冻结基线 426 → 430 行（`git diff --numstat` 实测 +4 / −0）。
+无破坏性变更；既有六条域标签与 `run_spec_hash` / `dataset_snapshot_hash` 的编码一字未动。
+
+### 新增（MINOR 级：加导出符号）
+
+- **QT-22 契约腿（2026-10-24）**：`engine/provenance.go` 增 `StrategyVersionInput`（六字段
+  `StrategyID` / `Carrier` / `ABIVersion` / `Scope` / `Entry` / `Source`）+ `Hash()` / `MustHash()`；
+  `engine/canonical.go` 增 `DomainStrategyVersionHash = "tellurion.strategy_version_hash.v1"`。
+  - **集合已裁死，不许就地改**：`strategy_id + carrier + abi_version + scope + entry + source`。
+    **不含** `capability`（只参与市场路由，不改变源码语义）；**不含** `params_defaults`
+    （资产服务今天没有该字段，零生产者；要进必须升 `v2` 域标签并走双标签过渡）。
+  - **不复用 `DomainParamsHash`**：`params_hash` 是生效参数指纹，`version_hash` 是源码版本身份；
+    同域会让「只比参数」的查询误命中换了源码版本的资产。
+  - **与 `tellurion-strategy` 对拍**：`StrategyVersionInput` 与
+    `tellurion-strategy:internal/asset/hash.go` 的 `VersionInput` **逐字段、逐顺序一致**；
+    `TestStrategyVersionInput_MatchesStrategyRepoEncoding` 逐行重建 strategy 侧编码并断言同 hex，
+    `TestGoldenVector_StrategyVersionHash` 钉住固定向量
+    `0e6ad53637ce43742804fe325d97b6799372fe03319f1020fc26f0d748d68412`（输入：`s1` / `wasm` /
+    `on_bar/1` / `symbol` / `OnBar` / `x`）。
+  - **未随本单落（如实）**：`tellurion-strategy` 侧把本地 `DomainStrategyVersionHash` / `VersionInput`
+    改为本仓别名（资产服务收编腿归 G4 / G13 通知腿）；`params_defaults` 的 `v2` 立项条件见
+    [`docs/design/qt22-version-hash-decision-material.md`](docs/design/qt22-version-hash-decision-material.md) §3。
+    本仓只交付 canonical 定义、向量与登记，**不改 core/strategy 源码**。
+
 ## [v0.4.0] - 2026-10-24
 
 MINOR 发版：两笔**只增不改**的契约腿（QT-20 参数投递入口 + QT-41b ④ 编译 / 资产错误族），导出面 439 → 443（+4 哨兵 `var`；两个结构体各 +1 可选字段，字段不计符号数），冻结基线 422 → 426 行（`git diff --numstat` 实测 +4 / −2：两条 struct 行因字段增加而改写）。无破坏性变更；`SignalWeight` / `ResultSpec` 冻结面一字未动。

@@ -484,3 +484,113 @@ func TestGoldenVector_ParamsHash(t *testing.T) {
 	assert.Equal(t, "bd6c02a8a0eae3a920d4c7f02553e59871a65da8c97106fc5ddfcaa0ebbff495", golden,
 		"params_hash 黄金向量变了 —— 编码漂移会让全部历史参数留痕失效")
 }
+
+// ─── version_hash（QT-22 六项冻结）──────────────────────────
+
+func baselineStrategyVersion() StrategyVersionInput {
+	return StrategyVersionInput{
+		StrategyID: "s1",
+		Carrier:    "wasm",
+		ABIVersion: "on_bar/1",
+		Scope:      ScopeSymbol,
+		Entry:      "OnBar",
+		Source:     "x",
+	}
+}
+
+func mustVersionHash(t *testing.T, in StrategyVersionInput) string {
+	t.Helper()
+	h, err := in.Hash()
+	require.NoError(t, err)
+	require.Len(t, h, 64)
+	return h
+}
+
+// TestStrategyVersionHash_ChangesOnEveryDecidingInput 是「六项缺一不可」的验收腿。
+//
+// 集合是 QT-22 裁死的：多一项（capability / params_defaults）等于换了语义，
+// 必须走 v2；少一项等于某个变化不会被任何留痕发现。
+func TestStrategyVersionHash_ChangesOnEveryDecidingInput(t *testing.T) {
+	base := mustVersionHash(t, baselineStrategyVersion())
+
+	mutations := []struct {
+		name string
+		mut  func(*StrategyVersionInput)
+	}{
+		{"strategy_id", func(in *StrategyVersionInput) { in.StrategyID = "s2" }},
+		{"carrier", func(in *StrategyVersionInput) { in.Carrier = "so" }},
+		{"abi_version", func(in *StrategyVersionInput) { in.ABIVersion = "on_bar/2" }},
+		{"scope", func(in *StrategyVersionInput) { in.Scope = ScopeMarket }},
+		{"entry", func(in *StrategyVersionInput) { in.Entry = "OnBar2" }},
+		{"source", func(in *StrategyVersionInput) { in.Source = "package strategy // x" }},
+	}
+	require.Len(t, mutations, 6, "QT-22 冻结的六项必须全部在册")
+
+	for _, tc := range mutations {
+		t.Run(tc.name, func(t *testing.T) {
+			mutated := baselineStrategyVersion()
+			tc.mut(&mutated)
+			assert.NotEqual(t, base, mustVersionHash(t, mutated),
+				"改了 version_hash 的决定性输入而 hash 不变 = 版本锁不住源码")
+		})
+	}
+}
+
+// TestStrategyVersionHash_StableForEquivalentInputs：同一份输入重算两次必须同值。
+func TestStrategyVersionHash_StableForEquivalentInputs(t *testing.T) {
+	assert.Equal(t, mustVersionHash(t, baselineStrategyVersion()), mustVersionHash(t, baselineStrategyVersion()))
+}
+
+// TestStrategyVersionHash_DomainIsNotReused 钉住「不复用 DomainParamsHash」，
+// 并把它与其余域分开：域标签相同会让两个不同语义的 hash 互相冒充。
+func TestStrategyVersionHash_DomainIsNotReused(t *testing.T) {
+	assert.Equal(t, "tellurion.strategy_version_hash.v1", DomainStrategyVersionHash)
+
+	for _, other := range []string{
+		DomainParamsHash,
+		DomainRunSpecHash,
+		DomainDatasetSnapshotHash,
+		DomainUniverseHash,
+		DomainCalendarHash,
+		DomainAnchorDigestsHash,
+		DomainRunIdentityHash,
+	} {
+		assert.NotEqual(t, other, DomainStrategyVersionHash, "version_hash 必须有自己的域标签")
+	}
+
+	// 同样的值编进两个域必须得到两个 hash（域混淆腿的最小形态）。
+	in := baselineStrategyVersion()
+	params := NewCanonical(DomainParamsHash).Str("strategy_id", in.StrategyID).MustHex()
+	assert.NotEqual(t, in.MustHash(), params)
+}
+
+// TestStrategyVersionInput_MatchesStrategyRepoEncoding 是跨仓对拍腿。
+//
+// 本仓不能 import `tellurion-strategy`（契约仓不许反向依赖实现），所以这里把
+// `tellurion-strategy:internal/asset/hash.go` 的编码**逐行重建**一遍：同样的域
+// 标签、同样的字段名、同样的写入顺序。任何一处漂移（字段顺序、多一项、少一项、
+// 域标签变体）都会让两条 hex 分叉。
+func TestStrategyVersionInput_MatchesStrategyRepoEncoding(t *testing.T) {
+	in := baselineStrategyVersion()
+
+	// 与 strategy 仓 VersionHash 的 canonical 段逐行等价。
+	strategySide := NewCanonical("tellurion.strategy_version_hash.v1")
+	strategySide.Str("strategy_id", in.StrategyID)
+	strategySide.Str("carrier", in.Carrier)
+	strategySide.Str("abi_version", in.ABIVersion)
+	strategySide.Str("scope", string(in.Scope))
+	strategySide.Str("entry", in.Entry)
+	strategySide.Str("source", in.Source)
+
+	assert.Equal(t, strategySide.MustHex(), in.MustHash(),
+		"contracts 与 strategy 仓的 version_hash 必须逐字节相同（字段/顺序/域标签）")
+}
+
+// TestGoldenVector_StrategyVersionHash 把版本的最终值是写死成字面量。
+//
+// 改它 = 宣布所有历史 version_hash 作废（它是策略资产四张表的键，还折进
+// run_spec_hash），必须走一次显式发布 + 双标签过渡，不能靠「重新跑一遍」。
+func TestGoldenVector_StrategyVersionHash(t *testing.T) {
+	assert.Equal(t, "0e6ad53637ce43742804fe325d97b6799372fe03319f1020fc26f0d748d68412", baselineStrategyVersion().MustHash(),
+		"version_hash 黄金向量变了 —— 编码漂移会让全部历史版本留痕失效")
+}

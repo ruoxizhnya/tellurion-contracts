@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-10-24
-verified-by: QT-20 契约腿（2026-10-24：`BacktestRequest` 增可选 `StrategyRef`（wire 形态 = `ParseStrategyRef`/`String()` 的 `id`/`id@hash`）与 `StrategyParams`（浅层对象，嵌套键在 `ValidateRunSpec` 拒绝）；`domain.BacktestParams` 增生效参数 `Params`（对齐 core `RunMeta.Params`）；未知键清单不复制进本仓，归 core manifest（J2）；导出符号数不变 439，冻结基线 +2 行字段形状）；QT-41b ④ 错误族契约腿（2026-10-24：`ErrCompileFailed`/`ErrCompileUnavailable`/`ErrSourceTooLarge`/`ErrArtifactTooLarge` 四哨兵迁入 `engine/execution_errors.go`，名字语义不改，资产服务私有哨兵不迁；导出面 439 → 443）；QT-10 ③-① 契约腿（2026-10-23：三类执行错误哨兵 `ErrDataGap`/`ErrStrategyFault`/`ErrContractBreach` 落 `engine/execution_errors.go` + `CodeDataGapSkipped` 落 `engine/validity.go`）；QT-05 ③-① 本仓侧落码完成（`fees` 13 + `domain/market` 46 + `domain` 176 + `engine` 194 = 429 个符号当时已登记）；§8 待裁 #1（errors//abi/，ADR-0003）、#2（`*Config` 族，ADR-0002）、#3（fees 整包）均已裁决；#4（dataprotocol 时机）已登记为 X1a 待办（2026-10-22 推送回写：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）
+verified-by: QT-22 契约腿（2026-10-24：`engine/provenance.go` 增 `StrategyVersionInput` 六字段 + `Hash()`/`MustHash()`，`engine/canonical.go` 增 `DomainStrategyVersionHash` = `tellurion.strategy_version_hash.v1`；集合 = `strategy_id + carrier + abi_version + scope + entry + source`，**不含** `capability`、**不含** `params_defaults`（后者若进必须升 v2）；导出面 443 → 447，冻结基线同步 +4 行）；QT-20 契约腿（2026-10-24：`BacktestRequest` 增可选 `StrategyRef`（wire 形态 = `ParseStrategyRef`/`String()` 的 `id`/`id@hash`）与 `StrategyParams`（浅层对象，嵌套键在 `ValidateRunSpec` 拒绝）；`domain.BacktestParams` 增生效参数 `Params`（对齐 core `RunMeta.Params`）；未知键清单不复制进本仓，归 core manifest（J2）；导出符号数不变 439，冻结基线 +2 行字段形状）；QT-41b ④ 错误族契约腿（2026-10-24：`ErrCompileFailed`/`ErrCompileUnavailable`/`ErrSourceTooLarge`/`ErrArtifactTooLarge` 四哨兵迁入 `engine/execution_errors.go`，名字语义不改，资产服务私有哨兵不迁；导出面 439 → 443）；QT-10 ③-① 契约腿（2026-10-23：三类执行错误哨兵 `ErrDataGap`/`ErrStrategyFault`/`ErrContractBreach` 落 `engine/execution_errors.go` + `CodeDataGapSkipped` 落 `engine/validity.go`）；QT-05 ③-① 本仓侧落码完成（`fees` 13 + `domain/market` 46 + `domain` 176 + `engine` 194 = 429 个符号当时已登记）；§8 待裁 #1（errors//abi/，ADR-0003）、#2（`*Config` 族，ADR-0002）、#3（fees 整包）均已裁决；#4（dataprotocol 时机）已登记为 X1a 待办（2026-10-22 推送回写：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）
 ---
 
 # API — 导出面规格（本仓有哪些符号、各自稳不稳定、错了怎么判）
@@ -11,7 +11,7 @@ verified-by: QT-20 契约腿（2026-10-24：`BacktestRequest` 增可选 `Strateg
 > 符号级冲突以本文件为准（它由 CI 核对，`api-schema.md` 不核对符号名）；规则级冲突以 `api-schema.md` 为准。
 >
 > **现状口径（开工前必读）**：本仓的**库代码已全部落地**（QT-05 ③-①，2026-10-22）：`fees/`、`domain/market/`、`domain/`、`engine/` 四个包，
-> 429 个导出符号全部登记在 §4。`tools/` 下的命令是 `package main`，不计入导出面。
+> 447 个导出符号全部登记在 §4（QT-22 后，2026-10-24）。`tools/` 下的命令是 `package main`，不计入导出面。
 > **§5~§7 已从「目标面快照」变成「现行规格」**——它们的符号今天都在 §4 的登记表里，本节只是把冻结面 / 语义讲透。
 > ✅ **下游今天已可 `import` 本仓**：6 个 commit 已于 2026-10-22 推到 `origin/main`（该批 HEAD `fbe9a2d`；仓外空模块里 `go get github.com/ruoxizhnya/tellurion-contracts@fbe9a2d` 实测解析为 `v0.0.0-20261022191510-fbe9a2d0df17`）。
 > ⚠️ core / agent 切依赖那条腿（③-③④⑤⑦⑨）由下游仓执行；在它落地前，core 仍用自己那份 `pkg/domain` / `pkg/backtest/contracts`（双份真相窗口，见 `docs/ARCHITECTURE.md` §8）。
@@ -485,6 +485,7 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `DomainCalendarHash` | const | **frozen** | `"tellurion.calendar_hash.v1"` |
 | `DomainAnchorDigestsHash` | const | **frozen** | `"tellurion.adjustment_anchor_digests.v1"` |
 | `DomainParamsHash` | const | **frozen** | `"tellurion.params_hash.v1"`：**生效参数**的独立指纹，与 `run_spec_hash` 里那份**不同域**（只比参数时别误命中换了区间/票池的 run） |
+| `DomainStrategyVersionHash` | const | **frozen** | `"tellurion.strategy_version_hash.v1"`（QT-22）：`version_hash` 的域标签，覆盖**六项** `strategy_id` + `carrier` + `abi_version` + `scope` + `entry` + `source`。与 `DomainParamsHash` **不同域，禁止复用**。改标签 = 所有历史 version_hash 失效（它同时是策略资产四张表的键与 `run_spec_hash` 的分量）⇒ 加项必须升 `v2` 并走双标签过渡；`capability` / `params_defaults` **不在集合内** |
 | `DomainRunIdentityHash` | const | **frozen** | `"tellurion.run_identity_hash.v1"`（QT-16）：检查点身份复合域，覆盖 `{run_universe_hash, scope, shard_key, param_effective_hash}` 四分量；计算函数在 core `pkg/strategy`（消费方只有 core，不进本仓） |
 | `ArtifactHash` | func | stable | 字节码 sha256（hex），**刻意不加域标签**：要能被编译服务 / 缓存 / 外部工具独立算出且逐字节相同（内容寻址）。执行与结果以它为真相（N7） |
 | `UniverseHash` | func | stable | 票池**集合**指纹（排序 + 去重）：`["A","B"]` 与 `["B","A"]` 同 hash |
@@ -497,6 +498,9 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `RunSpecInput.Hash` | method | **frozen** | 产出 `run_spec_hash`；不可编码的值返回错误而**不是跳过字段**（跳过的字段改了也不变 hash = 会撒谎的留痕） |
 | `RunSpecInput.MustHash` | method | stable | 已证明可编码时用；错误 → panic |
 | `ParamsHash` | func | stable | 生效参数指纹（QT-63 的 `params_hash` 列） |
+| `StrategyVersionInput` | type | stable | QT-22：`version_hash` 的**全部决定性输入**，六字段 `StrategyID` / `Carrier` / `ABIVersion` / `Scope`（`StrategyScope`）/ `Entry` / `Source`。与 `tellurion-strategy:internal/asset/hash.go` 的 `VersionInput` **逐字段同序**（两仓同输入必须同 hex）。形状稳定；**加字段 = 换语义 = 升 `v2`**（0.x 阶段按破坏性留账） |
+| `StrategyVersionInput.Hash` | method | stable | 产出 `version_hash`（`DomainStrategyVersionHash` 域）；全字段字符串，编码不会失败，但仍返回 error 以统一调用形状 |
+| `StrategyVersionInput.MustHash` | method | stable | 已证明可编码时用；错误 → panic（与 `RunSpecInput.MustHash` 同型） |
 | `StrategyRef` | type | stable | 策略引用（`name@hash` 形态；`Hash=""` = 最新） |
 | `StrategyRef.IsLatest` | method | stable | `Hash == ""` → true |
 | `StrategyRef.String` | method | stable | 还原 `name@hash` |

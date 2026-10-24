@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-10-24
-verified-by: G0 执行组（2026-10-24：QT-20 契约腿 + QT-41b ④ 错误族，`v0.4.0` 已发；施工记录见「一、本仓任务」）+ G0D 裁决材料（QT-22 / QT-40 X1a / 服务 DTO 三份，只出材料、0 代码）；QT-09 本仓侧交接（2026-10-23：② examples/ + ③ conformance 语料与契约侧自检腿 + ④ PR 模板/check_pr_body + ⑤ check_contract_shape + surface 冻结 check_surface_freeze/api-surface.txt，全部接进 CI；三条工具另补表驱动单测）；QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；推送回写（2026-10-22：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`，`go get` 实测可解析，CI 429/429；§8 #4 登记为 X1a 待办）
+verified-by: G2 执行组（2026-10-24：QT-22 契约腿 `StrategyVersionInput` 六项 + `DomainStrategyVersionHash`，`v0.5.0` 已发版；施工记录见「一、本仓任务」）+ G0 执行组（2026-10-24：QT-20 契约腿 + QT-41b ④ 错误族，`v0.4.0` 已发；施工记录见「一、本仓任务」）+ G0D 裁决材料（QT-22 / QT-40 X1a / 服务 DTO 三份，只出材料、0 代码）；QT-09 本仓侧交接（2026-10-23：② examples/ + ③ conformance 语料与契约侧自检腿 + ④ PR 模板/check_pr_body + ⑤ check_contract_shape + surface 冻结 check_surface_freeze/api-surface.txt，全部接进 CI；三条工具另补表驱动单测）；QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；推送回写（2026-10-22：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`，`go get` 实测可解析，CI 429/429；§8 #4 登记为 X1a 待办）
 ---
 
 # TASKS — tellurion-contracts 未完成项
@@ -88,6 +88,19 @@ verified-by: G0 执行组（2026-10-24：QT-20 契约腿 + QT-41b ④ 错误族�
 - **④ 约束与非目标**：不落 `StrategyVersionInput` / `dataprotocol` / 任何服务 DTO；不复用 `DomainParamsHash`；不改其他仓。
 - **⑤ 验收**：三份材料均在 `docs/design/`；每条结论带 `repo:path:line`；**本单 0 个 `.go` diff**（提交只含 `docs/`，可用 `git show --stat` 复核）。
 - **⑥ 边界**：只出材料。拍板与代码落点分别归 G1（core）、G4（strategy）、X1a 协调者、各服务仓协调者；分发对象 = G1 / G4 / G5 / G6 / G7。
+
+### QT-22 契约腿 · `version_hash` canonical 六项 + `v0.5.0` [P0] ✅ 完成（2026-10-24）
+
+> 派工来自 G2；本文只记本仓（contracts）侧。strategy 仓的别名切换与 core 的消费不在本单。
+
+- **① 目标**：把 `version_hash` 的 canonical 集合收进契约并冻结，新增 `StrategyVersionInput` / `DomainStrategyVersionHash`，使 contracts 与 strategy 两仓对同一输入算出同一个 hex。
+- **② 上下文**：`engine/provenance.go`（QT-03 三 hash 的唯一正文）、`engine/canonical.go`（域标签）、`tellurion-strategy:internal/asset/hash.go:32-79`（本地 `DomainStrategyVersionHash` + `VersionInput` + `VersionHash` 的六项编码）、裁决材料 [`design/qt22-version-hash-decision-material.md`](design/qt22-version-hash-decision-material.md)。
+- **③ 要求（全部落地）**：① `StrategyVersionInput` 六字段 `StrategyID` / `Carrier` / `ABIVersion` / `Scope`（`StrategyScope`）/ `Entry` / `Source` + `Hash()` / `MustHash()`；② `DomainStrategyVersionHash = "tellurion.strategy_version_hash.v1"`；③ 集合**不含** `capability`、**不含** `params_defaults`；④ 与 strategy 仓 `VersionInput` 逐字段同序并钉固定向量；⑤ 登记 `docs/API.md` §4 + `docs/api-surface.txt` + `CHANGELOG.md` + README 兼容矩阵 + `v0.5.0` tag。
+- **④ 约束与非目标**：不复用 `DomainParamsHash`；不改 core / strategy 源码；不发 PATCH 级 tag；`params_defaults` 若要进必须升 `v2`（双标签过渡），本单不落。
+- **⑤ 验收（真退出码）**：`go build ./... && go vet ./... && go test ./... -count=1` → **EXIT=0**（13 个包全绿，含 `go test ./conformance`）；`go run ./tools/check_api_surface` → 447/447；`go run ./tools/check_surface_freeze` → 430 行一致（426 → 430，本单 +4）；`go run ./tools/check_release_matrix` → EXIT=0；`go run ./tools/check_contract_shape` → 绿。
+  - **对拍向量**：输入 `s1` / `wasm` / `on_bar/1` / `symbol` / `OnBar` / `x` → `0e6ad53637ce43742804fe325d97b6799372fe03319f1020fc26f0d748d68412`；`TestStrategyVersionInput_MatchesStrategyRepoEncoding` 逐行重建 strategy 侧编码断言同 hex。
+  - **破坏验证**：删掉 `Hash()` 里的 `c.Str("source", in.Source)` → `go test ./engine -run 'TestGoldenVector_StrategyVersionHash|TestStrategyVersionInput_MatchesStrategyRepoEncoding|TestStrategyVersionHash_ChangesOnEveryDecidingInput'` **EXIT=1**（三条腿全部点名失败，实际 hex 变 `3112a2e7…`）；逐字节还原后 `engine/provenance.go` 的 `sha256=74E3A4BCEBADB8B002B4C055B8136D2EAF067E1E0AFAA259F79A7A86C9C4A90F` 与改坏前一致，`go test ./engine` 回到 EXIT=0。
+- **⑥ 边界**：只落契约类型、域标签、向量与登记；strategy 仓的本地常量改为本仓别名归 G4 / G13 通知腿；`v0.5.0` 的下游切换与 core 消费不在本仓。版本取 `v0.5.0`（新增导出符号 = MINOR，README 规则表）。
 
 ### QT-05 · S1 契约层与工具层落地（代码直接写进两个新仓）[P0] 🔶 本仓侧已完成并已推（`fbe9a2d`）；下游腿（③-③④⑤⑦⑨）待 core/agent 执行
 
