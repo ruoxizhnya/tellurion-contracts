@@ -8,6 +8,8 @@ verified-by: QT-40 X1a 契约腿（2026-10-24：新增 `dataprotocol/` 包 —�
 
 > 本仓**唯一**任务台账。跨仓任务只在 §二 留指针，**不镜像正文**（双写必然漂移）。
 > 状态：`⬜ 待做` / `🔶 进行中` / `⛔ 阻塞（有未解除前置）` / `✅ 完成（附日期）`
+
+> **第三轮裁决指针（2026-10-25）**：② risk 快照迁 contracts = **新建 `risk` 包**，迁 `Snapshot` / `SnapshotRule` / `Scope` / `RuleType` + 冻结词表 + hash 纯函数 + 4 个哨兵；`Bundle` / `ParseBundle` / `ForScope` 不迁；**编码逐字节搬运，禁止换 Canonical**；必须带固定向量 + 与 risk 仓的对拍腿。建议发 MINOR（`v0.7.0`）。正文见 `tellurion:docs/design/qt-decoupling/cross-repo-decision-record-2026-10-25.md` §五。
 > 每张单六字段（① 目标 ② 上下文 ③ 要求 ④ 约束与非目标 ⑤ 验收 ⑥ 边界），判据见 `tellurion:AGENTS.md` §8.5。
 > 完成即标 ✅（附日期）并移入 `docs/archive/TASKS-YYYY-MM-DD-archived.md`；本文件只留未完成项。
 
