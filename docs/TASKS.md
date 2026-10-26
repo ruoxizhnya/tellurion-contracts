@@ -1,7 +1,7 @@
 ---
 status: active
-last-verified: 2026-10-24
-verified-by: QT-40 X1a 契约腿（2026-10-24：新增 `dataprotocol/` 包 —— `UnifiedDataPoint` 七字段（含 `VisibleAt`）+ `ToJSON`/`DeduplicateKey` + 15 个 `DataType*` 常量；无构造器、不读时钟；`v0.6.0` 已打 tag（**待 push**）；施工记录见「一、本仓任务」）+ G4 执行组（2026-10-24：core / agent / data / strategy 四仓升 pin `v0.5.0`；`check_contract_pin` GREEN 6 pin、conformance 2/2 零跳过；施工记录见「一、本仓任务」）+ G2 执行组（2026-10-24：QT-22 契约腿 `StrategyVersionInput` 六项 + `DomainStrategyVersionHash`，`v0.5.0` 已发版；施工记录见「一、本仓任务」）+ G0 执行组（2026-10-24：QT-20 契约腿 + QT-41b ④ 错误族，`v0.4.0` 已发；施工记录见「一、本仓任务」）+ G0D 裁决材料（QT-22 / QT-40 X1a / 服务 DTO 三份，只出材料、0 代码）；QT-09 本仓侧交接（2026-10-23：② examples/ + ③ conformance 语料与契约侧自检腿 + ④ PR 模板/check_pr_body + ⑤ check_contract_shape + surface 冻结 check_surface_freeze/api-surface.txt，全部接进 CI；三条工具另补表驱动单测）；QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；推送回写（2026-10-22：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`，`go get` 实测可解析，CI 429/429；§8 #4 登记为 X1a 待办）；**2026-10-25 B6-1**：QT-07 ⑥ S3 结案回写——agent 删掉 `replace tellurion => ../tellurion`（零 import / 零 require / CI 不 checkout core），core 侧同批清空 `check_contract_pin.py` 的白名单与 `check_repo_autonomy.py` 的 R1 死登记；本仓 AGENTS §3 的「唯一过渡例外」改为无豁免禁令、ADR-0001 附「例外收回记录」、QT-05 在册余项清零转 ✅
+last-verified: 2026-10-26
+verified-by: A 组三个形状包决策材料（2026-10-26：只出材料、0 代码、三单未立；六条派工前提逐条复现 + 破坏验证实跑；施工记录见「一、本仓任务」）+ QT-40 X1a 契约腿（2026-10-24：新增 `dataprotocol/` 包 —— `UnifiedDataPoint` 七字段（含 `VisibleAt`）+ `ToJSON`/`DeduplicateKey` + 15 个 `DataType*` 常量；无构造器、不读时钟；`v0.6.0` 已打 tag（**待 push**）；施工记录见「一、本仓任务」）+ G4 执行组（2026-10-24：core / agent / data / strategy 四仓升 pin `v0.5.0`；`check_contract_pin` GREEN 6 pin、conformance 2/2 零跳过；施工记录见「一、本仓任务」）+ G2 执行组（2026-10-24：QT-22 契约腿 `StrategyVersionInput` 六项 + `DomainStrategyVersionHash`，`v0.5.0` 已发版；施工记录见「一、本仓任务」）+ G0 执行组（2026-10-24：QT-20 契约腿 + QT-41b ④ 错误族，`v0.4.0` 已发；施工记录见「一、本仓任务」）+ G0D 裁决材料（QT-22 / QT-40 X1a / 服务 DTO 三份，只出材料、0 代码）；QT-09 本仓侧交接（2026-10-23：② examples/ + ③ conformance 语料与契约侧自检腿 + ④ PR 模板/check_pr_body + ⑤ check_contract_shape + surface 冻结 check_surface_freeze/api-surface.txt，全部接进 CI；三条工具另补表驱动单测）；QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；推送回写（2026-10-22：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`，`go get` 实测可解析，CI 429/429；§8 #4 登记为 X1a 待办）；**2026-10-25 B6-1**：QT-07 ⑥ S3 结案回写——agent 删掉 `replace tellurion => ../tellurion`（零 import / 零 require / CI 不 checkout core），core 侧同批清空 `check_contract_pin.py` 的白名单与 `check_repo_autonomy.py` 的 R1 死登记；本仓 AGENTS §3 的「唯一过渡例外」改为无豁免禁令、ADR-0001 附「例外收回记录」、QT-05 在册余项清零转 ✅
 ---
 
 # TASKS — tellurion-contracts 未完成项
@@ -108,6 +108,18 @@ verified-by: QT-40 X1a 契约腿（2026-10-24：新增 `dataprotocol/` 包 —�
 - **④ 约束与非目标**：不落 `StrategyVersionInput` / `dataprotocol` / 任何服务 DTO；不复用 `DomainParamsHash`；不改其他仓。
 - **⑤ 验收**：三份材料均在 `docs/design/`；每条结论带 `repo:path:line`；**本单 0 个 `.go` diff**（提交只含 `docs/`，可用 `git show --stat` 复核）。
 - **⑥ 边界**：只出材料。拍板与代码落点分别归 G1（core）、G4（strategy）、X1a 协调者、各服务仓协调者；分发对象 = G1 / G4 / G5 / G6 / G7。
+
+### A 组 · 三个跨仓形状包决策材料（risk / 编排 / broker DTO）[P0] ✅ 完成（2026-10-26）
+
+> **只出材料，不写代码、不打 tag、不立正式单**。落点：[`design/shape-packages-decision-material.md`](design/shape-packages-decision-material.md)（导航见 [`design/README.md`](design/README.md)）。
+
+- **① 目标**：把主任要立的三单（`contracts/risk` / 编排三份 wire 形状 / broker DTO）的**前置、顺序、禁区、验收**写成可直接派发的材料，并核实派工给的六条事实。
+- **② 上下文**：第三轮裁决 ②（`tellurion:docs/design/qt-decoupling/cross-repo-decision-record-2026-10-25.md:372`）、risk `QT-74`（`tellurion-risk:docs/TASKS.md:465`，⬜）、本仓 `docs/API.md:766`（wire DTO = openapi 生成物、禁手改）、`tellurion-orchestration:docs/ARCHITECTURE.md:100/174/185`（契约位）、`tellurion-broker:docs/ARCHITECTURE.md:152-167`（DTO 对表）。
+- **③ 要求（全部落地）**：① §0.1 六条派工前提逐条复现（tag `v0.6.0` / 无 `risk/` / kit `v0.1.4` / 两仓干净且同步）；② §1~§3 逐项对表「迁什么 / 不迁什么」，每条带 `repo:path:line`；③ §4 点出**阻塞性冲突**、给两个选项与代价，并在 §4.4 落**四条组级禁区**（不得同批发三包 / 不得改 canonical 域标签 / 不得 `contracts → core` 反向依赖 / 不得顺手带 `Bundle`、`ParseBundle` 与私有哨兵，逐条带机械判据）；④ §5 出三张候选六字段单（建议编号 `CT-03`~`CT-05`）+ 逐单禁区；⑤ §8 如实登记未做项。
+- **④ 约束与非目标**：**不**落任何包、**不**改 `check_contract_shape` 的 `contractRoots`、**不**动 `docs/API.md` §4 / `api-surface.txt` / 兼容矩阵 / CHANGELOG；**不**改 risk / orchestration / broker / core / analytics 任何文件；**不**代裁 §4 的 openapi 口径，也**不**替主任定单号。
+- **⑤ 验收（真输出）**：`git -C tellurion-contracts tag | tail -1` → **`v0.6.0`**；`ls tellurion-contracts` → 无 `risk`（⇒ 证伪「risk 形状已进契约」）；两仓 `rev-list --count origin/main..HEAD` / `HEAD..origin/main` → **`0` / `0`**；**本单 0 个 `.go` diff**（`git show --stat` 只含 `docs/`）。
+  - **破坏验证（前提守卫，实跑）**：临时建 `tellurion-contracts/risk/doc.go` ⇒ `ls` 命中 `risk`（判据翻转）→ 删除后 `git status --porcelain` **为空**（逐字节还原）。派工原文的「不适用」指无实现可破坏，本文仍验证了它给的判据本身可证伪。
+- **⑥ 边界**：只出材料。三单的立单与编号归主任；① 的消费接线归 core F3、② 的别名切换归 orchestration / core / analytics 各自单、③ 的前置归 `SVC-BROKER-G1`；risk `ARCHITECTURE.md:85` 与 orchestration `ARCHITECTURE.md:100/174/185` 的判据订正各归其仓。
 
 ### QT-22 契约腿 · `version_hash` canonical 六项 + `v0.5.0` [P0] ✅ 完成（2026-10-24）
 
