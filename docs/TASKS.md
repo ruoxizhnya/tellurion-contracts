@@ -217,6 +217,52 @@ verified-by: A 组三个形状包决策材料（2026-10-26：只出材料、0 �
 
 ---
 
+### CT-03 · `contracts/risk` 包：快照形状 + 冻结词表 + hash 纯函数 + 4 哨兵 [P0] ⬜
+
+> 立单说明：正文原以「候选单（建议编号 `CT-03`）」形态落在 [`design/shape-packages-decision-material.md`](design/shape-packages-decision-material.md) §5（A 组单的 ⑥ 把编号权交回主任）。本轮按第三轮裁决 **②**（contracts 新建 `risk` 包）与六仓 G1/G3 的实际等待关系落成正式条目，编号沿用建议值。**逐字搬运清单与四项组级禁区以材料 §1.1 与 §4.4 为准，本条不复制正文**（防两处漂移）。
+
+- **① 目标**：把 risk 的规则快照**形状与 hash 算法**变成跨仓唯一实现，任何消费方 `import` 一次就能算出与 risk 逐字节相同的 `risk_rules_hash`。
+- **② 上下文**：材料 §1.1（迁入清单）/ §1.2（编码必须逐字节搬运）/ §1.3（三个撞名坑）/ §1.4（与本仓既有判据的冲突，**需主任拍**）/ §4.4（四条组级禁区）；目标形状与算法在 `tellurion-risk:internal/rule/{snapshot.go:15-117,hash.go:15-55,model.go:12-64,model.go:150-174,errors.go}`；同形参照 `engine/provenance.go:78-87`；本仓随单必改四处护栏 = `tools/check_contract_shape/main.go:36` 的 `contractRoots`、`docs/API.md` §4、`docs/api-surface.txt`、`README.md` 兼容矩阵（材料 §1.5：不改则**假绿**）。
+- **③ 要求**：① 新建 `risk/`（包名 `risk`），按 §1.1 迁入，**`Bundle` / `ParseBundle` / `ForScope` 与其余 7 个哨兵不迁**；② 编码逐字节搬运（`writeField` 的文本长度前缀 + 按 `rule_id` 排序 + `canonicalParams` 的 `UseNumber`→`Marshal`），**禁止**改用 `NewCanonical`；③ 固定向量测试（期望 hex 硬编码）+ 与 risk 的**对拍腿**；④ `contractRoots` 加 `risk` 并补夹具；⑤ 四件套（`API.md` §4 / `api-surface.txt` / 兼容矩阵 / `CHANGELOG`）同笔登记；⑥ 发 MINOR `v0.7.0`。
+- **④ 约束与非目标**：不改 hash 算法与 `DomainSnapshotHash` 字面量（改 = 全历史 hash 作废，需 ADR 级裁决）；不改 4 个哨兵文案；不把 `risk` 并入 `engine`；不在契约里读时钟/连库/读环境变量；不动 risk 的 Store/HTTP/`Bundle`；不代做 core 的 F3 消费接线；**不同批**发 ② ③ 的形状包。另：材料 §1.4 那条「`Snapshot` 兼作 `/bundle` 响应体，是否违反『契约不放 decode』」的口径**需主任拍**，拍板前不落 `Snapshot` 之外的方法。
+- **⑤ 验收**：① `go build ./... && go vet ./... && go test ./... -count=1` 三绿（贴真实退出码）；② `check_api_surface` / `check_surface_freeze` / `check_contract_shape` / `check_release_matrix` 四绿；③ 对拍腿绿（两侧 hex 相同）；④ 破坏验证两条：去掉 `risk:snapshot.go:63` 的 `sort.Slice` ⇒ 固定向量与对拍腿必须红；把 `writeField` 格式串改成明文分隔 `%s=%s\n` ⇒ 对拍腿必须红；两处**逐字节还原**后复绿（`sha256` 与改坏前一致）。
+- **⑥ 边界**：只做「契约落形状 + 对拍 + 登记 + 发版」。core 的 `bundle → RiskPolicy` 接线归 `tellurion:SVC-CORE-RISK-RETIRE`（该单 ⑤ 已把本包列为前置），risk 侧改别名与 `ARCHITECTURE.md:85` 的判据订正归 risk 仓。
+
+### CT-04 · 编排三份 wire 形状（claim / `run_artifacts` / 子 run 入队） [P0] ⬜（前置两条）
+
+> 正文 = 材料 §5 的 CT-04（含 §2.1 的「只迁三份消费方形状」清单、§2.2 的「不迁」清单、§2.3 的文档冲突）。**开工前置**：① 主任拍材料 §4 的 **wire DTO 口径**（A：区分「core 的 HTTP 报文」与「服务间 Go 共享形状」，后者可手写进 contracts + conformance 对拍；B：服务先出 openapi，本仓只收生成物。材料 §4.3 建议 ② 走 A）；② 第六轮裁决 **#9**（orchestration / broker 的 contracts 本轮不做）**要么解除、要么本单保持 ⬜** —— 二者不可同时声称「按 #9 暂缓」又开工。
+
+- **① 目标**：把已在多仓**手写复刻**的三份 wire 形状收成契约里的唯一实现，让 core `docs/openapi.yaml` 里那句 `must not drift` 变成机械判据。
+- **② 上下文**：生产侧 `tellurion-orchestration:internal/httpapi/{workers.go:103-111,provenance.go:32-48,parents.go:23-48}` + `internal/parents/service.go:130-132`；消费侧副本 `tellurion:internal/orchestrationworker/client.go:92-101`、`tellurion:docs/openapi.yaml:3802-3823`（`must not drift` 原文 `:3806-3807`）、`tellurion:pkg/storage/run_provenance.go:33-47`、`tellurion-analytics:internal/upstream/sensitivity.go:38-47`；向量测试形态照抄 `engine/provenance_vector_test.go`。
+- **③ 要求**：① 新建包（建议 `run/`，**不要**叫 `orchestration`——仓名不是形状名），只收 §2.1 三份；② **不迁** `RunRecord` / `ParentRecord` / `WorkerRecord` / `jobView` / `parentView` / `ArtifactStore`；③ 每份一条跨仓对拍腿；④ `ChildIdempotencyKey` 的二选一（迁函数 vs 只迁形状）在单内定死并写进 `docs/api-schema.md`；⑤ 四件套登记 + MINOR `v0.8.0`。
+- **④ 约束与非目标**：不改任何 wire 字段名/可空性/顺序（`provenanceView` 的 `*string` 出 `null` 而非省略键是**冻结语义**）；不迁队列状态机与租约语义；不在契约里做 decode / 默认值填充 / 幂等判定；不动 orchestration 的 HTTP / PG / DDL；不代做 orchestration `ARCHITECTURE.md:100/174/185` 的口径订正；**不同批**发 ① ③。
+- **⑤ 验收**：① 三条对拍腿全绿；② 三条命令 + 四条护栏绿（贴真实退出码）；③ 破坏验证两条：去掉 `claimView` 的 `parent_job_id` 的 `omitempty` ⇒ 对拍腿必须红；把 `ChildIdempotencyKey` 的分隔符 `:` 改成 `-` ⇒ 必须红；逐字节还原后复绿。
+- **⑥ 边界**：只做契约落形状 + 对拍 + 登记；orchestration 改别名、core 的 `orchestrationworker` 改用契约类型、analytics 的提交报文改用契约类型，各自立单。
+
+### CT-05 · broker DTO（order intent / fill / account） [P1] ⛔（前置 = 材料 §4 口径 + `SVC-BROKER-G1`；**死锁已裁，G1 先行**）
+
+> 正文 = 材料 §5 的 CT-05，材料 §4.3 对 ③ 的建议是**先不做**，只出对表。⛔ 的两条前置是**互锁**的：`SVC-BROKER-G1`（订单 HTTP 面）当时的阻塞理由写在 `tellurion-broker:docs/TASKS.md:37`（现 `:37` 起，行号会漂；等 A 组 broker DTO），而本单的阻塞理由又写「等 `SVC-BROKER-G1` 落定」——**这条死锁已于 2026-10-26 裁定，不是待裁项**：见材料新增 **§3.1.1**（三条理由 + 代价 + 两条窗口判据），结论 = **G1 先行、本单事后收编**，broker 侧已据此把 G1 从 ⛔ 改判 ⬜（`tellurion-broker:docs/TASKS.md:37`）。
+> 本单剩下的前置因此是**一条单点裁决**（§4 的 wire DTO 口径选 A 还是 B），不再是循环；G1 不等它。
+> ⚠️ 上面那句「这条死锁需主任裁定先后（建议：先裁 §4 口径 → broker 自持 DTO 落 G1 → 本单再收编）」是同批施工方的原文，方向与本裁定一致；**「本单不自行解开」已被执行侧代裁取代，待主任追认**。
+
+- **① 目标**：把 broker 的订单 / 成交 / 账户记账形状在**订单 HTTP 面定形之后**收进契约，避免两个消费方各写一份镜像。
+- **② 上下文**：材料 §3.1（今天一个都没上 wire）/ §3.2（order intent 三个候选名，选错=造第三份）/ §3.3（三处必须写进契约文档的形状差异）/ §3.4（kit 机械上被排除）；DTO 定义 `tellurion-broker:internal/gateway/model.go:80-186`；形状对表 `tellurion-broker:docs/ARCHITECTURE.md:152-167`；12 个哨兵 `internal/gateway/errors.go:12-36`。
+- **③ 要求**：① 前置满足后才迁；② 迁入时把 §3.3 三条差异写进 `docs/api-schema.md`（数量 `int` vs `float64`、`Side` 两值 vs `Direction` 四值、`OrderType` 两值 vs 四值），**禁止**用类型别名把两侧等同；③ 12 个哨兵是否随迁在单内另判（它们更接近 ① 的判据）。
+- **④ 约束与非目标**：不迁 XTP 适配器内部类型（`BusinessType` / `XTPConfig` / `XTPDeps`）；不在 HTTP 面定形前冻结报文；不动 `broker.order_acks` 的 DDL 与幂等语义（保留期归 `tellurion-broker:SVC-BROKER-G2`，R10 归 `SVC-BROKER-G4`）。
+- **⑤ 验收**：① 对表逐行可查（DTO × 字段 × 契约位 × 与 `domain` 的差异）；② `SVC-BROKER-G1` 已 ✅ 且有可指的端点清单；③ 若落包：对拍腿 + 四条护栏绿 + 破坏验证（改一个字段名 ⇒ 红 → 还原 → 绿）。
+- **⑥ 边界**：只做 broker 形状；真实 XTP（X6c ⛔）与 core `pkg/live` 退役（`tellurion:SVC-CORE-BROKER-RETIRE`）不在本单。
+
+### CT-06 · `domain/` core-only 81 根名的回收 [P3] ⬜（先重跑取证，别照抄数字）
+
+- **① 目标**：把 QT-05 ③-⑨ 产出、被两句「先别删 / S2 后回收」押下的 core-only 导出面回收掉，让本仓的导出面只剩**真有 ≥2 使用方**的形状（准入规则 C4）。
+- **② 上下文**：本仓 `docs/TASKS.md:159`（QT-05 ③-⑨ 的实测：`domain/` 根包 176 个导出符号折 **119 个根名**，agent import 38，**0 命中 81**；清单以命令输出为准，**不手抄**）与 `:193`（「那 81 个根名先别删：S1 整包迁的容忍条款到 S2 后才回收」）；S2 / S3 均已 ✅（core `docs/TASKS.md` 阶梯表），登记的容忍条款已到期；清单落点 `docs/API.md` §6 的 core-only 行。
+- **③ 要求**：① **先重跑再生成**（`81` 是 2026-10-22 的读数，core 已切五包到 kit、agent 已零 import，数字必变）；② 逐名核当前使用方数量：仅 1 个使用方 → 迁回该使用方仓；0 使用方 → 删除；③ 删除即 **MAJOR**（本仓 README 版本规则：删符号属 breaking），按兼容矩阵走「保留一个版本周期」的条款，先在 `CHANGELOG` 标 Deprecated 再删；④ `docs/API.md` §4 登记区与 `api-surface.txt` 同步（`check_surface_freeze -update`），不许只改基线。
+- **④ 约束与非目标**：不改任何仍在用的形状；不动 `engine/canonical.go:44-66` 的 8 个 `Domain*`（禁区，材料 §4.4）；不借回收改字段名或语义；不在本单引入 kit/依赖；不代删 core 侧的实现包。
+- **⑤ 验收**：① 一份「根名 × 使用方仓 × 处置（迁回/删/保留）」清单，每行有 grep 出处；② `go run ./tools/check_api_surface` 与 `check_surface_freeze` 绿，且导出符号数的**减少量**与清单逐条对得上；③ 消费方（core / agent / 各服务仓）在下一版 pin 上 `go build ./...` 绿；④ 破坏验证：随便删一个仍被 agent 用的名字 ⇒ agent 编译失败（证明清单的「0 使用方」判据不是空话）。
+- **⑥ 边界**：本仓导出面回收；core 侧 `pkg/*` 的包级退役归各 `SVC-CORE-*-RETIRE` 单。
+
+---
+
 ## 施工序（候选单，开工前必须展开成六字段）
 
 > 这张表是**施工顺序**，不是任务台账：每条在执行前要展开成六字段单（目标/上下文/要求/约束/验收/边界），并写明冻结契约的路径与节号。
