@@ -15,16 +15,19 @@ verified-by: A 组决策材料（只出材料，0 个 .go diff；三张候选六
 
 | # | 候选单 | 落点 | 今天能开工吗 | 硬前置 | 建议版本 |
 |---|---|---|---|---|---|
-| **①** | `contracts/risk` 包：`Snapshot` / `SnapshotRule` / `Scope` / `RuleType` + 冻结词表 + hash 纯函数 + 4 哨兵 | `tellurion-contracts/risk/`（新包） | ⛔ **不能** | risk `QT-74` 参数词典定稿（今天 ⬜） | MINOR（`v0.7.0`） |
+| **①** | `contracts/risk` 包：`Snapshot` / `SnapshotRule` / `Scope` / `RuleType` + 冻结词表 + hash 纯函数 + 4 哨兵 | `tellurion-contracts/risk/`（新包） | 🔶 **能开工**（2026-10-26 复测：原判「⛔ 不能」的前提已失效） | ~~risk `QT-74` 参数词典定稿（今天 ⬜）~~ → **词典已落**：`tellurion-risk:internal/rule/params.go` 246 行 / 14 标量，写侧 `model.go:147` `validateParams`、读侧 `snapshot.go:163` `rejectUnknownParamKeys`；risk 台账 `docs/TASKS.md:508` 记 **🔶**（前两步已落，未落项是「迁 contracts」本身 + core 消费 + 数值换算口径）。剩的前置只有**没人立单** | MINOR（`v0.7.0`） |
 | **②** | 编排形状：claim / `run_artifacts` / 子 run 入队 | `tellurion-contracts/run/`（新包，仅**消费方需要的**三个 wire 形状） | ⛔ **不能** | 先裁 §4 的「wire DTO 归属」冲突（下面第 1 条） | MINOR（`v0.8.0`） |
-| **③** | broker DTO：order intent / fill / account | `tellurion-contracts/broker/`（新包） | ⛔ **不能** | `SVC-BROKER-G1` 先把订单 HTTP 面定形（今天 ⬜） | MINOR（`v0.9.0`） |
+| **③** | broker DTO：order intent / fill / account | `tellurion-contracts/broker/`（新包） | ⛔ **不能**（顺序已裁定，不再是死锁） | `SVC-BROKER-G1` 先把订单 HTTP 面定形（`tellurion-broker:docs/TASKS.md:37` 现为 **⛔**）——⚠️ 该单原文把「等 A 组 broker DTO」当前置，与本行构成**互为前置的死锁**；2026-10-26 已按 §3.1.1 裁定**G1 先行**，③ 的反向依赖已解除 | MINOR（`v0.9.0`） |
 
 **三条判据支撑上面的排序**（每条都有实测出处，见 §1~§3）：
 
-1. **① 的顺序是「词典先于形状」**：risk 的 `params` 今天**没有词典**（`canonicalParams` 只校验「非空 JSON 对象、≤64 KiB」，
-   不看键名，`tellurion-risk:internal/rule/model.go:150-174`）。没有冻结的 `params` 形状，迁进契约的 `SnapshotRule`
-   就只是一个「装任意 JSON 的信封」——迁了等于没迁。这正是 `QT-74` 存在的理由
-   （`tellurion-risk:docs/TASKS.md:465`，状态 ⬜）。
+1. **① 的顺序是「词典先于形状」——顺序判据不变，但前置已于 2026-10-26 满足**：本行原文写「risk 的 `params` 今天**没有词典**」，
+   那是 `QT-74` 落码前的状态。现状：`canonicalParams`（`tellurion-risk:internal/rule/model.go:150-174`）确实**仍只做规范化**
+   （键有序 / 无多余空白 / ≤64 KiB，不看键名），但键名与单位已有词典并在两侧执法——`internal/rule/params.go`（246 行、
+   14 个标量的字段名 / 单位 / 取值域），写侧 `model.go:147` 调 `validateParams`（未知键 / 缺必填 / 越域 / NaN 当场拒），
+   读侧 `snapshot.go:163` 调 `rejectUnknownParamKeys`。所以「迁了等于没迁（只是个装任意 JSON 的信封）」这条**不再成立**。
+   `QT-74` 现在在 `tellurion-risk:docs/TASKS.md:508`，状态 **🔶**（前两步已落；未落的三项里只有「数值换算口径」
+   与单位语义有关，且 risk 已把权重冻结为**小数**，换算差异属 core 侧映射、不改形状）。⇒ ① 缺的是**立单**，不是前置。
 2. **② 的顺序是「先裁口径，再迁形状」**：本文逮到一条**结构性冲突**——本仓 `docs/API.md:766` 明写
    「跨进程 DTO 是 `tellurion:docs/openapi.yaml` 的**生成物**，本仓只收生成物且**禁手改**」，
    而 ② ③ 要迁的**恰恰是 wire DTO**，且六个服务仓**一个 openapi 文件都没有**（实测：12 仓 glob
@@ -33,7 +36,8 @@ verified-by: A 组决策材料（只出材料，0 个 .go diff；三张候选六
 3. **③ 的顺序是「有 HTTP 面才有 wire 形状」**：broker 今天**只有两条路由**（`GET /healthz`、`GET /version`，
    `tellurion-broker:cmd/brokergateway/main.go:45`、`:55`），订单 / 成交 / 账户 DTO **一次都没被 JSON 序列化上 wire**
    （全仓 `json.Marshal` 只有 3 处：`internal/ackstore/pg.go:96` 写 `ack` JSONB、`:53` 读回、`model.go:96` 算指纹）。
-   现在迁 = **在 HTTP 面存在之前冻结报文形状**，而 `SVC-BROKER-G1` 还没开工（`tellurion-broker:docs/TASKS.md:31` ⬜）。
+   现在迁 = **在 HTTP 面存在之前冻结报文形状**，而 `SVC-BROKER-G1` 还没开工（`tellurion-broker:docs/TASKS.md:37`，现标 **⛔**）。
+   ⚠️ 但那条 ⛔ 写的理由是「等 A 组 broker DTO」——与本判据互为前置，构成死锁；顺序见 **§3.1.1**。
 
 **一次只发一包**：三单**不得同批**。理由不只是纪律——① 要改 `tools/check_contract_shape` 的 `contractRoots`
 （见 §1.5），② ③ 各要改 `docs/API.md` §4 登记区与 `api-surface.txt` 基线；三单同批会让「这次红是谁造成的」失去答案。
@@ -43,10 +47,10 @@ verified-by: A 组决策材料（只出材料，0 个 .go diff；三张候选六
 | 断言 | 实测命令 | 实测输出 | 结论 |
 |---|---|---|---|
 | contracts 顶层无 `risk/` | `git -C tellurion-contracts ls-tree --name-only HEAD` | `.gitattributes .github .gitignore AGENTS.md CHANGELOG.md LICENSE README.md conformance dataprotocol doc.go docs domain engine examples fees go.mod go.sum tools` | ✅ **成立** |
-| contracts 最新 tag = `v0.6.0` | `git -C tellurion-contracts tag \| tail -1` | `v0.6.0` | ✅ **成立** |
+| contracts 最新 tag = `v0.6.0` | `git -C tellurion-contracts tag \| tail -1` | `v0.6.0` | ✅ **成立**（并已于 2026-10-26 实测**远端也有**：`git ls-remote --tags origin` → `refs/tags/v0.6.0` = `ec00ef9` / peel `5ee7fae`；kit 同法核得 `v0.1.4` = `f1d24df` / peel `8077c36`。台账 frontmatter 原文写的「待 push」已订正） |
 | kit 最新 tag = `v0.1.4` | `git -C tellurion-kit tag \| tail -1` | `v0.1.4` | ✅ **成立** |
 | 两仓工作树干净 | `git -C <repo> status --porcelain` | 空（两仓皆是） | ✅ **成立** |
-| 两仓 main 与 origin 同步 | `rev-list --count origin/main..HEAD` / `HEAD..origin/main` | `0` / `0`（两仓皆是） | ✅ **成立** |
+| 两仓 main 与 origin 同步 | `rev-list --count origin/main..HEAD` / `HEAD..origin/main` | ~~`0` / `0`（两仓皆是）~~ → **2026-10-26 复测不成立**：contracts 领先 **1** 笔（`3055b6e`）、kit 领先 **1** 笔（`ba42add`），两边 behind 均为 0。**本批订正提交后 contracts 会再 +1**（推送由主任执行，本材料不代推） | ⚠️ **已过期**：tag 在远端不等于分支已同步；判据现跑 `git -C <repo> rev-list --count origin/main..HEAD` |
 | contracts 无 `risk` 形状 | `git -C tellurion-contracts ls-tree -r --name-only HEAD \| grep '(^\|/)risk(/$\|$)'` | 零命中 | ✅ **「risk 形状已进契约」被证伪** |
 
 > **验收判据的原文照收**（派工给的）：`git -C tellurion-contracts tag | tail -1` = `v0.6.0`；`ls tellurion-contracts`
@@ -187,9 +191,39 @@ orchestration 自己的对表**早就写着**契约位 = contracts：
 `broker.order_acks.ack` 这个 JSONB 列；`model.go:96` 只对字段值数组算指纹）。
 `tellurion-broker:docs/api-schema.md:9` 自己写：「**契约地位：Go port（进程内），订单面今天不是 HTTP**」。
 
-⇒ **建议：③ 排最后，前置 = `SVC-BROKER-G1` 落定**（`tellurion-broker:docs/TASKS.md:31` ⬜）。
+⇒ **建议：③ 排最后，前置 = `SVC-BROKER-G1` 落定**（`tellurion-broker:docs/TASKS.md:37` ⛔）。
 理由：现在迁 = 把一份「尚未存在的报文」冻进契约，之后 HTTP 面一落地就会发现字段不对，再改就是 MAJOR。
 这与 ① 的顺序逻辑同型（词典先于形状），只是这里的前置是「报文先于形状」。
+
+#### 3.1.1 死锁裁定：`CT-05` ③ ↔ `SVC-BROKER-G1` 谁先（2026-10-26 执行侧代裁，待主任追认）
+
+**循环原文**（两侧都指对方）：本材料 §0 行 ③ 与 §3.1 写「③ 的前置 = G1 先把订单 HTTP 面定形」；
+`tellurion-broker:docs/TASKS.md:37`（标题）与 `:46`（前置复核）写「G1 ⛔ = 等 A 组 broker DTO」。
+两条并读 ⇒ 谁都不许开工，且不会自动解开。材料 §4.3 原本给的破环建议是「③ 只出对表、不落包」——
+**那不算产出**（对表 §3.3 已经存在，再抄一遍不产生新形状），所以必须裁顺序而不是绕开。
+
+**裁定：G1 先行，③（`CT-05`）收编在后。** 三条理由：
+
+1. **契约仓自己的准入判据反对先落包**：`tellurion-contracts:AGENTS.md` §3 禁「只有单个仓使用的类型」。
+   今天 broker DTO 的真实消费方只有 broker 一侧（core 没有订单 HTTP 客户端；`core:pkg/live` 是被退役的旧实现）。
+   在 G1 之前把它冻进契约 = 把单仓形状塞进底座，违反的是 contracts 自己的规则，不是偏好。
+2. **HTTP 面是形状唯一的可执行验证场**：G1 落地后，报文被真 `json.Marshal` 过一次、有测试钉住字段名，
+   ③ 才是「收编已被验证的形状」；反过来的话 contracts 先出的那份包从未经过上 wire 的检验，
+   而 §3.3 那三条差异（`int` vs `float64`、`Side` 两值 vs `Direction` 四值、`OrderType` 两值 vs 四值）恰恰只有真报文才能证伪。
+3. **反向顺序会把 G1 变成「等发版」**：③ 落包要走 contracts 的 MINOR + 兼容矩阵 + `check_surface_freeze` + 三仓同测，
+   G1 因此要等一次跨仓发版；而 ① ② 也在争同一批发版批次（`v0.7.0` / `v0.8.0`），批次耦合只会更重。
+
+**代价（如实）**：G1 期间订单 DTO 暂住 broker（`internal/gateway/model.go:80-186`，今天已经在那儿），
+存在一个「HTTP 报文先定形、契约后收编」的漂移窗口；若 core 在 ③ 之前就要消费，会出现一份手写镜像——
+这正是 ③ 想消掉的东西，窗口期内它是**已知且被接受**的复刻，不是新缺陷。
+
+**两条机械判据锁住这个窗口**（缺一即 G1 不算落定，③ 不许开工）：
+① `tellurion-broker:docs/api-schema.md` 必须写出订单 / 成交 / 账户三族的**逐字段报文表**（字段名 + 可空性 + 类型），
+   并有 httpapi 的用例断言序列化后的键集合；② ③ 收编时的验收 = broker 删掉本地形状改引契约 +
+   同一条**报文快照逐字节一致**（改前 / 改后各序列化一次比对），不允许「先并存两份」。
+
+**剩余前置（不是循环）**：③ 落包仍要 §4 的 wire DTO 口径先拍（建议 A：区分 core 的 openapi 生成物与服务间手写形状）。
+那是一条**单点裁决**，拍完 ③ 就能开工；G1 不再等它，因此循环已断。
 
 ### 3.2 order intent 到底住在谁那儿（三个候选名，选错就是造第三份）
 
@@ -290,13 +324,13 @@ kit 的 `tools/check_scope` 把 `order` / `market` / `portfolio` 等词写进了
 - **⑤ 验收**：① 三条对拍腿全绿；② `go build/vet/test ./... -count=1` + 四条护栏绿（贴真实退出码）；③ **破坏验证**：把 `claimView` 的 `parent_job_id` 的 `omitempty` 去掉 ⇒ 对拍腿必须红；把 `ChildIdempotencyKey` 的分隔符从 `:` 改成 `-` ⇒ 对拍腿必须红；逐字节还原后复绿。
 - **⑥ 边界**：只做「契约落形状 + 对拍 + 登记」。orchestration 侧改别名、core 的 `orchestrationworker` 改用契约类型、analytics 的提交报文改用契约类型，都是各自仓的单。
 
-### CT-05（建议）· broker DTO（order intent / fill / account）——**建议只出对表，不立包** [P1] ⬜
+### CT-05（建议）· broker DTO（order intent / fill / account）——**排在 `SVC-BROKER-G1` 之后落包**（顺序裁定见 §3.1.1）[P1] ⛔（等 G1）
 
 - **① 目标**：把 broker 的订单 / 成交 / 账户记账形状在**订单 HTTP 面定形之后**收进契约，避免两个消费方各写一份镜像。
-- **② 上下文**：DTO 定义 `tellurion-broker:internal/gateway/model.go:80-186`；形状对表已在 `tellurion-broker:docs/ARCHITECTURE.md:152-167`；契约位今天标 contracts（同表「契约位」列）；HTTP 面未落 `tellurion-broker:docs/TASKS.md:31`（`SVC-BROKER-G1` ⬜）；与 `domain` 的三处差异见本文 §3.3。
-- **③ 要求**：① **前置 = `SVC-BROKER-G1` 落定**（订单面 HTTP 契约冻结）之后再迁；② 迁入时按 §3.3 的三条差异写进 `docs/api-schema.md`（数量 `int` vs `float64`、`Side` 两值 vs `Direction` 四值、`OrderType` 两值 vs 四值），**禁止**用类型别名把两侧等同；③ 12 个哨兵**是否随迁**单内另判（`internal/gateway/errors.go:12-36`，它们与 12 个 wire code 一一对应，属「跨仓消费方要能识别」的候选，比 DTO 更接近 ① 的判据）。
+- **② 上下文**：DTO 定义 `tellurion-broker:internal/gateway/model.go:80-186`；形状对表已在 `tellurion-broker:docs/ARCHITECTURE.md:152-167`；契约位今天标 contracts（同表「契约位」列）；HTTP 面未落 `tellurion-broker:docs/TASKS.md:37`（`SVC-BROKER-G1` **⛔**，且它原文「等 A 组 broker DTO」与本单互为前置——**已由 §3.1.1 裁定 G1 先行、本单反向依赖解除**）；与 `domain` 的三处差异见本文 §3.3。
+- **③ 要求**：① **前置 = `SVC-BROKER-G1` 落定**（订单面 HTTP 契约冻结 + §3.1.1 那两条机械判据到手）之后再迁；本单**不再等自己**：G1 的 DTO 形状 owner 暂留 broker，③ 是**收编**而不是先立法；② 迁入时按 §3.3 的三条差异写进 `docs/api-schema.md`（数量 `int` vs `float64`、`Side` 两值 vs `Direction` 四值、`OrderType` 两值 vs 四值），**禁止**用类型别名把两侧等同；③ 12 个哨兵**是否随迁**单内另判（`internal/gateway/errors.go:12-36`，它们与 12 个 wire code 一一对应，属「跨仓消费方要能识别」的候选，比 DTO 更接近 ① 的判据）。
 - **④ 约束与非目标**：**不迁** XTP 适配器内部类型（`BusinessType` / `XTPConfig` / `XTPDeps`）——`broker:docs/db-schema.md:69` 与 `ARCHITECTURE.md:165` 都写死了「券商特有字段不许泄漏进契约」；**不在** HTTP 面定形前冻结报文；**不动** `broker.order_acks` 的 DDL 与幂等语义（保留期归 ㉒R10 / ⑨ 那两张单）。
-- **⑤ 验收**：① 对表逐行可查（DTO × 字段 × 契约位 × 与 `domain` 的差异）；② `SVC-BROKER-G1` 已标 ✅ 且有可指的端点清单；③ 若落包：对拍腿 + 四条护栏绿 + 破坏验证（改一个字段名 ⇒ 对拍腿红 → 还原 → 绿）。
+- **⑤ 验收**：① 对表逐行可查（DTO × 字段 × 契约位 × 与 `domain` 的差异）；② `SVC-BROKER-G1` 已标 ✅ 且有可指的端点清单，**并满足 §3.1.1 的两条窗口判据**（`docs/api-schema.md` 有逐字段报文表 + httpapi 用例钉住键集合；③ 收编后 broker 本地形状已删、报文快照逐字节一致）；③ 若落包：对拍腿 + 四条护栏绿 + 破坏验证（改一个字段名 ⇒ 对拍腿红 → 还原 → 绿）。
 - **⑥ 边界**：只做 broker 形状。真实 XTP（X6c）与 core `pkg/live` 的退役（`SVC-CORE-BROKER-RETIRE`）都不在本单。
 
 ## 6. 破坏验证（前提守卫；本轮实跑）
