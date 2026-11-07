@@ -23,11 +23,6 @@ func TestAlias_MarketTypesIdentical(t *testing.T) {
 	var _ Fundamental = market.Fundamental{}
 	var _ FundamentalData = market.FundamentalData{}
 
-	// Interface alias: a value implementing market.Provider also
-	// implements domain.MarketDataProvider (same interface, via alias).
-	var _ MarketDataProvider = (MarketDataProvider)(nil)
-	var _ market.Provider = (market.Provider)(nil)
-
 	// Runtime sanity: zero values are interchangeable in slices/maps.
 	ohlcv := OHLCV{Symbol: "000001.SZ"}
 	var mO market.OHLCV = ohlcv // no conversion needed

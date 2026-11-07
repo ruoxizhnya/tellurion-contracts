@@ -8,9 +8,8 @@ import (
 // Provider defines the interface for accessing market data.
 //
 // Renamed from domain.MarketDataProvider during S7-P3-4 migration.
-// Since no external consumers existed at migration time, the rename
-// is safe. The legacy name remains accessible as
-// `domain.MarketDataProvider` via type alias.
+// The legacy `domain.MarketDataProvider` alias was removed by CT-06
+// (2026-11-07) after the rerun found 0 consumers.
 type Provider interface {
 	GetOHLCV(ctx context.Context, symbol string, start, end time.Time) ([]OHLCV, error)
 	GetFundamental(ctx context.Context, symbol string, date time.Time) (*Fundamental, error)

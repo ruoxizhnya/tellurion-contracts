@@ -261,7 +261,7 @@ verified-by: CT-03 契约腿（2026-11-07：新建 `risk/` 包 —— 快照形�
 - **⑤ 验收**：① 对表逐行可查（DTO × 字段 × 契约位 × 与 `domain` 的差异）；② `SVC-BROKER-G1` 已 ✅ 且有可指的端点清单；③ 若落包：对拍腿 + 四条护栏绿 + 破坏验证（改一个字段名 ⇒ 红 → 还原 → 绿）。
 - **⑥ 边界**：只做 broker 形状；真实 XTP（X6c ⛔）与 core `pkg/live` 退役（`tellurion:SVC-CORE-BROKER-RETIRE`）不在本单。
 
-### CT-06 · `domain/` core-only 81 根名的回收 [P3] ⬜（先重跑取证，别照抄数字）
+### CT-06 · `domain/` core-only 根名的回收（重跑：119 根名） [P3] 🔶（0 使用方已删；61 个单使用方迁回待跨仓单）
 
 - **① 目标**：把 QT-05 ③-⑨ 产出、被两句「先别删 / S2 后回收」押下的 core-only 导出面回收掉，让本仓的导出面只剩**真有 ≥2 使用方**的形状（准入规则 C4）。
 - **② 上下文**：本仓 `docs/TASKS.md:159`（QT-05 ③-⑨ 的实测：`domain/` 根包 176 个导出符号折 **119 个根名**，agent import 38，**0 命中 81**；清单以命令输出为准，**不手抄**）与 `:193`（「那 81 个根名先别删：S1 整包迁的容忍条款到 S2 后才回收」）；S2 / S3 均已 ✅（core `docs/TASKS.md` 阶梯表），登记的容忍条款已到期；清单落点 `docs/API.md` §6 的 core-only 行。
@@ -269,6 +269,15 @@ verified-by: CT-03 契约腿（2026-11-07：新建 `risk/` 包 —— 快照形�
 - **④ 约束与非目标**：不改任何仍在用的形状；不动 `engine/canonical.go:44-66` 的 8 个 `Domain*`（禁区，材料 §4.4）；不借回收改字段名或语义；不在本单引入 kit/依赖；不代删 core 侧的实现包。
 - **⑤ 验收**：① 一份「根名 × 使用方仓 × 处置（迁回/删/保留）」清单，每行有 grep 出处；② `go run ./tools/check_api_surface` 与 `check_surface_freeze` 绿，且导出符号数的**减少量**与清单逐条对得上；③ 消费方（core / agent / 各服务仓）在下一版 pin 上 `go build ./...` 绿；④ 破坏验证：随便删一个仍被 agent 用的名字 ⇒ agent 编译失败（证明清单的「0 使用方」判据不是空话）。
 - **⑥ 边界**：本仓导出面回收；core 侧 `pkg/*` 的包级退役归各 `SVC-CORE-*-RETIRE` 单。
+- **施工记录（2026-11-07）**：
+  - **重跑取证（取代 2026-10-22 的「81」）**：`go run ./tools/check_api_surface -list` 实测 `domain/` 根包 **176 符号 / 119 根名**（方法并回类型）。11 个同级仓（`C:\Users\ruoxi\Workspace\tellurion*`，排除本仓；`*.go` 含测试；只统计导入 `contracts/domain` 的文件）逐名 grep `\bdomain\.<Name>\b`，命令与逐名 `repo:path:line` 出处见 `docs/API.md` §6.1。
+  - **处置结果**：**删除 22 根名 / 69 符号**（公司行为族 68：`CorporateAction` / `ActionType` / `CashDividend` / `BonusShare` / `CorporateActionSplit` / `RightsIssue` / `Placement` / `ActionEngine` / `ApplyResult` / `ApplyOutcome` 及构造函数与方法，整文件 `domain/corporate_action.go` 与测试同删；旧名别名 `MarketDataProvider` 1）——11 仓全部 0 命中；**保留 34 根名**（≥2 使用方，含 core+agent / core+data）；**保留 2 根名**（`CaliberRank` / `CaliberRaw`，0 外部引用但属 `FactorCaliber` 封闭词表且 `Valid()` 依赖，删会改语义）；**迁回建议 61 根名**（均只有 1 个使用方：`tellurion` 60 + `tellurion-agent` 1 `BuiltinHypothesisFor`），本轮**不执行**——迁回须改 core / agent 并删本仓公共符号，超出「只改本仓」边界。grep 初筛后用 Go AST（`go/parser` 只数 `SelectorExpr`）复核，排除字符串/注释：`OHLCV` / `OrderType` / `OrderTypeLimit` / `OrderTypeMarket` / `Portfolio` 的 agent 命中在 `pkg/ai/prompts.go` 提示词代码示例字符串里，从「2 仓」改判为「1 仓（core）」。
+  - **版本规则裁决**：`README.md:63-64` 明确 0.x **允许 breaking，bump MINOR + 写 CHANGELOG 即可**；「deprecated 旧接口保留 1 个 MINOR 周期」是 1.0 之后的义务，0.x **没有**。故本轮直接删净，未先标 Deprecated；`CHANGELOG.md` 的 `[Unreleased]` 已按「破坏性：<旧 → 新>」留账，下一 MINOR 发版。
+  - **登记与基线**：`docs/API.md` §4 删除公司行为族行与 `MarketDataProvider` 行、§5.2 删 `CorporateAction` 纯函数行、§6 分组表同步、新增 §6.1 逐名清单；`docs/api-surface.txt` 用 `go run ./tools/check_surface_freeze -update` 重生成，`git diff --numstat` 实测 **−62 / +0**（69 个 API 符号中 7 个 `CorporateAction` 接口方法在冻结基线里折进 interface 指纹行，故基线少 62 行）。
+  - **验收（真退出码）**：`gofmt -l .` 空（exit 0）；`go build ./...` **0**；`go vet ./...` **0**；`go test ./... -count=1` **0**（12 个包全绿）；`check_api_surface` **418/418**、exit **0**；`check_surface_freeze` **408 = 408**、exit **0**；`check_contract_shape` exit **0**；`check_release_matrix` exit **0**。
+  - **破坏验证（真做真还原）**：在仓外临时模块 `%TEMP%\ct06-destru` 用 `replace` 指向本仓，引用 agent 在用的 `domain.WalkForwardParams`（agent 侧 11 命中，`pkg/ai/http_runner.go:189`）→ `go build ./...` **exit 0**；临时删掉 `domain/backtest.go` 的该类型声明 → 同一模块 **exit 1**（`undefined: domain.WalkForwardParams`）；逐字节还原后 **exit 0**，本仓 `go build ./...` **exit 0**，`git diff domain/backtest.go` 为空。
+  - **未执行（如实）**：① 消费方（core / agent / data）在「下一版 pin」上 `go build ./...` —— 本轮不打 tag / 不 push，`go get` 拉不到新版本，未执行；② 56 个单使用方根名的迁回（需跨仓单，且会删本仓公共符号）；③ tag / push（纪律禁止）。
+  - 状态保持 **🔶** 的原因：0 使用方已删净，但 56 个「仅 1 使用方」尚未迁回，导出面还未达到 C4 的「只剩 ≥2 使用方」。
 
 ---
 

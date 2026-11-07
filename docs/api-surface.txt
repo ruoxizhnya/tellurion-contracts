@@ -16,69 +16,16 @@ dataprotocol/DataTypeTopList = "top_list"
 dataprotocol/UnifiedDataPoint struct{Symbol string; TradeTime time.Time; Source string; DataType string; Data map[string]interface{}; IngestTime time.Time; VisibleAt time.Time}
 dataprotocol/UnifiedDataPoint.DeduplicateKey() string
 dataprotocol/UnifiedDataPoint.ToJSON() ([]byte, error)
-domain/(*ActionEngine).ApplyAll(time.Time, []Position, map[string]float64, []CorporateAction) ([]Position, float64, []ApplyOutcome)
-domain/(*ActionEngine).IsApplied(CorporateAction) bool
-domain/(*ActionEngine).MarkApplied(CorporateAction)
-domain/(*BonusShare).Apply(Position, float64) (Position, float64)
-domain/(*BonusShare).Description() string
-domain/(*BonusShare).ExDate() time.Time
-domain/(*BonusShare).PayDate() time.Time
-domain/(*BonusShare).RecordDate() time.Time
-domain/(*BonusShare).Symbol() string
-domain/(*BonusShare).Type() ActionType
-domain/(*CashDividend).Apply(Position, float64) (Position, float64)
-domain/(*CashDividend).Description() string
-domain/(*CashDividend).ExDate() time.Time
-domain/(*CashDividend).PayDate() time.Time
-domain/(*CashDividend).RecordDate() time.Time
-domain/(*CashDividend).Symbol() string
-domain/(*CashDividend).Type() ActionType
-domain/(*CorporateActionSplit).Apply(Position, float64) (Position, float64)
-domain/(*CorporateActionSplit).Description() string
-domain/(*CorporateActionSplit).ExDate() time.Time
-domain/(*CorporateActionSplit).PayDate() time.Time
-domain/(*CorporateActionSplit).RecordDate() time.Time
-domain/(*CorporateActionSplit).Symbol() string
-domain/(*CorporateActionSplit).Type() ActionType
-domain/(*Placement).Apply(Position, float64) (Position, float64)
-domain/(*Placement).Description() string
-domain/(*Placement).ExDate() time.Time
-domain/(*Placement).PayDate() time.Time
-domain/(*Placement).RecordDate() time.Time
-domain/(*Placement).Symbol() string
-domain/(*Placement).Type() ActionType
-domain/(*RightsIssue).Apply(Position, float64) (Position, float64)
-domain/(*RightsIssue).ApplyPaid(Position, float64) (Position, float64)
-domain/(*RightsIssue).Description() string
-domain/(*RightsIssue).ExDate() time.Time
-domain/(*RightsIssue).ExRefPrice(float64) float64
-domain/(*RightsIssue).PayDate() time.Time
-domain/(*RightsIssue).RecordDate() time.Time
-domain/(*RightsIssue).Symbol() string
-domain/(*RightsIssue).Type() ActionType
-domain/ActionBonusShare ActionType
-domain/ActionCashDividend ActionType
-domain/ActionEngine struct{appliedLog map[string]bool}
-domain/ActionPlacement ActionType
 domain/ActionRegister RegistrationAction
-domain/ActionRightsIssue ActionType
 domain/ActionRollback RegistrationAction
-domain/ActionSplit ActionType
-domain/ActionType string
-domain/ApplyOutcome struct{Action CorporateAction; Position ApplyResult}
-domain/ApplyResult struct{Action CorporateAction; Symbol string; OldPos Position; NewPos Position; CashDelta float64; Applied bool; SkipReason string}
 domain/BacktestParams struct{StrategyName string; StockPool []string; StartDate time.Time; EndDate time.Time; InitialCapital float64; RiskFreeRate float64; LookbackDays int; FillTiming string; Kernel string; IndexCode string; Params map[string]any}
 domain/BacktestResult struct{StartDate time.Time; EndDate time.Time; TotalReturn float64; AnnualReturn float64; SharpeRatio float64; SortinoRatio float64; MaxDrawdown float64; MaxDrawdownDate time.Time; WinRate float64; TotalTrades int; WinTrades int; LoseTrades int; AvgHoldingDays float64; CalmarRatio float64; PortfolioValues []PortfolioValue; Trades []Trade; UniverseMaxSize *int; InvalidReasons []string}
-domain/BonusShare struct{SymbolValue string; ExDateValue time.Time; RecordValue time.Time; PayValue time.Time; BonusPer10 float64}
 domain/BuiltinFactorDefinitions []FactorDefinition
 domain/BuiltinFactorHypotheses []FactorHypothesis
 domain/BuiltinHypothesisFor(FactorType) (FactorHypothesis, bool)
 domain/CaliberRank FactorCaliber
 domain/CaliberRaw FactorCaliber
 domain/CaliberZScore FactorCaliber
-domain/CashDividend struct{SymbolValue string; ExDateValue time.Time; RecordValue time.Time; PayValue time.Time; CashPerShare float64}
-domain/CorporateAction interface{Type func() ActionType; Symbol func() string; ExDate func() time.Time; RecordDate func() time.Time; PayDate func() time.Time; Apply func(Position, float64) (Position, float64); Description func() string}
-domain/CorporateActionSplit struct{SymbolValue string; ExDateValue time.Time; RecordValue time.Time; PayValue time.Time; SplitRatio float64}
 domain/DefaultExecutionConfig() ExecutionConfig
 domain/Direction string
 domain/DirectionClose Direction
@@ -133,14 +80,7 @@ domain/KernelLeaf FactorKernel
 domain/KernelPending FactorKernel
 domain/MacroSeries struct{Indicator string; Freq string; ObsDate time.Time; Value float64; Unit string; Source string; AsOf time.Time}
 domain/MarketActivity struct{Symbol string; TradeDate time.Time; TurnoverRate *float64; TurnoverRateF *float64; VolumeRatio *float64; Source string; AsOf time.Time}
-domain/MarketDataProvider = market.Provider
 domain/MarketRegime struct{Trend string; Volatility string; Sentiment float64; Timestamp time.Time}
-domain/NewActionEngine() *ActionEngine
-domain/NewBonusShare(string, time.Time, time.Time, time.Time, float64) *BonusShare
-domain/NewCashDividend(string, time.Time, time.Time, time.Time, float64) *CashDividend
-domain/NewPlacement(string, time.Time, time.Time, time.Time, float64, float64) *Placement
-domain/NewRightsIssue(string, time.Time, time.Time, time.Time, float64, float64) *RightsIssue
-domain/NewSplit(string, time.Time, time.Time, time.Time, float64) *CorporateActionSplit
 domain/OHLCV = market.OHLCV
 domain/Order struct{ID string; Symbol string; Direction Direction; OrderType OrderType; Quantity float64; LimitPrice float64; ExecAlgo string; ExecSlices int; ExecProfile []float64; StopPrice float64; TrailAmount float64; TrailPercent float64; HighWaterMark float64; Timestamp time.Time; FilledQty float64; FillPrice float64; Status string; Notes string}
 domain/OrderType string
@@ -149,7 +89,6 @@ domain/OrderTypeMarket OrderType
 domain/OrderTypeStop OrderType
 domain/OrderTypeTrailing OrderType
 domain/ParseFactorType(string) (FactorType, bool)
-domain/Placement struct{SymbolValue string; ExDateValue time.Time; RecordValue time.Time; PayValue time.Time; NewShares float64; PricePerShare float64}
 domain/Portfolio struct{Cash float64; Positions map[string]Position; TotalValue float64; DailyReturn float64; UpdatedAt time.Time}
 domain/PortfolioValue struct{Date time.Time; TotalValue float64; Cash float64; Positions float64}
 domain/Position struct{Symbol string; Quantity float64; AvgCost float64; CurrentPrice float64; MarketValue float64; UnrealizedPnL float64; RealizedPnL float64; Weight float64; EntryDate time.Time; BuyDate time.Time; QuantityToday float64; QuantityYesterday float64; Metadata map[string]any}
@@ -161,7 +100,6 @@ domain/RegistrationRolledBack RegistrationStatus
 domain/RegistrationStatus string
 domain/RegistrationStatus.Valid() bool
 domain/RelationIndustryMember = "industry_member"
-domain/RightsIssue struct{SymbolValue string; ExDateValue time.Time; RecordValue time.Time; PayValue time.Time; RightsPer10 float64; RightsPricePerShare float64}
 domain/RiskManager interface{CalculatePosition func(context.Context, Signal, *Portfolio, *MarketRegime, float64, []OHLCV) (PositionSize, error); DetectRegime func(context.Context, []OHLCV) (*MarketRegime, error); CheckStopLoss func(context.Context, []Position, map[string]float64) ([]StopLossEvent, error)}
 domain/RiskMetrics struct{Volatility float64; Beta float64; SharpeRatio float64; SortinoRatio float64; MaxDrawdown float64; MaxDrawdownDate time.Time; VaR95 float64; CVaR95 float64}
 domain/SWIndustryNode struct{Code string; ParentCode string; Level int; Name string; IsLeaf bool; Source string; AsOf time.Time}

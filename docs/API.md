@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-11-07
-verified-by: CT-03 契约腿（2026-11-07：新建 `risk/` 包 —— `Snapshot`/`SnapshotRule`/`Scope`/`RuleType` + 冻结词表 + `Snapshot.Hash()`/`Verify()`/`Clone()` + 4 个跨仓哨兵 + `DomainSnapshotHash`/`MaxParamsBytes`；编码逐字节搬运 risk 的 `SnapshotHash`，禁止换 `NewCanonical`；`Bundle`/`ParseBundle`/`ForScope` 与服务私有 7 哨兵不迁；导出面 465 → 487，冻结基线同步；固定向量与跨仓对拍腿在 `risk/snapshot_test.go`）；QT-40 X1a 契约腿（2026-10-24：新增 `dataprotocol/` 包 —— `UnifiedDataPoint` 七字段（含 `VisibleAt`）+ `ToJSON`/`DeduplicateKey` + 15 个 `DataType*` 常量；无构造器、不读时钟、不含 `Aggregator`；导出面 447 → 465，冻结基线 +18 行；§8 #4 按 (a) 先迁落定）；QT-22 契约腿（2026-10-24：`engine/provenance.go` 增 `StrategyVersionInput` 六字段 + `Hash()`/`MustHash()`，`engine/canonical.go` 增 `DomainStrategyVersionHash` = `tellurion.strategy_version_hash.v1`；集合 = `strategy_id + carrier + abi_version + scope + entry + source`，**不含** `capability`、**不含** `params_defaults`（后者若进必须升 v2）；导出面 443 → 447，冻结基线同步 +4 行）；QT-20 契约腿（2026-10-24：`BacktestRequest` 增可选 `StrategyRef`（wire 形态 = `ParseStrategyRef`/`String()` 的 `id`/`id@hash`）与 `StrategyParams`（浅层对象，嵌套键在 `ValidateRunSpec` 拒绝）；`domain.BacktestParams` 增生效参数 `Params`（对齐 core `RunMeta.Params`）；未知键清单不复制进本仓，归 core manifest（J2）；导出符号数不变 439，冻结基线 +2 行字段形状）；QT-41b ④ 错误族契约腿（2026-10-24：`ErrCompileFailed`/`ErrCompileUnavailable`/`ErrSourceTooLarge`/`ErrArtifactTooLarge` 四哨兵迁入 `engine/execution_errors.go`，名字语义不改，资产服务私有哨兵不迁；导出面 439 → 443）；QT-10 ③-① 契约腿（2026-10-23：三类执行错误哨兵 `ErrDataGap`/`ErrStrategyFault`/`ErrContractBreach` 落 `engine/execution_errors.go` + `CodeDataGapSkipped` 落 `engine/validity.go`）；QT-05 ③-① 本仓侧落码完成（`fees` 13 + `domain/market` 46 + `domain` 176 + `engine` 194 = 429 个符号当时已登记）；§8 待裁 #1（errors//abi/，ADR-0003）、#2（`*Config` 族，ADR-0002）、#3（fees 整包）均已裁决；#4（dataprotocol 时机）已登记为 X1a 待办（2026-10-22 推送回写：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）
+verified-by: CT-06 契约腿（2026-11-07：`domain/` 根名重跑取证 —— 119 根名逐一在 11 个同级仓 grep；删除 22 个 0 使用方根名 / 69 个符号（公司行为族 68 + `MarketDataProvider` 别名 1），61 个单使用方根名登记「迁回（待跨仓单）」，`CaliberRank`/`CaliberRaw` 作为封闭词表成员保留；导出面 487 → 418，冻结基线同步；§6.1 为逐名 grep 出处）；CT-03 契约腿（2026-11-07：新建 `risk/` 包 —— `Snapshot`/`SnapshotRule`/`Scope`/`RuleType` + 冻结词表 + `Snapshot.Hash()`/`Verify()`/`Clone()` + 4 个跨仓哨兵 + `DomainSnapshotHash`/`MaxParamsBytes`；编码逐字节搬运 risk 的 `SnapshotHash`，禁止换 `NewCanonical`；`Bundle`/`ParseBundle`/`ForScope` 与服务私有 7 哨兵不迁；导出面 465 → 487，冻结基线同步；固定向量与跨仓对拍腿在 `risk/snapshot_test.go`）；QT-40 X1a 契约腿（2026-10-24：新增 `dataprotocol/` 包 —— `UnifiedDataPoint` 七字段（含 `VisibleAt`）+ `ToJSON`/`DeduplicateKey` + 15 个 `DataType*` 常量；无构造器、不读时钟、不含 `Aggregator`；导出面 447 → 465，冻结基线 +18 行；§8 #4 按 (a) 先迁落定）；QT-22 契约腿（2026-10-24：`engine/provenance.go` 增 `StrategyVersionInput` 六字段 + `Hash()`/`MustHash()`，`engine/canonical.go` 增 `DomainStrategyVersionHash` = `tellurion.strategy_version_hash.v1`；集合 = `strategy_id + carrier + abi_version + scope + entry + source`，**不含** `capability`、**不含** `params_defaults`（后者若进必须升 v2）；导出面 443 → 447，冻结基线同步 +4 行）；QT-20 契约腿（2026-10-24：`BacktestRequest` 增可选 `StrategyRef`（wire 形态 = `ParseStrategyRef`/`String()` 的 `id`/`id@hash`）与 `StrategyParams`（浅层对象，嵌套键在 `ValidateRunSpec` 拒绝）；`domain.BacktestParams` 增生效参数 `Params`（对齐 core `RunMeta.Params`）；未知键清单不复制进本仓，归 core manifest（J2）；导出符号数不变 439，冻结基线 +2 行字段形状）；QT-41b ④ 错误族契约腿（2026-10-24：`ErrCompileFailed`/`ErrCompileUnavailable`/`ErrSourceTooLarge`/`ErrArtifactTooLarge` 四哨兵迁入 `engine/execution_errors.go`，名字语义不改，资产服务私有哨兵不迁；导出面 439 → 443）；QT-10 ③-① 契约腿（2026-10-23：三类执行错误哨兵 `ErrDataGap`/`ErrStrategyFault`/`ErrContractBreach` 落 `engine/execution_errors.go` + `CodeDataGapSkipped` 落 `engine/validity.go`）；QT-05 ③-① 本仓侧落码完成（`fees` 13 + `domain/market` 46 + `domain` 176 + `engine` 194 = 429 个符号当时已登记）；§8 待裁 #1（errors//abi/，ADR-0003）、#2（`*Config` 族，ADR-0002）、#3（fees 整包）均已裁决；#4（dataprotocol 时机）已登记为 X1a 待办（2026-10-22 推送回写：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）
 ---
 
 # API — 导出面规格（本仓有哪些符号、各自稳不稳定、错了怎么判）
@@ -209,7 +209,7 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `FundamentalData` | type | stable | **持久化视图**（ODR-043 D3 soft layering 的 "view" 半边）：在 `Fundamental` 之上带 `ID` / `CreatedAt` / `TsCode` / `EndDate`。指针语义同上 |
 | `IndexDaily` | type | stable | **指数**日线，与 `OHLCV` **刻意分开**（DATA-12）：身份列是 `Code`（→ `market.index_daily`），混用会让指数被当股票进票池。除 `Close`/`Volume` 外的数值列是指针（nil = 上游未发布） |
 | `IndexConstituent` | type | stable | 指数成分（入 / 出日与权重）。`OutDate` 零值 = 仍在成分内 |
-| `Provider` | interface | experimental | 行情数据访问接口（原 `domain.MarketDataProvider`，S7-P3-4 改名，旧名以别名保留）。⚠️ **实测今天 0 实现 / 0 消费**：core 全仓除定义、别名与别名测试外无引用（`pkg/marketdata` 用的是它**自己的** `Provider`，与这个不是同一个类型），agent 侧 0 命中。所以它标 experimental 而不是 stable——一个没人实现的 port，稳定性无从谈起。X1a（data 服务拆分 / `DataPort`）会重新裁这个形状，届时走 ADR，不许两边各留一份 |
+| `Provider` | interface | experimental | 行情数据访问接口（原 `domain.MarketDataProvider`，S7-P3-4 改名；旧别名已按 CT-06 删除）。⚠️ **实测今天 0 实现 / 0 消费**：core 全仓除定义外无引用（`pkg/marketdata` 用的是它**自己的** `Provider`，与这个不是同一个类型），agent 侧 0 命中。所以它标 experimental 而不是 stable——一个没人实现的 port，稳定性无从谈起。X1a（data 服务拆分 / `DataPort`）会重新裁这个形状，届时走 ADR，不许两边各留一份 |
 | `Provider.GetOHLCV` | method | experimental | 按 symbol + 区间取 bar，返回 `[]OHLCV`；**今天返回未分类 error**，QT-10 ③-② 落地后缺数据须包成 `ErrDataGap`（§5.4） |
 | `Provider.GetFundamental` | method | experimental | 按 symbol + 日期取基本面（PIT：用可用日，不是报告期）；错误分类同上 |
 | `Provider.GetStocks` | method | experimental | 按交易所取证券列表（含退市，见 `Stock.DelistDate`）；错误分类同上 |
@@ -221,8 +221,8 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 > **迁入形状**：23 个文件（16 非测试 + 7 测试）自 core 拷入，刻意的改动只有三类：① import 换成本仓路径（`domain/market`、`fees`）；② **删掉 5 个零引用的部署配置类型**（`Config` / `DatabaseConfig` / `RedisConfig` / `ServiceConfig` / `TushareConfig`——core 与 agent 实测 0 引用；`Config` 还带 `Password` 字段，不该进公开库；裁决见 §8 #2 与 [`adr/0002`](adr/0002-config-族的边界处置.md)）；③ 随之删掉只为它们存在、且断言恒真的 `TestConfig_Types`。
 > **等价性证据**：剥注释 + 归一化 import 后，20/23 文件与 core 完全相同；`execution_test.go` 只差 gofmt 的 import 顺序；`types.go` / `types_test.go` 只差被删的那两段（−31 / −24 行）。
 > **稳定性口径（本节）**：`frozen` = SPEC 互锁（`OHLCV` / `Fundamental` 别名）；`stable` = 引擎 / 策略 / 风控的领域词汇（改 = MINOR，破坏 = MAJOR）；`experimental` = 配置形状（§8 #2）与 core-only 数据族（QT-05 ③-⑨ 回收清单）。core-only 的族按 §6 的功能分组标 stable，并在备注里写明「core-only，③-⑨」——两处判断都留痕。
-> **别名不是重复真相**：`OHLCV` / `Stock` / … / `MarketDataProvider` 的实体在 `domain/market`，这里只为兼容旧拼写（`domain.X` 与 `market.X` 是**同一个类型**）。
-> **方法体边界**：本包里的 `Validate` / `VersionHash` / `CorporateAction.Apply` / `ActionEngine.ApplyAll` 是**纯函数行为**，随值对象迁入；判据（无 I/O、依赖受限、无跨调用持久状态、不替代服务）见 [`adr/0004`](adr/0004-值对象上的纯函数行为随类型走.md)。
+> **别名不是重复真相**：`OHLCV` / `Stock` / … / `FundamentalData` 的实体在 `domain/market`，这里只为兼容旧拼写（`domain.X` 与 `market.X` 是**同一个类型**）。
+> **方法体边界**：本包里的 `Validate` / `VersionHash` 是**纯函数行为**，随值对象迁入；判据（无 I/O、依赖受限、无跨调用持久状态、不替代服务）见 [`adr/0004`](adr/0004-值对象上的纯函数行为随类型走.md)。
 
 | 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
 |---|---|---|---|
@@ -255,77 +255,10 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `FundamentalData` | type | stable | `= market.FundamentalData`（别名，持久化视图） |
 | `IndexDaily` | type | stable | `= market.IndexDaily`（别名，指数日线，身份列 `Code`） |
 | `IndexConstituent` | type | stable | `= market.IndexConstituent`（别名） |
-| `Split` | type | stable | `= market.Split`（别名；Tushare 风格的拆股记录，**不是**公司行为引擎里的 `CorporateActionSplit`） |
+| `Split` | type | stable | `= market.Split`（别名；Tushare 风格的拆股记录） |
 | `Dividend` | type | stable | `= market.Dividend`（别名） |
-| `MarketDataProvider` | type | experimental | `= market.Provider`（旧名别名）。与实体同命：**今天 0 实现 / 0 消费**，X1a 定 `DataPort` 时一并裁（见 §4 `domain/market/`） |
-| `ActionType` | type | stable | 公司行为类型枚举（5 类，字面量即契约） |
-| `ActionCashDividend` | const | stable | `"cash_dividend"`：每股派现；持仓不变、现金增加 `qty × cash_per_share` |
-| `ActionBonusShare` | const | stable | `"bonus_share"`：送股；`qty × (1 + bonus_per_10/10)`，均价同比例下调 |
-| `ActionSplit` | const | stable | `"split"`：拆股 / 并股；`qty × ratio`，均价 `/ ratio` |
-| `ActionRightsIssue` | const | stable | `"rights_issue"`：配股；默认按**放弃**处理，缴款走 `ApplyPaid` |
-| `ActionPlacement` | const | stable | `"placement"`：增发；持仓与现金都不变（只调整参考价 / 记事件） |
-| `CorporateAction` | interface | stable | 公司行为统一接口（`Type` / `Symbol` / `ExDate` / `RecordDate` / `PayDate` / `Apply` / `Description`）。`Apply` 是**纯函数**：不改入参，返回新持仓 + 现金增量（正=收到） |
-| `CorporateAction.Type` | method | stable | 返回判别子（`ActionType`） |
-| `CorporateAction.Symbol` | method | stable | 返回 ts_code |
-| `CorporateAction.ExDate` | method | stable | 除权除息日（此日开盘股价已调整、持仓与现金已结算） |
-| `CorporateAction.RecordDate` | method | stable | 股权登记日（此日收盘后持股者享有本次行为） |
-| `CorporateAction.PayDate` | method | stable | 实际到账 / 缴款日；零值 = 不适用 |
-| `CorporateAction.Apply` | method | stable | `(pos, prevClose) → (newPos, cashDelta)`，纯函数 |
-| `CorporateAction.Description` | method | stable | 审计用的人类可读描述（含日期与数量，格式非契约、内容可读即可） |
-| `CashDividend` | type | stable | 现金分红实现（税**不在**引擎内处理，留 tax 模块） |
-| `NewCashDividend` | func | stable | 构造函数（`symbol, exDate, recordDate, payDate, cashPerShare`） |
-| `CashDividend.Apply` | method | stable | `qty ≤ 0` 或 `cashPerShare ≤ 0` → 原样返回、现金增量 0（**不报错**，由引擎按无持仓/无效事件跳过） |
-| `CashDividend.Description` | method | stable | 见接口同名方法 |
-| `CashDividend.ExDate` | method | stable | 见接口同名方法 |
-| `CashDividend.PayDate` | method | stable | 见接口同名方法 |
-| `CashDividend.RecordDate` | method | stable | 见接口同名方法 |
-| `CashDividend.Symbol` | method | stable | 见接口同名方法 |
-| `CashDividend.Type` | method | stable | `ActionCashDividend` |
-| `BonusShare` | type | stable | 送股实现（`BonusPer10`，如 10 送 5 → 5） |
-| `NewBonusShare` | func | stable | 构造函数 |
-| `BonusShare.Apply` | method | stable | `qty × (1 + bonus/10)`；`AvgCost > 0` 时按同比例下调；`CurrentPrice > 0` 时顺带重算市值与浮盈（调用方通常会用最新价再算一遍） |
-| `BonusShare.Description` | method | stable | 见接口同名方法 |
-| `BonusShare.ExDate` | method | stable | 见接口同名方法 |
-| `BonusShare.PayDate` | method | stable | 见接口同名方法 |
-| `BonusShare.RecordDate` | method | stable | 见接口同名方法 |
-| `BonusShare.Symbol` | method | stable | 见接口同名方法 |
-| `BonusShare.Type` | method | stable | `ActionBonusShare` |
-| `CorporateActionSplit` | type | stable | 拆股 / 并股实现。**名字刻意带前缀**：与 `types.go` 的 `Split`（Tushare 记录，别名到 `market.Split`）区分 |
-| `NewSplit` | func | stable | 构造函数；`splitRatio` 必须 > 0（≤0 时 `Apply` 原样返回） |
-| `CorporateActionSplit.Apply` | method | stable | `qty × ratio`、`AvgCost / ratio`；`ratio ≤ 0` → 原样返回 |
-| `CorporateActionSplit.Description` | method | stable | 见接口同名方法 |
-| `CorporateActionSplit.ExDate` | method | stable | 见接口同名方法 |
-| `CorporateActionSplit.PayDate` | method | stable | 见接口同名方法 |
-| `CorporateActionSplit.RecordDate` | method | stable | 见接口同名方法 |
-| `CorporateActionSplit.Symbol` | method | stable | 见接口同名方法 |
-| `CorporateActionSplit.Type` | method | stable | `ActionSplit` |
-| `RightsIssue` | type | stable | 配股实现（`RightsPer10` + 配股价） |
-| `NewRightsIssue` | func | stable | 构造函数 |
-| `RightsIssue.Apply` | method | stable | **默认按放弃处理**：持仓与现金都不变（缴款走 `ApplyPaid`，由券商客户端在 pay_date 前提示） |
-| `RightsIssue.ApplyPaid` | method | stable | 已缴款：qty 增加 `qty × rightsPer10/10`，均价按 (原成本+新股成本)/新股数 重算，现金增量 = `-cost` |
-| `RightsIssue.Description` | method | stable | 见接口同名方法 |
-| `RightsIssue.ExDate` | method | stable | 见接口同名方法 |
-| `RightsIssue.ExRefPrice` | method | stable | 除权参考价 `(prevClose + 配股价×ratio) / (1+ratio)`；`rightsPer10 ≤ 0` 或 `prevClose ≤ 0` → 原样返回 prevClose |
-| `RightsIssue.PayDate` | method | stable | 见接口同名方法 |
-| `RightsIssue.RecordDate` | method | stable | 见接口同名方法 |
-| `RightsIssue.Symbol` | method | stable | 见接口同名方法 |
-| `RightsIssue.Type` | method | stable | `ActionRightsIssue` |
-| `Placement` | type | stable | 增发实现（新股数 + 增发价），供稀释提示 |
-| `NewPlacement` | func | stable | 构造函数 |
-| `Placement.Apply` | method | stable | 持仓与现金都不变（引擎只记录事件） |
-| `Placement.Description` | method | stable | 见接口同名方法 |
-| `Placement.ExDate` | method | stable | 见接口同名方法 |
-| `Placement.PayDate` | method | stable | 见接口同名方法 |
-| `Placement.RecordDate` | method | stable | 见接口同名方法 |
-| `Placement.Symbol` | method | stable | 见接口同名方法 |
-| `Placement.Type` | method | stable | `ActionPlacement` |
-| `ActionEngine` | type | stable | 多 action 调度器，**无状态承诺**：已应用历史由调用方持有（生产应落库 / Redis）。⚠️ 它内部有 `appliedLog` 去重表——这是进程内便利，不是持久化真相 |
-| `NewActionEngine` | func | stable | 构造空引擎（去重表已初始化） |
-| `ActionEngine.ApplyAll` | method | stable | 按「除权日升序 + A 股标准顺序（split → bonus → rights → cash → placement）」应用 `ex_date ≤ asOf` 且未 applied 的 action。返回新持仓、现金增量合计、逐条审计结果。**不修改入参**；无持仓的 action 也标记 applied（附 `SkipReason="no_position"`）；未到除权日 → `ex_date_in_future`；已应用 → `already_applied` |
-| `ActionEngine.IsApplied` | method | stable | 该 action（key = `symbol:ex_date:type`）是否已应用 |
-| `ActionEngine.MarkApplied` | method | stable | 标记已应用（幂等）。手工回放 / 对账时用 |
-| `ApplyResult` | type | stable | 单个 action 对单个持仓的结果（旧/新持仓、现金增量、是否应用、跳过原因） |
-| `ApplyOutcome` | type | stable | `ApplyAll` 的逐条审计项（action + `ApplyResult`） |
+
+> **CT-06 回收（2026-11-07）**：公司行为族（`CorporateAction` / `ActionType` / 5 个实现 / `ActionEngine` / `ApplyResult` / `ApplyOutcome` 共 68 个符号）经 11 仓重跑实测 **0 使用方**，已按 CT-06 ② 删除；旧名别名 `MarketDataProvider` 同批删除。完整清单与 grep 出处见 §6。
 
 **因子名册与注册（§6「因子族」；core-only：agent 侧 0 命中，QT-05 ③-⑨ 待回收）**
 
@@ -711,9 +644,8 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `MarketRouter` | `ResolveKernel` / `Markets` | core | stable | 未登记市场 → `ErrMarketNotRegistered`；路由表未装配 → 创建即拒绝、job 不落库 |
 | `BacktestRunner` | `RunBacktest(ctx, strategyName, stockPool, startDate, endDate) (*domain.BacktestResult, error)` | core / agent 适配器 | stable | 与 `EngineRunner` **刻意分离**（五参 + 返回 domain 结果，AI 管线端口）；签名不动是 K10 明文约束 |
 | `SignalProvider` | `Signals(ctx, Scope, asOf) ([]Signal, error)` | core（`tellurion:pkg/strategy`） | stable（**不住本仓**：QT-05 只搬 `domain` / `engine` / `fees`，接口留 core 至策略资产拆分） | 返回 `as_of > asOf` 的信号即违约：`RejectFutureSignals` fail-loud，不静默跳过 |
-| `Provider`（`domain/market`，别名 `MarketDataProvider`） | `GetOHLCV` / `GetFundamental` / `GetStocks` / `GetLatestPrice` / `GetIndexConstituents` | **无**（实测 0 实现 / 0 消费：core 除定义/别名/别名测试外 0 引用，`pkg/marketdata` 用的是它自己的同名接口） | **experimental**（原标 stable，2026-10-22 落码时按实测下调——没人实现的 port 没有稳定性可言；§4 已同步） | **今天返回未分类 error**；QT-10 ③-② 落地后缺数据须包成 `ErrDataGap`（跳过当天 + 写 `invalid_reasons`），不是 fault —— 见 §5.4 的「⬜ 目标」行 |
+| `Provider`（`domain/market`） | `GetOHLCV` / `GetFundamental` / `GetStocks` / `GetLatestPrice` / `GetIndexConstituents` | **无**（实测 0 实现 / 0 消费：core 除定义外 0 引用，`pkg/marketdata` 用的是它自己的同名接口） | **experimental**（原标 stable，2026-10-22 落码时按实测下调——没人实现的 port 没有稳定性可言；§4 已同步） | **今天返回未分类 error**；QT-10 ③-② 落地后缺数据须包成 `ErrDataGap`（跳过当天 + 写 `invalid_reasons`），不是 fault —— 见 §5.4 的「⬜ 目标」行 |
 | `RiskManager`（`domain/`） | `CheckStopLoss` / `CalculatePosition` / `DetectRegime` | core | stable | 裁决失败必须可归因；禁止把拒绝伪装成空信号 |
-| `CorporateAction`（`domain/`） | `Type` / `Symbol` / `ExDate` / `RecordDate` / `PayDate` / `Description` / `Apply` | core | stable | 公司行为按 ex-date 生效；`Apply` 的现金变动走返回值，不静默改持仓 |
 | `BrokerGateway` | **未定形**（形态见 `tellurion:docs/design/qt-decoupling/broker-gateway-design.md`） | `tellurion-broker` | ⬜ 设计中，S1 不落 | 见 `api-schema.md` §1.1「状态」列——今天源码 0 命中，**别当已存在接口去 import** |
 | `DataPort` / `ExecutionPort` | **未定形** | `tellurion-data` / core | ⬜ 设计中，S1 不落 | 同上 |
 
@@ -780,7 +712,7 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 
 ## 6. 值对象面（`domain/`，S1 整包迁入——✅ 2026-10-22 已落）
 
-来源与再生成：**本仓内**跑 `go run ./tools/check_api_surface -list`（今天输出全部 429 个；本节覆盖其中 `domain` 一侧的 235 个 = `fees` 13 + `domain/market` 46 + `domain` 176，根包 0，`engine` 的 194 个见 §4/§5）。落地前从 core 抓的快照是 2026-10-21 的 227 个（`market/` 46 + 根包 181）：`market/` 46 个与根包 176 个**已全部登记在 §4**；差的 5 个是 §8 #2 裁决删掉的零引用部署配置（`Config` / `DatabaseConfig` / `RedisConfig` / `ServiceConfig` / `TushareConfig`，见 [`adr/0002`](adr/0002-config-族的边界处置.md)）。
+来源与再生成：**本仓内**跑 `go run ./tools/check_api_surface -list`（今天输出全部 418 个；本节覆盖其中 `domain` 一侧的 166 个 = `fees` 13 + `domain/market` 46 + `domain` 107，根包 0，`engine` 的 194 个见 §4/§5）。`domain/` 根包 107 个符号折 **97 个根名**（CT-06 按 0 使用方删除 69 个符号后；删除前为 176 符号 / 119 根名）。
 **逐符号清单不在这里手抄**——抄一份就会漂；落码时用上面这条命令生成 §4 的表，再按下面分组填稳定性。
 
 | 组 | 代表符号 | 稳定性 | 备注 |
@@ -790,9 +722,142 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | 时间/频率语义 | `Frequency`、`FrequencySpec`、`TimeSemantics`、`AsiaShanghai`、`Visible*`、`DailyVisibleAt` | **frozen** | PIT 红线：`tellurion:docs/SPEC.md` §「时间语义（PIT 红线）」。⚠️ 说清来源——core「冻结 schema 变更评审」点名的名单是三契约（RunSpec/ResultSpec/SignalSpec），这一行的 frozen 是**本文件按 §2 定义给的标注**，依据是它已有注册期闸门（D2）与逐源钉子（`tellurion:pkg/data/source/registry_rev05_test.go` 等把每个 connector 的 `TimeSemantics` 钉死）；改语义同样要先让那些测试红 |
 | 信号与订单 | `Signal`、`Direction`、`Order`、`OrderType`、`Position(Size)`、`Portfolio`、`TargetPosition`、`StopLossEvent`、`MarketRegime` | stable | — |
 | 因子族 | `FactorDefinition`、`FactorHypothesis`、`FactorType`、`FactorKernel`、`FactorCaliber`、`FactorRegistration`、`FactorMiningRecord`、`FactorOutput`、`ICEntry`、`FactorValue` + 内置定义/假设种子变量 | stable（`VersionHash` 语义受「版本哈希纪律」节约束） | 封闭词表扩展 = 加名 + 加实现 + 同步 SPEC 对应节 |
-| 公司行为 | `CorporateAction`、`CashDividend`、`BonusShare`、`CorporateActionSplit`、`RightsIssue`、`Placement`、`ActionEngine`、`ApplyResult`/`ApplyOutcome` | stable | — |
-| 配置形状 | ~~`Config`、`ServiceConfig`、`DatabaseConfig`、`RedisConfig`、`TushareConfig`~~（**已按 §8 #2 裁决删除：零引用 + 含 `Password`**）、`StrategyConfig`、`ExecutionConfig` | ⚠️ **experimental（core-only，③-⑨ 待回收）** | 命中 `adr/0001` ③ 的 `Config` 命名禁令；裁决见 **§8 #2 + [`adr/0002`](adr/0002-config-族的边界处置.md)**：前五个不迁（core 侧随 sed 删除），后两个按原名保留、进回收清单。`engine/` 的 `TradingConfig` / `PriceLimitConfig` 另按「冻结面伴生名」保留（同一条 ADR ③） |
-| core-only（agent 侧 0 命中） | QT-05 ③-⑨ 点名的 5 族：`Screen*`、`Sector`/`StockSector`/`SWIndustryNode`、`SupplyChainEdge`、`MacroSeries`、`mining` 族（`FactorMiningRecord`）；实测另含 `CorporateAction` 族、`FactorDefinition`/`FactorRegistration`/`FactorOutput`、`RiskManager`、`ExecutionConfig`/`StrategyConfig`、`Signal`/`Order`、`FundamentalsDetailRow`、`ETFConstituent`、`IndustryVitality`、`MarketActivity` 等 | **experimental + 待回收** | QT-05 ③-⑨ 与 ADR-0001 的代价条款：S1 仍整包迁，S2 后按清单回收。**下游不要依赖这一组**。<br>**实测口径（2026-10-22，落码时重测，取代 2026-10-21 的 86/124）**：`domain/` 根包 176 个导出符号折成 **119 个根名**（方法并回所属类型），agent 侧 import 了其中 **38 个**，**81 个 0 命中**。再生成命令：`grep -rhoE '\bdomain\.[A-Za-z0-9_]+' --include='*.go' <tellurion-agent 仓>` 去重，与 `go run ./tools/check_api_surface -list` 的 `domain/` 行对差。<br>agent 实际在用的 38 个是：`BacktestResult`、`Direction*`、`Factor*` 名册与假设、`MarketRegime`、`OHLCV`、`OrderType*`、`ParseFactorType`、`Portfolio`、`PortfolioValue`、`Stock`、`Trade`、`WalkForward*`。<br>「0 命中」≠「该删」——agent 走 HTTP/JSON 消费的那几族（`Signal`/`Order`）本来就不摸 Go 类型。**完整逐符号清单以命令输出为准**（本表只记判据、族与数字，不手抄会漂的名单） |
+| 配置形状 | ~~`Config`、`ServiceConfig`、`DatabaseConfig`、`RedisConfig`、`TushareConfig`~~（**已按 §8 #2 裁决删除：零引用 + 含 `Password`**）、`StrategyConfig`、`ExecutionConfig` | ⚠️ **experimental（单使用方 core，CT-06 迁回待办）** | 命中 `adr/0001` ③ 的 `Config` 命名禁令；裁决见 **§8 #2 + [`adr/0002`](adr/0002-config-族的边界处置.md)**：前五个不迁（core 侧随 sed 删除），后两个按原名保留、进回收清单。`engine/` 的 `TradingConfig` / `PriceLimitConfig` 另按「冻结面伴生名」保留（同一条 ADR ③） |
+| 单使用方（core / agent） | CT-06 重跑后仍只有 1 个使用方的 61 个根名（见 §6.1）；含 `Screen*`、`Sector`/`StockSector`/`SWIndustryNode`、`SupplyChainEdge`、`mining` 族、`FactorDefinition`/`FactorRegistration`/`FactorOutput`、`RiskManager`、`Signal`/`Order`、`FundamentalsDetailRow`、`ETFConstituent`、`IndustryVitality` 等 | **experimental + 待回收** | **本轮不迁**：迁回要改 core / agent 仓并删本仓公共符号，超出「只改本仓」边界；已按 CT-06 ② 登记为「迁回（待跨仓单）」。**下游不要依赖这一组**。判定与 grep 出处见 §6.1。 |
+
+> **公司行为族已删除（CT-06，2026-11-07）**：`CorporateAction` / `ActionType` / `CashDividend` / `BonusShare` / `CorporateActionSplit` / `RightsIssue` / `Placement` / `ActionEngine` / `ApplyResult` / `ApplyOutcome` 及构造函数共 68 个符号，连同旧名别名 `MarketDataProvider`（1 个符号），11 仓重跑均 0 使用方，已从 §4 与代码中删除。破坏性记录见 `CHANGELOG.md`。
+
+### 6.1 CT-06 重跑处置清单（2026-11-07，119 个根名）
+
+> **取证命令**（PowerShell，11 个同级仓 `C:\Users\ruoxi\Workspace\tellurion*`，排除本仓；`*.go` 含测试；只统计导入 `github.com/ruoxizhnya/tellurion-contracts/domain` 的文件里的选择器）：
+> `Get-ChildItem <repo> -Recurse -Filter *.go | ForEach-Object { Select-String -Path $_ -Pattern '\bdomain\.<Name>\b' }`
+> 下表每条的证据列 = 代表性 `repo:path:line` + 该仓命中数（`nontest` / `test` 单列）。「0」= 11 仓全部 0 命中。基线 `go run ./tools/check_api_surface -list` 当日 `domain/` 根包 176 符号 / 119 根名。
+>
+> **复核口径**：先 grep 初筛，再用 Go AST（`go/parser`）只数 `SelectorExpr`，排除字符串 / 注释里的 `domain.X`。AST 复核后只有 5 个根名从「2 仓」降为「1 仓」：`OHLCV` / `OrderType` / `OrderTypeLimit` / `OrderTypeMarket` / `Portfolio`——agent 侧命中全部位于 `tellurion-agent:pkg/ai/prompts.go` 的提示词代码示例字符串，不是编译使用方；处置已改判为迁回。
+>
+> **处置统计**：删除 22 个根名（69 个符号，含 `MarketDataProvider`）；保留 36 个根名（34 个 ≥2 使用方 + `CaliberRank` / `CaliberRaw` 两个封闭词表成员）；迁回建议 61 个根名（均只有 1 个使用方：`tellurion` 60 + `tellurion-agent` 1，本轮因跨仓边界不执行）。删除后 `domain/` 根包 107 符号 / 97 根名。
+
+| 根名 | 使用方仓数 | 处置 | grep 出处（repo:path:line / 命令 + 命中数） |
+|---|---|---|---|
+| `ActionBonusShare` | 0 | 删除 | 11 仓 grep `\bdomain\.ActionBonusShare\b` → 0 命中（含测试） |
+| `ActionCashDividend` | 0 | 删除 | 11 仓 grep `\bdomain\.ActionCashDividend\b` → 0 命中（含测试） |
+| `ActionEngine` | 0 | 删除 | 11 仓 grep `\bdomain\.ActionEngine\b` → 0 命中（含测试） |
+| `ActionPlacement` | 0 | 删除 | 11 仓 grep `\bdomain\.ActionPlacement\b` → 0 命中（含测试） |
+| `ActionRegister` | 1 | 迁回（待跨仓单） | tellurion:pkg/data/factor_governance.go:129 (6 hits, nontest=2, test=4) |
+| `ActionRightsIssue` | 0 | 删除 | 11 仓 grep `\bdomain\.ActionRightsIssue\b` → 0 命中（含测试） |
+| `ActionRollback` | 1 | 迁回（待跨仓单） | tellurion:pkg/data/factor_governance.go:162 (5 hits, nontest=2, test=3) |
+| `ActionSplit` | 0 | 删除 | 11 仓 grep `\bdomain\.ActionSplit\b` → 0 命中（含测试） |
+| `ActionType` | 0 | 删除 | 11 仓 grep `\bdomain\.ActionType\b` → 0 命中（含测试） |
+| `ApplyOutcome` | 0 | 删除 | 11 仓 grep `\bdomain\.ApplyOutcome\b` → 0 命中（含测试） |
+| `ApplyResult` | 0 | 删除 | 11 仓 grep `\bdomain\.ApplyResult\b` → 0 命中（含测试） |
+| `BacktestParams` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_backtest_readpath_test.go:56 (34 hits, nontest=13, test=21) |
+| `BacktestResult` | 2 | 保留 | tellurion:cmd/analysis/handlers_backtest_readpath_test.go:57 (72 hits, nontest=23, test=49) ; tellurion-agent:cmd/ai/handlers_explore.go:381 (99 hits, nontest=38, test=61) |
+| `BonusShare` | 0 | 删除 | 11 仓 grep `\bdomain\.BonusShare\b` → 0 命中（含测试） |
+| `BuiltinFactorDefinitions` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_factor.go:195 (27 hits, nontest=3, test=24) |
+| `BuiltinFactorHypotheses` | 2 | 保留 | tellurion:pkg/storage/factor_hypothesis.go:55 (2 hits, nontest=2, test=0) ; tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool.go:191 (9 hits, nontest=6, test=3) |
+| `BuiltinHypothesisFor` | 1 | 迁回（待跨仓单） | tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool.go:156 (3 hits, nontest=2, test=1) |
+| `CaliberRank` | 0 | 保留（封闭词表） | 11 仓 grep → 0 命中；`domain/factor_output.go:19` 词表成员，`FactorCaliber.Valid()` 依赖 |
+| `CaliberRaw` | 0 | 保留（封闭词表） | 11 仓 grep → 0 命中；`domain/factor_output.go:21` 词表成员，`FactorCaliber.Valid()` 依赖 |
+| `CaliberZScore` | 1 | 迁回（待跨仓单） | tellurion:cmd/data/mining_cmd_test.go:105 (14 hits, nontest=1, test=13) |
+| `CashDividend` | 0 | 删除 | 11 仓 grep `\bdomain\.CashDividend\b` → 0 命中（含测试） |
+| `CorporateAction` | 0 | 删除 | 11 仓 grep `\bdomain\.CorporateAction\b` → 0 命中（含测试） |
+| `CorporateActionSplit` | 0 | 删除 | 11 仓 grep `\bdomain\.CorporateActionSplit\b` → 0 命中（含测试） |
+| `DefaultExecutionConfig` | 1 | 迁回（待跨仓单） | tellurion:pkg/backtest/execution/execution_test.go:13 (17 hits, nontest=2, test=15) |
+| `Direction` | 2 | 保留 | tellurion:cmd/analysis/alert_loop_test.go:71 (62 hits, nontest=40, test=22) ; tellurion-agent:pkg/ai/yaml/config.go:59 (3 hits, nontest=3, test=0) |
+| `DirectionClose` | 2 | 保留 | tellurion:cmd/analysis/handlers_export_test.go:51 (126 hits, nontest=32, test=94) ; tellurion-agent:pkg/ai/yaml/config.go:62 (1 hits, nontest=1, test=0) |
+| `DirectionHold` | 2 | 保留 | tellurion:pkg/backtest/engine.go:1671 (13 hits, nontest=9, test=4) ; tellurion-agent:pkg/ai/yaml/config.go:62 (1 hits, nontest=1, test=0) |
+| `DirectionLong` | 2 | 保留 | tellurion:cmd/analysis/handlers_execution.go:184 (414 hits, nontest=50, test=364) ; tellurion-agent:cmd/ai/handlers_explore_test.go:59 (5 hits, nontest=1, test=4) |
+| `DirectionShort` | 2 | 保留 | tellurion:cmd/dualrun/diff.go:63 (75 hits, nontest=33, test=42) ; tellurion-agent:pkg/ai/yaml/config.go:62 (1 hits, nontest=1, test=0) |
+| `Dividend` | 1 | 迁回（待跨仓单） | tellurion:cmd/data/sync_dates_rev24_test.go:42 (26 hits, nontest=18, test=8) |
+| `ETFConstituent` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_industry_test.go:280 (19 hits, nontest=12, test=7) |
+| `ExecutionConfig` | 1 | 迁回（待跨仓单） | tellurion:pkg/backtest/aliases.go:155 (41 hits, nontest=24, test=17) |
+| `FactorCacheEntry` | 1 | 迁回（待跨仓单） | tellurion:cmd/data/handlers_factor.go:36 (39 hits, nontest=21, test=18) |
+| `FactorCaliber` | 1 | 迁回（待跨仓单） | tellurion:pkg/mining/mining.go:83 (1 hits, nontest=1, test=0) |
+| `FactorContractLiabilityRatio` | 2 | 保留 | tellurion:pkg/data/factor_equitydeep.go:476 (7 hits, nontest=1, test=6) ; tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool_test.go:151 (1 hits, nontest=0, test=1) |
+| `FactorDefinition` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_factor_registration.go:68 (62 hits, nontest=30, test=32) |
+| `FactorGrossMarginTrend` | 2 | 保留 | tellurion:cmd/data/handlers_factor_test.go:86 (13 hits, nontest=1, test=12) ; tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool_test.go:151 (1 hits, nontest=0, test=1) |
+| `FactorGrowth` | 2 | 保留 | tellurion:pkg/data/factor_registry_test.go:27 (3 hits, nontest=0, test=3) ; tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool_test.go:150 (1 hits, nontest=0, test=1) |
+| `FactorHypothesis` | 2 | 保留 | tellurion:pkg/storage/factor_hypothesis.go:23 (6 hits, nontest=6, test=0) ; tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool.go:34 (24 hits, nontest=13, test=11) |
+| `FactorInventoryTurnoverDelta` | 2 | 保留 | tellurion:pkg/data/factor_equitydeep.go:568 (6 hits, nontest=1, test=5) ; tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool_test.go:153 (1 hits, nontest=0, test=1) |
+| `FactorKernel` | 1 | 迁回（待跨仓单） | tellurion:pkg/data/factor_registry_test.go:45 (1 hits, nontest=0, test=1) |
+| `FactorMarketActivity` | 1 | 迁回（待跨仓单） | tellurion:pkg/data/factor_market_activity_governance_test.go:22 (16 hits, nontest=0, test=16) |
+| `FactorMiningRecord` | 1 | 迁回（待跨仓单） | tellurion:cmd/data/mining_cmd.go:63 (29 hits, nontest=10, test=19) |
+| `FactorMomentum` | 2 | 保留 | tellurion:cmd/data/handlers_factor_test.go:97 (101 hits, nontest=3, test=98) ; tellurion-agent:pkg/ai/prompts.go:59 (2 hits, nontest=1, test=1) |
+| `FactorOCFToNetProfit` | 2 | 保留 | tellurion:pkg/data/factor_equitydeep.go:504 (6 hits, nontest=1, test=5) ; tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool_test.go:152 (1 hits, nontest=0, test=1) |
+| `FactorOutput` | 1 | 迁回（待跨仓单） | tellurion:e2e/guard/spec_drift_test.go:218 (2 hits, nontest=0, test=2) |
+| `FactorQuality` | 2 | 保留 | tellurion:pkg/backtest/cache/factor_cache.go:229 (14 hits, nontest=3, test=11) ; tellurion-agent:pkg/ai/prompts.go:59 (2 hits, nontest=1, test=1) |
+| `FactorRegistration` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_factor_registration.go:12 (43 hits, nontest=22, test=21) |
+| `FactorReturn` | 1 | 迁回（待跨仓单） | tellurion:pkg/data/factor_attribution.go:23 (11 hits, nontest=9, test=2) |
+| `FactorROEDuPontLeverage` | 2 | 保留 | tellurion:pkg/data/factor_equitydeep.go:532 (6 hits, nontest=1, test=5) ; tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool_test.go:152 (1 hits, nontest=0, test=1) |
+| `FactorSize` | 2 | 保留 | tellurion:pkg/data/factor_governance_test.go:149 (11 hits, nontest=0, test=11) ; tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool_test.go:150 (1 hits, nontest=0, test=1) |
+| `FactorSourceAdHoc` | 2 | 保留 | tellurion:pkg/mining/mining.go:61 (2 hits, nontest=2, test=0) ; tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool.go:170 (4 hits, nontest=2, test=2) |
+| `FactorSourceAI` | 2 | 保留 | tellurion:cmd/data/mining_cmd_test.go:110 (4 hits, nontest=1, test=3) ; tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool_test.go:82 (5 hits, nontest=0, test=5) |
+| `FactorSourceLiterature` | 2 | 保留 | tellurion:pkg/mining/mining.go:60 (1 hits, nontest=1, test=0) ; tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool_test.go:54 (2 hits, nontest=0, test=2) |
+| `FactorSourceSupplyChain` | 2 | 保留 | tellurion:pkg/mining/mining.go:61 (1 hits, nontest=1, test=0) ; tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool_test.go:68 (2 hits, nontest=0, test=2) |
+| `FactorType` | 2 | 保留 | tellurion:cmd/analysis/handlers_factor_registration.go:78 (98 hits, nontest=59, test=39) ; tellurion-agent:pkg/ai/prompts.go:57 (14 hits, nontest=7, test=7) |
+| `FactorValue` | 2 | 保留 | tellurion:pkg/backtest/engine_accessors_test.go:155 (23 hits, nontest=3, test=20) ; tellurion-agent:pkg/ai/prompts.go:59 (3 hits, nontest=1, test=2) |
+| `FactorVolatility` | 2 | 保留 | tellurion:pkg/data/factor_registry_test.go:27 (3 hits, nontest=0, test=3) ; tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool_test.go:150 (1 hits, nontest=0, test=1) |
+| `Fundamental` | 2 | 保留 | tellurion:pkg/backtest/engine_accessors_test.go:25 (82 hits, nontest=57, test=25) ; tellurion-data:internal/ingest/tushare_adapter.go:187 (3 hits, nontest=3, test=0) |
+| `FundamentalData` | 1 | 迁回（待跨仓单） | tellurion:cmd/data/handlers_factor_test.go:40 (45 hits, nontest=21, test=24) |
+| `FundamentalsDetailRow` | 1 | 迁回（待跨仓单） | tellurion:cmd/data/handlers_equitydeep_ingest.go:104 (37 hits, nontest=9, test=28) |
+| `ICEntry` | 1 | 迁回（待跨仓单） | tellurion:pkg/data/factor_attribution.go:24 (12 hits, nontest=10, test=2) |
+| `IndexConstituent` | 1 | 迁回（待跨仓单） | tellurion:cmd/data/sync_index_constituents_persist_test.go:43 (28 hits, nontest=13, test=15) |
+| `IndexDaily` | 1 | 迁回（待跨仓单） | tellurion:e2e/guard/spec_drift_test.go:228 (17 hits, nontest=11, test=6) |
+| `IndustryVitality` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_industry_test.go:232 (17 hits, nontest=8, test=9) |
+| `KernelCode` | 1 | 迁回（待跨仓单） | tellurion:pkg/data/factor.go:369 (10 hits, nontest=4, test=6) |
+| `KernelFormula` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_factor_registration_test.go:49 (16 hits, nontest=5, test=11) |
+| `KernelLeaf` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_factor_registration_test.go:49 (7 hits, nontest=4, test=3) |
+| `KernelPending` | 1 | 迁回（待跨仓单） | tellurion:pkg/data/factor.go:389 (9 hits, nontest=4, test=5) |
+| `MacroSeries` | 2 | 保留 | tellurion:cmd/analysis/handlers_macro_test.go:122 (33 hits, nontest=14, test=19) ; tellurion-data:internal/ingest/transport.go:37 (1 hits, nontest=1, test=0) |
+| `MarketActivity` | 2 | 保留 | tellurion:cmd/data/handlers_factor_test.go:49 (49 hits, nontest=16, test=33) ; tellurion-data:internal/ingest/transport.go:42 (1 hits, nontest=1, test=0) |
+| `MarketDataProvider` | 0 | 删除 | 11 仓 grep `\bdomain\.MarketDataProvider\b` → 0 命中（含测试） |
+| `MarketRegime` | 2 | 保留 | tellurion:cmd/analysis/handlers_risk.go:92 (73 hits, nontest=35, test=38) ; tellurion-agent:pkg/ai/client/risk_client.go:62 (20 hits, nontest=5, test=15) |
+| `NewActionEngine` | 0 | 删除 | 11 仓 grep `\bdomain\.NewActionEngine\b` → 0 命中（含测试） |
+| `NewBonusShare` | 0 | 删除 | 11 仓 grep `\bdomain\.NewBonusShare\b` → 0 命中（含测试） |
+| `NewCashDividend` | 0 | 删除 | 11 仓 grep `\bdomain\.NewCashDividend\b` → 0 命中（含测试） |
+| `NewPlacement` | 0 | 删除 | 11 仓 grep `\bdomain\.NewPlacement\b` → 0 命中（含测试） |
+| `NewRightsIssue` | 0 | 删除 | 11 仓 grep `\bdomain\.NewRightsIssue\b` → 0 命中（含测试） |
+| `NewSplit` | 0 | 删除 | 11 仓 grep `\bdomain\.NewSplit\b` → 0 命中（含测试） |
+| `OHLCV` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_risk.go:43 (795 hits, AST 复核 nontest=262, test=533)；agent 侧仅 `pkg/ai/prompts.go:43` 的提示词代码示例字符串，**非编译使用方** |
+| `Order` | 1 | 迁回（待跨仓单） | tellurion:pkg/backtest/engine_daily.go:836 (147 hits, nontest=51, test=96) |
+| `OrderType` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/alert_loop_test.go:71 (23 hits, AST 复核 nontest=16, test=7)；agent 侧仅 `pkg/ai/prompts.go:34` 的提示词代码示例字符串，**非编译使用方** |
+| `OrderTypeLimit` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/wiring/live_trader_port_test.go:80 (42 hits, AST 复核 nontest=12, test=30)；agent 侧仅 `pkg/ai/prompts.go:34-35` 的提示词代码示例字符串，**非编译使用方** |
+| `OrderTypeMarket` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_execution.go:181 (96 hits, AST 复核 nontest=19, test=77)；agent 侧仅 `pkg/ai/prompts.go:34` 的提示词代码示例字符串，**非编译使用方** |
+| `OrderTypeStop` | 1 | 迁回（待跨仓单） | tellurion:pkg/live/engine.go:338 (8 hits, nontest=3, test=5) |
+| `OrderTypeTrailing` | 1 | 迁回（待跨仓单） | tellurion:pkg/live/engine.go:281 (13 hits, nontest=4, test=9) |
+| `ParseFactorType` | 2 | 保留 | tellurion:cmd/analysis/handlers_factor.go:19 (7 hits, nontest=6, test=1) ; tellurion-agent:pkg/ai/tools/builtin/factor_hypothesis_tool.go:127 (2 hits, nontest=1, test=1) |
+| `Placement` | 0 | 删除 | 11 仓 grep `\bdomain\.Placement\b` → 0 命中（含测试） |
+| `Portfolio` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_risk.go:91 (125 hits, AST 复核 nontest=42, test=83)；agent 侧仅 `pkg/ai/prompts.go:43` 的提示词代码示例字符串，**非编译使用方** |
+| `PortfolioValue` | 2 | 保留 | tellurion:cmd/analysis/handlers_compare_test.go:79 (31 hits, nontest=21, test=10) ; tellurion-agent:cmd/ai/handlers_explore_test.go:51 (24 hits, nontest=5, test=19) |
+| `Position` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_risk.go:235 (117 hits, nontest=54, test=63) |
+| `PositionSize` | 1 | 迁回（待跨仓单） | tellurion:pkg/backtest/engine.go:1859 (30 hits, nontest=24, test=6) |
+| `RegistrationAction` | 1 | 迁回（待跨仓单） | tellurion:pkg/data/factor_governance_test.go:102 (1 hits, nontest=0, test=1) |
+| `RegistrationActive` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_factor_registration.go:108 (11 hits, nontest=3, test=8) |
+| `RegistrationAuditEntry` | 1 | 迁回（待跨仓单） | tellurion:pkg/data/factor_governance.go:56 (11 hits, nontest=11, test=0) |
+| `RegistrationRolledBack` | 1 | 迁回（待跨仓单） | tellurion:pkg/data/factor_governance.go:149 (3 hits, nontest=2, test=1) |
+| `RegistrationStatus` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_factor_registration.go:81 (1 hits, nontest=1, test=0) |
+| `RelationIndustryMember` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_industry_test.go:196 (10 hits, nontest=1, test=9) |
+| `RightsIssue` | 0 | 删除 | 11 仓 grep `\bdomain\.RightsIssue\b` → 0 命中（含测试） |
+| `RiskManager` | 1 | 迁回（待跨仓单） | tellurion:pkg/risk/interfaces.go:9 (15 hits, nontest=9, test=6) |
+| `RiskMetrics` | 1 | 迁回（待跨仓单） | tellurion:pkg/backtest/metrics/performance.go:13 (4 hits, nontest=4, test=0) |
+| `ScreenFilters` | 1 | 迁回（待跨仓单） | tellurion:pkg/storage/fundamentals.go:504 (19 hits, nontest=4, test=15) |
+| `ScreenRequest` | 1 | 迁回（待跨仓单） | tellurion:cmd/data/handlers_stocks.go:316 (5 hits, nontest=4, test=1) |
+| `ScreenResult` | 1 | 迁回（待跨仓单） | tellurion:pkg/storage/fundamentals.go:504 (34 hits, nontest=11, test=23) |
+| `Sector` | 1 | 迁回（待跨仓单） | tellurion:pkg/data/sector_sync.go:19 (4 hits, nontest=4, test=0) |
+| `Signal` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_risk.go:90 (171 hits, nontest=74, test=97) |
+| `Split` | 1 | 迁回（待跨仓单） | tellurion:cmd/data/sync_dates_rev24_test.go:56 (28 hits, nontest=18, test=10) |
+| `Stock` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/signals_e2e_test.go:104 (110 hits, nontest=60, test=50) |
+| `StockIndustry` | 1 | 迁回（待跨仓单） | tellurion:pkg/data/sector_sync.go:18 (4 hits, nontest=4, test=0) |
+| `StockSector` | 1 | 迁回（待跨仓单） | tellurion:pkg/data/sector_sync.go:20 (4 hits, nontest=4, test=0) |
+| `StopLossEvent` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_risk_execution_test.go:302 (16 hits, nontest=15, test=1) |
+| `StrategyConfig` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_strategy.go:51 (18 hits, nontest=12, test=6) |
+| `SupplyChainEdge` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_industry_test.go:195 (20 hits, nontest=13, test=7) |
+| `SWIndustryNode` | 1 | 迁回（待跨仓单） | tellurion:cmd/analysis/handlers_industry_test.go:129 (24 hits, nontest=13, test=11) |
+| `TargetPosition` | 1 | 迁回（待跨仓单） | tellurion:pkg/backtest/engine.go:842 (12 hits, nontest=7, test=5) |
+| `Trade` | 2 | 保留 | tellurion:cmd/analysis/handlers_export_test.go:49 (120 hits, nontest=47, test=73) ; tellurion-agent:cmd/ai/handlers_explore_test.go:58 (14 hits, nontest=3, test=11) |
+| `WalkForwardParams` | 2 | 保留 | tellurion:pkg/backtest/batch/batch.go:260 (18 hits, nontest=3, test=15) ; tellurion-agent:cmd/ai/http_runner.go:189 (11 hits, nontest=5, test=6) |
+| `WalkForwardReport` | 2 | 保留 | tellurion:pkg/backtest/batch/batch.go:44 (35 hits, nontest=16, test=19) ; tellurion-agent:cmd/ai/http_runner.go:190 (19 hits, nontest=7, test=12) |
+| `WalkForwardResult` | 2 | 保留 | tellurion:pkg/backtest/walkforward/walkforward.go:156 (31 hits, nontest=6, test=25) ; tellurion-agent:pkg/ai/tools/builtin/walkforward_tool_test.go:56 (4 hits, nontest=0, test=4) |
 
 ---
 

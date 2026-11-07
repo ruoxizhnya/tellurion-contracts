@@ -7,7 +7,24 @@
 
 ## [Unreleased]
 
-（暂无）
+### 破坏性（下一 MINOR 发版；0.x 规则见 README「版本规则」，版本号由发版单分配）
+
+- **CT-06（2026-11-07）：回收 `domain/` 根包 0 使用方导出面，导出符号 487 → 418（−69）。**
+  - 取证：`domain/` 根包 176 符号折 119 个根名，逐一在 11 个同级仓（`tellurion*`，排除本仓，
+    `*.go` 含测试，仅统计导入 `contracts/domain` 的文件）grep `\bdomain\.<Name>\b`。
+    逐名出处见 `docs/API.md` §6.1。
+  - **破坏性：删除公司行为族 68 符号** —— `CorporateAction`、`ActionType`、
+    `CashDividend` / `BonusShare` / `CorporateActionSplit` / `RightsIssue` / `Placement`、
+    `ActionEngine`、`ApplyResult` / `ApplyOutcome` 及其构造函数 / 方法（`domain/corporate_action.go`
+    整文件与测试同删）。11 仓实测 **0 使用方**。
+  - **破坏性：删除 `domain.MarketDataProvider` 别名 1 符号**（实体 `domain/market.Provider` 保留；
+    11 仓实测 0 使用方）。
+  - 版本规则口径：README 明确 0.x 阶段**没有**「deprecated 至少保留 1 个 MINOR 周期」的义务，
+    故本单直接删净，不先标 Deprecated；发版时按 0.x breaking → MINOR 记入下一 MINOR。
+  - **未随本单落（如实）**：61 个根名只有 1 个使用方（`tellurion` 60 + `tellurion-agent` 1），
+    按 CT-06 ② 应迁回该使用方仓；迁回须改其它仓并删本仓公共符号，超出本单「只改本仓」边界，
+    已在 §6.1 登记「迁回（待跨仓单）」，本轮不执行。`CaliberRank` / `CaliberRaw` 虽 0 外部引用，
+    但属 `FactorCaliber` 封闭词表且被 `Valid()` 依赖，保留不改语义。
 
 ## [v0.7.0] - 2026-11-07
 
