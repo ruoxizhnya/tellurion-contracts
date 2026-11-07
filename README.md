@@ -18,7 +18,7 @@
 | `CHANGELOG.md` | 版本账本：每个发版一节，breaking 逐条写明「旧 → 新」 |
 | `tools/check_api_surface/` | 导出面 AST 扫描护栏（`go run ./tools/check_api_surface`） |
 | `tools/check_release_matrix/` | 版本纪律护栏：矩阵 ↔ CHANGELOG ↔ tag 三件套不一致即红（`go run ./tools/check_release_matrix`） |
-| `tools/check_contract_shape/` | 契约形状护栏：`domain/` `engine/` `fees/` `dataprotocol/` 出现 `*Config`/`*Options`/`*Impl` 形状名或任何 DB/驱动 import 即红（`go run ./tools/check_contract_shape`；例外只认 [`adr/0002`](docs/adr/0002-config-族的边界处置.md) 登记的那几个） |
+| `tools/check_contract_shape/` | 契约形状护栏：`domain/` `engine/` `fees/` `dataprotocol/` `risk/` 出现 `*Config`/`*Options`/`*Impl` 形状名或任何 DB/驱动 import 即红（`go run ./tools/check_contract_shape`；例外只认 [`adr/0002`](docs/adr/0002-config-族的边界处置.md) 登记的那几个） |
 | `tools/check_surface_freeze/` | 导出面签名冻结护栏：形状指纹与 `docs/api-surface.txt` 任何一行增删改即红（`go run ./tools/check_surface_freeze`；`-update` 重生成基线） |
 | `tools/check_pr_body/` | PR 模板必填段核对（仅 `pull_request` 事件，CI 用 `if:` 控制） |
 | `examples/` | 跨仓 port 的**最小可编译用法**（`market.Provider` / `EngineRunner`），只演示调用形状、不进导出面；清单见 `examples/README.md` |
@@ -81,6 +81,7 @@ go run ./tools/check_pr_body          # 仅 PR 事件用（stdin 传 PR 正文�
 <!-- matrix:begin -->
 | 契约版本 | 状态 | 支持的 core（`tellurion`） | 支持的 agent（`tellurion-agent`） |
 |---|---|---|---|
+| `v0.7` | 已发版（2026-11-07，CT-03；**本地 annotated tag `v0.7.0`，未 push**）。`core` / `risk` / `agent` 的 pin 升级**未执行**——`go get` 要求 tag 已在远端，推版归协调者 | 未切（实测仍 `v0.6.0`；`risk/` 包今天零 import） | 未切（实测仍 `v0.6.0`） |
 | `v0.6` | 已发版（2026-10-24，`main` + tag 已于 2026-10-25 推远端）；**core / data / agent 三仓已切**（2026-10-25 实测；`dataprotocol` 三处本地副本已收编）。strategy / risk / analytics / orchestration / broker 未切（无消费点） | 已切 `v0.6.0`（`go.mod` 实测；`pkg/data/source/unified.go` 与 `pkg/storage/bulk_insert.go` 两份副本改别名，构造器留 core） | 已切 `v0.6.0`（`go.mod` 实测；`replace tellurion` 在册期间与 core 同批升） |
 | `v0.5` | 已发版（2026-10-24）；core / agent / data / strategy **四仓已切**（G4，2026-10-24 实测；agent 的 `replace tellurion` 在册期间与 core 同批升） | 已切 `v0.5.0`（`go.mod` 实测；QT-22 新增符号，core 暂无消费点） | 已切 `v0.5.0`（`go.mod` 实测；`replace tellurion` 在册不改） |
 | `v0.4` | 已发版（2026-10-24） | 已切 `v0.4.0`（G13，2026-10-24 实测；QT-20 的请求字段消费属 core G1，QT-41b 的错误族消费属 strategy 仓） | 已切 `v0.4.0`（G13 同批切，2026-10-24 实测；`replace tellurion` 在册期间与 core 同批升） |

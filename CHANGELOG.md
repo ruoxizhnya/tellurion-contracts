@@ -9,6 +9,40 @@
 
 （暂无）
 
+## [v0.7.0] - 2026-11-07
+
+MINOR 发版：CT-03 新增 `risk/` 包（**只增不改**），导出面 465 → 487
+（+22：1 个 `const` 域标签 + 1 个 `const` 体积上限 + 2 个枚举 `type` + 8 个枚举 `const`
++ 2 个 struct + 4 个 `var` 哨兵 + 4 个方法），冻结基线 448 → 470 行（`git diff --numstat` 实测 +22 / −0）。
+无破坏性变更；既有五个包一字未动。
+
+### 新增（MINOR 级：新包）
+
+- **CT-03 契约腿（2026-11-07）**：`risk/` —— 把风控规则快照的**形状与 hash 算法**收成跨仓唯一实现，
+  任何消费方 `import` 一次就能算出与 risk 逐字节相同的 `risk_rules_hash`。
+  - `Snapshot` 三字段（`RiskRulesHash` / `Rules` / `CreatedAt`）+ `Clone()` / `Hash()` / `Verify()`；
+    `SnapshotRule` 六字段（`RuleID` / `Revision` / `Scope` / `Type` / `Params` / `VersionHash`）。
+  - 冻结词表：`RuleType`（`position_sizing` / `stop_loss` / `regime` / `take_profit`）、
+    `Scope`（`global` / `account` / `strategy` / `symbol`）+ `Scope.Valid()`。
+  - `DomainSnapshotHash = "tellurion.risk_snapshot_hash.v1"`（逐字节不动；改 = 全历史 hash 作废）；
+    `MaxParamsBytes = 65536`（⚠️ 与 `engine/` 的 4096 **同名不同值不同义**，禁止「统一」）。
+  - 4 个跨仓哨兵：`ErrInvalidRuleType` / `ErrInvalidScope` / `ErrInvalidParams` / `ErrSnapshotMismatch`，
+    **文案与 risk 逐字一致**；服务私有 7 哨兵不迁。
+  - **编码逐字节搬运**：域标签裸写一行 + `\n`、长度前缀帧 `len(key):key=len(value):value\n`、
+    按 `rule_id` 升序且重复即拒、参数 `UseNumber` 解码后 `json.Marshal`。**禁止**改用
+    `engine.NewCanonical`（帧结构 / 域标签 / 参数规范化三处都不同；换 = `quant.run_provenance`
+    与 `run.run_artifacts` 两处锚点同时失效）。
+  - **对拍**：固定向量 `14ecab865bebaef54052354b63caa5d351f533ab112e1a29a9dcad3707955c5b`
+    （由 `tellurion-risk` 内真实调用 `rule.SnapshotHash` 取得，2026-11-07 退出码 0）+
+    `TestSnapshotHash_MatchesRiskRepoEncoding` 逐行重建 risk 侧编码并断言同 hex。
+  - **不迁**（按 CT-03 ④）：`Bundle` / `ParseBundle` / `ForScope` 带 decode、默认值填充与进程内索引；
+    它们属服务策略，进契约就把实现冻进底座。
+  - 随单护栏：`tools/check_contract_shape` 的 `contractRoots` 四根 → 五根（+`risk`），
+    夹具新增「risk 命名红」用例、缺根红期望补 `risk/`。
+  - **未随本单落（如实）**：risk 侧改别名与 `tellurion-risk:docs/ARCHITECTURE.md:85` 判据订正归 risk 仓；
+    core 的 `bundle → RiskPolicy` 接线归 `tellurion:SVC-CORE-RISK-RETIRE`；core / risk / agent 的 pin 升级
+    **未执行**（tag 未 push，`go get` 拉不到）。⇒ 本包今天**零 import**，有意取舍见 `docs/API.md` §5.6。
+
 ## [v0.6.0] - 2026-10-24
 
 MINOR 发版：QT-40 X1a 新增 `dataprotocol/` 包（**只增不改**），导出面 447 → 465

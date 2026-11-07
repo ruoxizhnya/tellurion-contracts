@@ -446,3 +446,25 @@ fees/DefaultTransferFeeRate = 0.00001
 fees/FixedSlippageRate = 0.001
 fees/StampTaxCutDate = time.Date(2023, 8, 28, 0, 0, 0, 0, time.UTC)
 fees/StampTaxRateFor(time.Time, float64, float64) float64
+risk/DomainSnapshotHash = "tellurion.risk_snapshot_hash.v1"
+risk/ErrInvalidParams = errors.New("rule params are invalid")
+risk/ErrInvalidRuleType = errors.New("rule type is not in the frozen enum")
+risk/ErrInvalidScope = errors.New("scope is not in the frozen enum")
+risk/ErrSnapshotMismatch = errors.New("snapshot hash does not match content")
+risk/MaxParamsBytes = 64 << 10
+risk/RuleType string
+risk/RuleTypePositionSizing RuleType
+risk/RuleTypeRegime RuleType
+risk/RuleTypeStopLoss RuleType
+risk/RuleTypeTakeProfit RuleType
+risk/Scope string
+risk/Scope.Valid() bool
+risk/ScopeAccount Scope
+risk/ScopeGlobal Scope
+risk/ScopeStrategy Scope
+risk/ScopeSymbol Scope
+risk/Snapshot struct{RiskRulesHash string; Rules []SnapshotRule; CreatedAt time.Time}
+risk/Snapshot.Clone() Snapshot
+risk/Snapshot.Hash() (string, error)
+risk/Snapshot.Verify() error
+risk/SnapshotRule struct{RuleID string; Revision int; Scope Scope; Type RuleType; Params json.RawMessage; VersionHash string}

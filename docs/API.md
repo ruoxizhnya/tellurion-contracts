@@ -1,7 +1,7 @@
 ---
 status: active
-last-verified: 2026-10-24
-verified-by: QT-40 X1a 契约腿（2026-10-24：新增 `dataprotocol/` 包 —— `UnifiedDataPoint` 七字段（含 `VisibleAt`）+ `ToJSON`/`DeduplicateKey` + 15 个 `DataType*` 常量；无构造器、不读时钟、不含 `Aggregator`；导出面 447 → 465，冻结基线 +18 行；§8 #4 按 (a) 先迁落定）；QT-22 契约腿（2026-10-24：`engine/provenance.go` 增 `StrategyVersionInput` 六字段 + `Hash()`/`MustHash()`，`engine/canonical.go` 增 `DomainStrategyVersionHash` = `tellurion.strategy_version_hash.v1`；集合 = `strategy_id + carrier + abi_version + scope + entry + source`，**不含** `capability`、**不含** `params_defaults`（后者若进必须升 v2）；导出面 443 → 447，冻结基线同步 +4 行）；QT-20 契约腿（2026-10-24：`BacktestRequest` 增可选 `StrategyRef`（wire 形态 = `ParseStrategyRef`/`String()` 的 `id`/`id@hash`）与 `StrategyParams`（浅层对象，嵌套键在 `ValidateRunSpec` 拒绝）；`domain.BacktestParams` 增生效参数 `Params`（对齐 core `RunMeta.Params`）；未知键清单不复制进本仓，归 core manifest（J2）；导出符号数不变 439，冻结基线 +2 行字段形状）；QT-41b ④ 错误族契约腿（2026-10-24：`ErrCompileFailed`/`ErrCompileUnavailable`/`ErrSourceTooLarge`/`ErrArtifactTooLarge` 四哨兵迁入 `engine/execution_errors.go`，名字语义不改，资产服务私有哨兵不迁；导出面 439 → 443）；QT-10 ③-① 契约腿（2026-10-23：三类执行错误哨兵 `ErrDataGap`/`ErrStrategyFault`/`ErrContractBreach` 落 `engine/execution_errors.go` + `CodeDataGapSkipped` 落 `engine/validity.go`）；QT-05 ③-① 本仓侧落码完成（`fees` 13 + `domain/market` 46 + `domain` 176 + `engine` 194 = 429 个符号当时已登记）；§8 待裁 #1（errors//abi/，ADR-0003）、#2（`*Config` 族，ADR-0002）、#3（fees 整包）均已裁决；#4（dataprotocol 时机）已登记为 X1a 待办（2026-10-22 推送回写：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）
+last-verified: 2026-11-07
+verified-by: CT-03 契约腿（2026-11-07：新建 `risk/` 包 —— `Snapshot`/`SnapshotRule`/`Scope`/`RuleType` + 冻结词表 + `Snapshot.Hash()`/`Verify()`/`Clone()` + 4 个跨仓哨兵 + `DomainSnapshotHash`/`MaxParamsBytes`；编码逐字节搬运 risk 的 `SnapshotHash`，禁止换 `NewCanonical`；`Bundle`/`ParseBundle`/`ForScope` 与服务私有 7 哨兵不迁；导出面 465 → 487，冻结基线同步；固定向量与跨仓对拍腿在 `risk/snapshot_test.go`）；QT-40 X1a 契约腿（2026-10-24：新增 `dataprotocol/` 包 —— `UnifiedDataPoint` 七字段（含 `VisibleAt`）+ `ToJSON`/`DeduplicateKey` + 15 个 `DataType*` 常量；无构造器、不读时钟、不含 `Aggregator`；导出面 447 → 465，冻结基线 +18 行；§8 #4 按 (a) 先迁落定）；QT-22 契约腿（2026-10-24：`engine/provenance.go` 增 `StrategyVersionInput` 六字段 + `Hash()`/`MustHash()`，`engine/canonical.go` 增 `DomainStrategyVersionHash` = `tellurion.strategy_version_hash.v1`；集合 = `strategy_id + carrier + abi_version + scope + entry + source`，**不含** `capability`、**不含** `params_defaults`（后者若进必须升 v2）；导出面 443 → 447，冻结基线同步 +4 行）；QT-20 契约腿（2026-10-24：`BacktestRequest` 增可选 `StrategyRef`（wire 形态 = `ParseStrategyRef`/`String()` 的 `id`/`id@hash`）与 `StrategyParams`（浅层对象，嵌套键在 `ValidateRunSpec` 拒绝）；`domain.BacktestParams` 增生效参数 `Params`（对齐 core `RunMeta.Params`）；未知键清单不复制进本仓，归 core manifest（J2）；导出符号数不变 439，冻结基线 +2 行字段形状）；QT-41b ④ 错误族契约腿（2026-10-24：`ErrCompileFailed`/`ErrCompileUnavailable`/`ErrSourceTooLarge`/`ErrArtifactTooLarge` 四哨兵迁入 `engine/execution_errors.go`，名字语义不改，资产服务私有哨兵不迁；导出面 439 → 443）；QT-10 ③-① 契约腿（2026-10-23：三类执行错误哨兵 `ErrDataGap`/`ErrStrategyFault`/`ErrContractBreach` 落 `engine/execution_errors.go` + `CodeDataGapSkipped` 落 `engine/validity.go`）；QT-05 ③-① 本仓侧落码完成（`fees` 13 + `domain/market` 46 + `domain` 176 + `engine` 194 = 429 个符号当时已登记）；§8 待裁 #1（errors//abi/，ADR-0003）、#2（`*Config` 族，ADR-0002）、#3（fees 整包）均已裁决；#4（dataprotocol 时机）已登记为 X1a 待办（2026-10-22 推送回写：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`）
 ---
 
 # API — 导出面规格（本仓有哪些符号、各自稳不稳定、错了怎么判）
@@ -646,6 +646,40 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `ErrSourceTooLarge` | var | stable | QT-41b ④：上传源码超过 1 MiB（不可重试，改输入） |
 | `ErrArtifactTooLarge` | var | stable | QT-41b ④：artifact 超过 8 MiB blob 上限（fail-loud，不截断；上限本身属资产服务配置） |
 
+### `risk/` — 包 `risk`（风控规则快照的形状 + 冻结词表 + hash 纯函数；2026-11-07 CT-03 新建，`v0.7.0`）
+
+> **编码逐字节冻结**：`Snapshot.Hash()` 与 `tellurion-risk:internal/rule/snapshot.go` 的 `SnapshotHash`
+> 必须同 hex；算法细节见 §5.6。**禁止**改用 `engine.NewCanonical`（帧结构、域标签、参数规范化三处都不同，
+> 换编码 = 全历史 `risk_rules_hash` 作废）。
+> **不迁**（按 CT-03 ④）：`Bundle` / `ParseBundle` / `ForScope` 带 decode、默认值填充与进程内索引，属服务策略；
+> 服务私有哨兵（`ErrRuleNotFound` 等 7 个）只经 wire code 消费，也不进契约。
+> **零 I/O、零时钟**：包内无构造器；`CreatedAt` 只是被承载的字段，不参与 hash（ADR-0004）。
+
+| 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
+|---|---|---|---|
+| `DomainSnapshotHash` | const | **frozen** | `"tellurion.risk_snapshot_hash.v1"`。改它 = 全历史 `risk_rules_hash` 作废（`tellurion-risk:docs/db-schema.md` §5）；要改必须 ADR 级裁决并升 v2 |
+| `MaxParamsBytes` | const | **frozen** | `65536`（规则参数 JSON 上限，超限 fail-loud 不截断）。⚠️ **与 `engine/` 的 `MaxParamsBytes`（4096，wasm `initialize` 的 params 区）同名不同值不同义**，禁止为「统一」改成 4096——会拒掉今天所有合法快照 |
+| `RuleType` | type | **frozen** | 冻结枚举（`string` 底层）。旧读者遇未知类型必须 fail-closed 拒收；新增取值 = MINOR，改既有语义 = breaking |
+| `RuleTypePositionSizing` | const | **frozen** | `"position_sizing"`，与 risk 仓逐字一致 |
+| `RuleTypeStopLoss` | const | **frozen** | `"stop_loss"` |
+| `RuleTypeRegime` | const | **frozen** | `"regime"` |
+| `RuleTypeTakeProfit` | const | **frozen** | `"take_profit"` |
+| `Scope` | type | **frozen** | 规则适用范围（`string` 底层）。⚠️ 与 `engine/` 的 `ScopeSymbol`（`StrategyScope` 的取值 `"symbol"`，指每实例绑定一个 symbol）**不是同一个概念**，禁止用类型别名互转 |
+| `ScopeGlobal` | const | **frozen** | `"global"` |
+| `ScopeAccount` | const | **frozen** | `"account"` |
+| `ScopeStrategy` | const | **frozen** | `"strategy"` |
+| `ScopeSymbol` | const | **frozen** | `"symbol"` |
+| `Scope.Valid` | method | stable | 纯函数：是否在冻结四值内（ADR-0004）。零值 `""` → `false` |
+| `SnapshotRule` | type | stable | 六字段：`RuleID` / `Revision` / `Scope` / `Type` / `Params`（`json.RawMessage`，须为 JSON 对象）/ `VersionHash`。**字段顺序即位置化字面量的顺序** |
+| `Snapshot` | type | stable | 三字段：`RiskRulesHash` / `Rules` / `CreatedAt`。内容寻址：同 hash 同字节，原地改内容禁止 |
+| `Snapshot.Clone` | method | stable | 深拷贝 `Rules` 与每条 `Params`，避免与 Store / 来源共享可变内存 |
+| `Snapshot.Hash` | method | **frozen** | 由 `Rules` 派生 `risk_rules_hash`：按 `rule_id` 升序、长度前缀帧、逐条六字段。**不含** `CreatedAt` 与 `RiskRulesHash`（后者只参与 `Verify`）。错误族：空快照 / 重复 `rule_id` / 缺 `rule_id` / `Revision <= 0` / 缺 `version_hash` / 非法 params → `ErrInvalidParams`；未知 `Type` → `ErrInvalidRuleType`；未知 `Scope` → `ErrInvalidScope` |
+| `Snapshot.Verify` | method | stable | 重新 derive 并与 `RiskRulesHash` 比对；不符 → `ErrSnapshotMismatch`（fail-loud，不吞、不回退） |
+| `ErrInvalidRuleType` | var | stable | `"rule type is not in the frozen enum"`（文案与 risk 逐字一致） |
+| `ErrInvalidScope` | var | stable | `"scope is not in the frozen enum"` |
+| `ErrInvalidParams` | var | stable | `"rule params are invalid"` |
+| `ErrSnapshotMismatch` | var | stable | `"snapshot hash does not match content"` |
+
 <!-- surface:end -->
 
 ---
@@ -725,6 +759,22 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 > **迁移边界（如实）**：本仓只交付类型与登记。core 删两份副本、data 镜像改 import 是**各自仓的单**；
 > 在那之前三份形状仍并存，且 `storage` 的列布局与共享字段的**对表测试**尚未补（`bulk_insert_ddl_test.go` 只核表名）——
 > 这是 core 侧迁移单的验收项，不是本仓可以代做的。
+
+### 5.6 风控快照面（`risk/`，CT-03——✅ 2026-11-07 新建，**hash 算法 frozen**）
+
+| 判据 | 口径 | 证据 |
+|---|---|---|
+| 编码必须逐字节搬运 | `Snapshot.Hash()` 与 risk 的 `SnapshotHash` **产出同一字节流**：域标签裸写一行 + `\n`、长度前缀帧 `len(key):key=len(value):value\n`、按 `rule_id` 升序且重复即拒、参数 `UseNumber` 解码后 `json.Marshal` | `tellurion-risk:internal/rule/{snapshot.go:57-104,hash.go:52-55,model.go:150-174}` |
+| **禁止**换 `engine.NewCanonical` | 两套编码器三处不同：帧结构（文本长度前缀 vs 二进制 uvarint + 类型标签）、域标签（带换行 vs 无换行首帧）、参数规范化（`UseNumber` 全收 vs 显式拒 `json.Number`）。换 = 全历史 `risk_rules_hash` 作废，且 `quant.run_provenance` 与 `run.run_artifacts` 两处锚点同时失效 | `engine/canonical.go:70-74`、`:83-91`、`:185-197`；`tellurion-contracts:docs/design/shape-packages-decision-material.md` §1.2 |
+| 固定向量 | `14ecab865bebaef54052354b63caa5d351f533ab112e1a29a9dcad3707955c5b`（两条规则：`zz_guard` 乱序在前 + `aa_stop`；首条 params 带多余空白）。该 hex 由 `tellurion-risk` 内真实调用 `rule.SnapshotHash` 取得（2026-11-07，退出码 0），**不是按本仓实现反推** | `risk/snapshot_test.go` 的 `TestGoldenVector_SnapshotHash` |
+| 跨仓对拍腿 | 测试里逐行重建 risk 侧编码器（独立实现，不调本包编码辅助函数），断言两侧同 hex；排序或帧格式任一漂移先红 | 同上 `TestSnapshotHash_MatchesRiskRepoEncoding` |
+| 两个撞名坑 | `MaxParamsBytes`（本包 65536 vs `engine/` 4096）与 `ScopeSymbol`（`Scope` 取值 vs `StrategyScope` 取值）**同名不同义**，禁类型别名互转 | §4 `risk/` 表；材料 §1.3 |
+| 不迁清单 | `Bundle` / `ParseBundle` / `ForScope` + 7 个服务私有哨兵 | §4 `risk/` 表注；CT-03 ③ |
+
+> **迁移边界（如实）**：本单只交付契约形状、向量与登记。risk 侧改别名与 `tellurion-risk:docs/ARCHITECTURE.md:85`
+> 的判据订正**归 risk 仓**；core 的 `bundle → RiskPolicy` 接线归 `tellurion:SVC-CORE-RISK-RETIRE`。
+> ⇒ **本节落地的真实消费方今天仍为零**（risk 的 F3 未接、core 全仓 `ParseBundle` 零调用点）。
+> 这是「先冻结形状、后续线」的有意取舍（与 `dataprotocol` 落库时同型）；代价是这段时间契约里多一个没人 `import` 的包。
 
 ---
 
