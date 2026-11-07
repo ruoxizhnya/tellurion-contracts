@@ -1,0 +1,190 @@
+[
+  {
+    "id": "broker-order/limit",
+    "kind": "order_request_json",
+    "sides": ["contracts"],
+    "input": {
+      "client_order_id": "c-1",
+      "account_id": "acc-1",
+      "symbol": "600519",
+      "side": "buy",
+      "order_type": "limit",
+      "quantity": 100,
+      "limit_price": 1685.5
+    },
+    "expect": {
+      "json": "{\"client_order_id\":\"c-1\",\"account_id\":\"acc-1\",\"symbol\":\"600519\",\"side\":\"buy\",\"order_type\":\"limit\",\"quantity\":100,\"limit_price\":1685.5}"
+    }
+  },
+  {
+    "id": "broker-order/market-omits-limit-price",
+    "kind": "order_request_json",
+    "sides": ["contracts"],
+    "input": {
+      "client_order_id": "c-2",
+      "account_id": "acc-1",
+      "symbol": "600519",
+      "side": "sell",
+      "order_type": "market",
+      "quantity": 200
+    },
+    "expect": {
+      "json": "{\"client_order_id\":\"c-2\",\"account_id\":\"acc-1\",\"symbol\":\"600519\",\"side\":\"sell\",\"order_type\":\"market\",\"quantity\":200}"
+    }
+  },
+  {
+    "id": "broker-ack/accepted",
+    "kind": "order_ack_json",
+    "sides": ["contracts"],
+    "input": {
+      "client_order_id": "c-1",
+      "broker_order_id": "b-9",
+      "status": "accepted",
+      "idempotent_replay": false,
+      "accepted_at": "2026-11-07T09:30:00Z"
+    },
+    "expect": {
+      "json": "{\"client_order_id\":\"c-1\",\"broker_order_id\":\"b-9\",\"status\":\"accepted\",\"idempotent_replay\":false,\"accepted_at\":\"2026-11-07T09:30:00Z\"}"
+    }
+  },
+  {
+    "id": "broker-ack/rejected-keeps-code",
+    "kind": "order_ack_json",
+    "sides": ["contracts"],
+    "input": {
+      "client_order_id": "c-3",
+      "status": "rejected",
+      "idempotent_replay": true,
+      "accepted_at": "2026-11-07T09:30:00Z",
+      "code": "order_rejected",
+      "reason": "counterparty rejected"
+    },
+    "expect": {
+      "json": "{\"client_order_id\":\"c-3\",\"status\":\"rejected\",\"idempotent_replay\":true,\"accepted_at\":\"2026-11-07T09:30:00Z\",\"code\":\"order_rejected\",\"reason\":\"counterparty rejected\"}"
+    }
+  },
+  {
+    "id": "broker-order-state/filled",
+    "kind": "order_state_json",
+    "sides": ["contracts"],
+    "input": {
+      "client_order_id": "c-1",
+      "broker_order_id": "b-9",
+      "status": "filled",
+      "filled_quantity": 100,
+      "avg_fill_price": 1685.5,
+      "remaining_quantity": 0,
+      "last_update": "2026-11-07T09:30:00Z"
+    },
+    "expect": {
+      "json": "{\"client_order_id\":\"c-1\",\"broker_order_id\":\"b-9\",\"status\":\"filled\",\"filled_quantity\":100,\"avg_fill_price\":1685.5,\"remaining_quantity\":0,\"last_update\":\"2026-11-07T09:30:00Z\"}"
+    }
+  },
+  {
+    "id": "broker-fill/full",
+    "kind": "fill_json",
+    "sides": ["contracts"],
+    "input": {
+      "fill_id": "f-1",
+      "client_order_id": "c-1",
+      "broker_order_id": "b-9",
+      "symbol": "600519",
+      "side": "buy",
+      "quantity": 100,
+      "price": 1685.5,
+      "commission": 4.2,
+      "stamp_tax": 0,
+      "transfer_fee": 0.1,
+      "filled_at": "2026-11-07T09:30:00Z"
+    },
+    "expect": {
+      "json": "{\"fill_id\":\"f-1\",\"client_order_id\":\"c-1\",\"broker_order_id\":\"b-9\",\"symbol\":\"600519\",\"side\":\"buy\",\"quantity\":100,\"price\":1685.5,\"commission\":4.2,\"stamp_tax\":0,\"transfer_fee\":0.1,\"filled_at\":\"2026-11-07T09:30:00Z\"}"
+    }
+  },
+  {
+    "id": "broker-account/empty-positions-is-array",
+    "kind": "account_snapshot_json",
+    "sides": ["contracts"],
+    "input": {
+      "account_id": "acc-1",
+      "as_of": "2026-11-07T09:30:00Z",
+      "cash": {"total": 1000000, "available": 800000},
+      "total_assets": 1000000,
+      "positions": [],
+      "fees": {"commission": 4.2, "stamp_tax": 0, "transfer_fee": 0.1}
+    },
+    "expect": {
+      "json": "{\"account_id\":\"acc-1\",\"as_of\":\"2026-11-07T09:30:00Z\",\"cash\":{\"total\":1000000,\"available\":800000},\"total_assets\":1000000,\"positions\":[],\"fees\":{\"commission\":4.2,\"stamp_tax\":0,\"transfer_fee\":0.1}}"
+    }
+  },
+  {
+    "id": "broker-account/one-position",
+    "kind": "account_snapshot_json",
+    "sides": ["contracts"],
+    "input": {
+      "account_id": "acc-1",
+      "as_of": "2026-11-07T09:30:00Z",
+      "cash": {"total": 1000000, "available": 800000},
+      "total_assets": 1168550,
+      "positions": [
+        {
+          "account_id": "acc-1",
+          "symbol": "600519",
+          "quantity": 100,
+          "available_quantity": 0,
+          "avg_cost": 1685.5,
+          "market_value": 168550,
+          "as_of": "2026-11-07T09:30:00Z"
+        }
+      ],
+      "fees": {"commission": 4.2, "stamp_tax": 0, "transfer_fee": 0.1}
+    },
+    "expect": {
+      "json": "{\"account_id\":\"acc-1\",\"as_of\":\"2026-11-07T09:30:00Z\",\"cash\":{\"total\":1000000,\"available\":800000},\"total_assets\":1168550,\"positions\":[{\"account_id\":\"acc-1\",\"symbol\":\"600519\",\"quantity\":100,\"available_quantity\":0,\"avg_cost\":1685.5,\"market_value\":168550,\"as_of\":\"2026-11-07T09:30:00Z\"}],\"fees\":{\"commission\":4.2,\"stamp_tax\":0,\"transfer_fee\":0.1}}"
+    }
+  },
+  {
+    "id": "broker-flatten/sold-and-skipped",
+    "kind": "emergency_flatten_json",
+    "sides": ["contracts"],
+    "input": {
+      "sold": [
+        {
+          "account_id": "acc-1",
+          "symbol": "600519",
+          "quantity": 100,
+          "client_order_id": "c-9",
+          "broker_order_id": "b-9",
+          "avg_fill_price": 1685.5,
+          "filled_at": "2026-11-07T09:30:00Z"
+        }
+      ],
+      "skipped": [
+        {"account_id": "acc-1", "symbol": "000001", "quantity": 200, "reason": "unknown_state"}
+      ],
+      "sold_total": 168550,
+      "started_at": "2026-11-07T09:30:00Z",
+      "completed_at": "2026-11-07T09:30:00Z",
+      "reason": "operator drill"
+    },
+    "expect": {
+      "json": "{\"sold\":[{\"account_id\":\"acc-1\",\"symbol\":\"600519\",\"quantity\":100,\"client_order_id\":\"c-9\",\"broker_order_id\":\"b-9\",\"avg_fill_price\":1685.5,\"filled_at\":\"2026-11-07T09:30:00Z\"}],\"skipped\":[{\"account_id\":\"acc-1\",\"symbol\":\"000001\",\"quantity\":200,\"reason\":\"unknown_state\"}],\"sold_total\":168550,\"started_at\":\"2026-11-07T09:30:00Z\",\"completed_at\":\"2026-11-07T09:30:00Z\",\"reason\":\"operator drill\"}"
+    }
+  },
+  {
+    "id": "broker-flatten/empty-is-array",
+    "kind": "emergency_flatten_json",
+    "sides": ["contracts"],
+    "input": {
+      "sold": [],
+      "skipped": [],
+      "sold_total": 0,
+      "started_at": "2026-11-07T09:30:00Z",
+      "completed_at": "2026-11-07T09:30:00Z",
+      "reason": "no positions"
+    },
+    "expect": {
+      "json": "{\"sold\":[],\"skipped\":[],\"sold_total\":0,\"started_at\":\"2026-11-07T09:30:00Z\",\"completed_at\":\"2026-11-07T09:30:00Z\",\"reason\":\"no positions\"}"
+    }
+  }
+]

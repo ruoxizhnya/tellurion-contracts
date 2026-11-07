@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-// 最小绿基座：六条契约根各有一个无害的包。任何红腿都在这上面只动一处。
+// 最小绿基座：七条契约根各有一个无害的包。任何红腿都在这上面只动一处。
 const (
 	okDomain       = "package domain\n\n// Price 是价格。\ntype Price struct{}\n"
 	okEngine       = "package engine\n\n// Run 启动回测。\nfunc Run() {}\n"
@@ -16,6 +16,7 @@ const (
 	okDataProtocol = "package dataprotocol\n\n// Point 是统一数据点。\ntype Point struct{}\n"
 	okRisk         = "package risk\n\n// Scope 是规则适用范围。\ntype Scope string\n"
 	okRun          = "package run\n\n// ClaimView 是领取到的 run。\ntype ClaimView struct{}\n"
+	okBroker       = "package broker\n\n// OrderRequest 是下单请求。\ntype OrderRequest struct{}\n"
 )
 
 func greenFiles() map[string]string {
@@ -26,6 +27,7 @@ func greenFiles() map[string]string {
 		"dataprotocol/base.go": okDataProtocol,
 		"risk/base.go":         okRisk,
 		"run/base.go":          okRun,
+		"broker/base.go":       okBroker,
 	}
 }
 
@@ -45,7 +47,7 @@ type shapeCase struct {
 func TestContractShapeLegs(t *testing.T) {
 	cases := []shapeCase{
 		{
-			name:  "绿/六条根都在且没有形状名",
+			name:  "绿/七条根都在且没有形状名",
 			files: greenFiles(),
 		},
 		{
@@ -121,6 +123,18 @@ func TestContractShapeLegs(t *testing.T) {
 			},
 		},
 		{
+			name:     "命名红/broker 导出结构体 *Options（新增契约根同样在红线内）",
+			files:    withFile(greenFiles(), "broker/options.go", "package broker\n\n// OrderRequestOptions 命中形状名。\ntype OrderRequestOptions struct{}\n"),
+			wantRed:  true,
+			wantErr:  "契约形状违规（1 项）",
+			wantSubs: []string{"导出类型 OrderRequestOptions 命中 Options 族"},
+			rejectSubs: []string{
+				"禁止数据库/驱动依赖",
+				"契约根目录扫不到",
+				"一个 Go 包都没扫到",
+			},
+		},
+		{
 			name: "白名单/7 个登记符号各就各位 → 绿",
 			files: map[string]string{
 				"domain/base.go": okDomain,
@@ -137,6 +151,7 @@ func TestContractShapeLegs(t *testing.T) {
 				"dataprotocol/base.go": okDataProtocol,
 				"risk/base.go":         okRisk,
 				"run/base.go":          okRun,
+				"broker/base.go":       okBroker,
 			},
 		},
 		{
@@ -187,11 +202,11 @@ func TestContractShapeLegs(t *testing.T) {
 			redLines: -1, // 这条腿在打印前就返回错误，输出里没有 ❌
 		},
 		{
-			name:     "缺根红/只有 domain 与 engine，fees/、dataprotocol/、risk/ 与 run/ 整棵搬走",
+			name:     "缺根红/只有 domain 与 engine，fees/、dataprotocol/、risk/、run/ 与 broker/ 整棵搬走",
 			files:    withFile(withFile(map[string]string{}, "domain/base.go", okDomain), "engine/base.go", okEngine),
 			wantRed:  true,
 			wantErr:  "契约形状违规（1 项）",
-			wantSubs: []string{"契约根目录扫不到非测试 Go 文件：fees/、dataprotocol/、risk/、run/"},
+			wantSubs: []string{"契约根目录扫不到非测试 Go 文件：fees/、dataprotocol/、risk/、run/、broker/"},
 			rejectSubs: []string{
 				"：domain/",
 				"：engine/",

@@ -120,6 +120,21 @@ host API 的 abi 版本、内存区所有权、枚举上限。冻结集合是 **
 - **对拍**：`run/run_test.go` 的重建腿 + `conformance/run_cases.json` 的 `child_idempotency_key` 用例各钉一次；
   生产侧出处 `tellurion-orchestration:internal/parents/service.go`。
 
+### 3.2 broker wire 形状与 `domain` 的三处差异（CT-05 定死）
+
+`broker/` 与 `domain/` **不是同一套词表**。三处差异是今天的真陷阱，**禁止**用类型别名抹平：
+
+| 概念 | `domain/`（本地值对象） | `broker/`（通道 wire） | 处置 |
+|---|---|---|---|
+| 数量 | `Position.Quantity` / `Order.Quantity` = `float64` | `OrderRequest.Quantity` / `Position.Quantity` / `Fill.Quantity` = **`int`（整股）** | 类型与语义都不同；跨边界必须显式换算，契约里**不**做别名 |
+| 方向 | `Direction` 四值：`long` / `short` / `close` / `hold` | `Side` **两值**：`buy` / `sell` | 映射是**业务判断**（`close` → `sell` 只是其中一种），留在消费方，不藏进 JSON 字段名 |
+| 委托类型 | `OrderType` 四值：`market` / `limit` / `stop` / `trailing` | `OrderType` **两值**：`market` / `limit` | broker 刻意不收 `stop` / `trailing`；契约只收 broker 那两值 |
+
+> **为什么写在这里**：这三条只有真报文才能证伪（`SVC-BROKER-G1` 的键集合用例 + 报文表是窗口判据）。
+> 第 4 条同名不同义已在本文件 §1.1 的 `BrokerGateway` 命名冲突里记过，不重复。
+> **哨兵不迁**：12 个契约哨兵是 broker 进程内错误值，HTTP 消费方按键值码（wire code）判定；
+> 迁进契约会把「仓储/状态机私有语义」冻成跨仓承诺。
+
 ## 4. 版本与兼容
 
 - **0.x 阶段**（现在 → 1.0）：允许 breaking，但必须 **bump MINOR + 写 CHANGELOG 条目**。

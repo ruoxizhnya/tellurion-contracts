@@ -7,30 +7,33 @@
 
 ## [Unreleased]
 
-### 破坏性（下一 MINOR 发版；0.x 规则见 README「版本规则」，版本号由发版单分配）
+（无）
 
-- **CT-06（2026-11-07）：回收 `domain/` 根包 0 使用方导出面，导出符号 487 → 418（−69）。**
-  - 取证：`domain/` 根包 176 符号折 119 个根名，逐一在 11 个同级仓（`tellurion*`，排除本仓，
-    `*.go` 含测试，仅统计导入 `contracts/domain` 的文件）grep `\bdomain\.<Name>\b`。
-    逐名出处见 `docs/API.md` §6.1。
-  - **破坏性：删除公司行为族 68 符号** —— `CorporateAction`、`ActionType`、
-    `CashDividend` / `BonusShare` / `CorporateActionSplit` / `RightsIssue` / `Placement`、
-    `ActionEngine`、`ApplyResult` / `ApplyOutcome` 及其构造函数 / 方法（`domain/corporate_action.go`
-    整文件与测试同删）。11 仓实测 **0 使用方**。
-  - **破坏性：删除 `domain.MarketDataProvider` 别名 1 符号**（实体 `domain/market.Provider` 保留；
-    11 仓实测 0 使用方）。
-  - 版本规则口径：README 明确 0.x 阶段**没有**「deprecated 至少保留 1 个 MINOR 周期」的义务，
-    故本单直接删净，不先标 Deprecated；发版时按 0.x breaking → MINOR 记入下一 MINOR。
-  - **未随本单落（如实）**：61 个根名只有 1 个使用方（`tellurion` 60 + `tellurion-agent` 1），
-    按 CT-06 ② 应迁回该使用方仓；迁回须改其它仓并删本仓公共符号，超出本单「只改本仓」边界，
-    已在 §6.1 登记「迁回（待跨仓单）」，本轮不执行。`CaliberRank` / `CaliberRaw` 虽 0 外部引用，
-    但属 `FactorCaliber` 封闭词表且被 `Valid()` 依赖，保留不改语义。
+## [v0.9.0] - 2026-11-07
+
+MINOR 发版：CT-05 新增 `broker/` 包（**只增不改**），导出面 427 → 458
+（+31：12 个 `const` + 12 个 struct + 3 个枚举类型 + 4 个谓词方法），冻结基线 417 → 448 行
+（`git diff --numstat docs/api-surface.txt` 实测 +31 / −0）。既有六个包一字未动。
+
+### 新增（MINOR 级：新包）
+
+- **CT-05（2026-11-07）：`broker/` —— 把 broker 的订单 / 成交 / 账户 wire 形状收成唯一实现。**
+  - 13 个类型（`Side` / `OrderType` / `OrderStatus` + 12 个 struct）与 12 个常量、4 个谓词方法
+    （`Side.Valid` / `OrderType.Valid` / `OrderStatus.Valid` / `OrderStatus.Terminal`）。
+  - **字节来源**：期望值由 `tellurion-broker:internal/gateway` 的生产类型 `json.Marshal` 打出后
+    逐字节抄入 `broker/wire_test.go` 与 `conformance/broker_cases.json`（10 例）；不是按契约侧反推。
+  - **不迁**：XTP 适配器内部类型、`OrderRequest.Fingerprint`（仓储幂等规则）、12 个契约哨兵
+    （进程内错误值）；`quantity` 整股 `int` / `Side` 两值 / `OrderType` 两值与 `domain/` 的差异
+    写进 `docs/api-schema.md` §3.2，**禁止**类型别名抹平。
+  - **未随本单落（如实）**：`tellurion-broker` 删本地形状改引本包**未执行**——tag 未 push，
+    `go get` 解析不到；解除前置后由 broker 一笔做，判据是报文快照逐字节一致。
 
 ## [v0.8.0] - 2026-11-07
 
-MINOR 发版：CT-04 新增 `run/` 包（**只增不改**），导出面 418 → 427（+9：2 个 `const` +
-6 个 struct + 1 个纯函数），冻结基线 408 → 417 行（`git diff --numstat docs/api-surface.txt` 实测 +9 / −0）。
-无破坏性变更；既有六个包一字未动。
+MINOR 发版：CT-04 新增 `run/` 包（**只增不改**）＋ CT-06 回收 `domain/` 根包 0 使用方导出面
+（**破坏性**，见本节末）。导出面 418 → 427（+9：2 个 `const` + 6 个 struct + 1 个纯函数），
+冻结基线 408 → 417 行（`git diff --numstat docs/api-surface.txt` 实测 +9 / −0）。
+既有六个包除 CT-06 的删除外一字未动。
 
 ### 新增（MINOR 级：新包）
 
@@ -52,6 +55,25 @@ MINOR 发版：CT-04 新增 `run/` 包（**只增不改**），导出面 418 →
   - **未随本单落（如实）**：orchestration 改别名、core `orchestrationworker` 改用契约类型、
     analytics 提交报文改用契约类型，都是各自仓的单（CT-04 ⑥）；本单落地时三处仍各自持有副本。
     下游 pin 升级未执行（`go get` 要求 tag 已在远端）。
+
+### 破坏性（CT-06，已随本版发出）
+
+- **CT-06（2026-11-07）：回收 `domain/` 根包 0 使用方导出面，导出符号 487 → 418（−69）。**
+  - 取证：`domain/` 根包 176 符号折 119 个根名，逐一在 11 个同级仓（`tellurion*`，排除本仓，
+    `*.go` 含测试，仅统计导入 `contracts/domain` 的文件）grep `\bdomain\.<Name>\b`。
+    逐名出处见 `docs/API.md` §6.1。
+  - **破坏性：删除公司行为族 68 符号** —— `CorporateAction`、`ActionType`、
+    `CashDividend` / `BonusShare` / `CorporateActionSplit` / `RightsIssue` / `Placement`、
+    `ActionEngine`、`ApplyResult` / `ApplyOutcome` 及其构造函数 / 方法（`domain/corporate_action.go`
+    整文件与测试同删）。11 仓实测 **0 使用方**。
+  - **破坏性：删除 `domain.MarketDataProvider` 别名 1 符号**（实体 `domain/market.Provider` 保留；
+    11 仓实测 0 使用方）。
+  - 版本规则口径：README 明确 0.x 阶段**没有**「deprecated 至少保留 1 个 MINOR 周期」的义务，
+    故本单直接删净，不先标 Deprecated；发版时按 0.x breaking → MINOR 记入下一 MINOR。
+  - **未随本单落（如实）**：61 个根名只有 1 个使用方（`tellurion` 60 + `tellurion-agent` 1），
+    按 CT-06 ② 应迁回该使用方仓；迁回须改其它仓并删本仓公共符号，超出本单「只改本仓」边界，
+    已在 §6.1 登记「迁回（待跨仓单）」，本轮不执行。`CaliberRank` / `CaliberRaw` 虽 0 外部引用，
+    但属 `FactorCaliber` 封闭词表且被 `Valid()` 依赖，保留不改语义。
 
 ## [v0.7.0] - 2026-11-07
 

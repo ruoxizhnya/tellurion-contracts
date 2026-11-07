@@ -635,6 +635,50 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `ChildKeySeparator` | const | **frozen** | `":"`：改它 = 全部子 run 的幂等身份改变（MAJOR） |
 | `ChildIdempotencyKey` | func | **frozen** | 纯函数 `parent:<parent_job_id>:<child_index>`；逐字节对齐 `tellurion-orchestration:internal/parents/service.go`。改规则 = MAJOR |
 
+### `broker/` — 包 `broker`（订单 / 成交 / 账户 wire 面；2026-11-07 CT-05 新建，`v0.9.0`）
+
+> **字段名 / 可空性 / 声明顺序逐字冻结**：形状逐字取自
+> `tellurion-broker:internal/gateway/model.go`，期望字节由生产类型 `json.Marshal` 打出后逐字节抄入
+> `broker/wire_test.go` 与 `conformance/broker_cases.json`。改任一处 = breaking（已上 wire 的字节改变）。
+> **不迁**（按 CT-05 ④）：XTP 适配器内部类型（`BusinessType` / `XTPConfig` / `XTPDeps`）、
+> `OrderRequest.Fingerprint`（幂等指纹是 broker 的仓储规则，不是 wire 形状）、12 个契约哨兵
+> （进程内错误值，HTTP 消费方只看 wire code）。包内**零 I/O、零时钟、零 decode**。
+> **三处与 `domain` 的形状差异**见 `api-schema.md` §3.2，**禁止**用类型别名把两侧等同。
+
+| 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
+|---|---|---|---|
+| `Side` | type | stable | **两值** `buy` / `sell`；不是 `domain.Direction` 四值 |
+| `SideBuy` | const | stable | `"buy"` |
+| `SideSell` | const | stable | `"sell"` |
+| `Side.Valid` | method | stable | 是否两值之一；零值 → false |
+| `OrderType` | type | stable | **两值** `market` / `limit`；broker 刻意不收 `stop` / `trailing` |
+| `OrderMarket` | const | stable | `"market"` |
+| `OrderLimit` | const | stable | `"limit"` |
+| `OrderType.Valid` | method | stable | 是否两值之一；零值 → false |
+| `OrderStatus` | type | stable | **八值**（`pending` / `accepted` / `partially_filled` / `filled` / `cancelled` / `rejected` / `expired` / `unknown`）；不是 run 三值 |
+| `OrderPending` | const | stable | `"pending"` |
+| `OrderAccepted` | const | stable | `"accepted"`（**受理 ≠ 成交**） |
+| `OrderPartiallyFilled` | const | stable | `"partially_filled"` |
+| `OrderFilled` | const | stable | `"filled"` |
+| `OrderCancelled` | const | stable | `"cancelled"` |
+| `OrderRejected` | const | stable | `"rejected"` |
+| `OrderExpired` | const | stable | `"expired"` |
+| `OrderUnknown` | const | stable | `"unknown"`：**未决**状态，不是拒绝；调用方只能查单 / 对账，禁止重发 |
+| `OrderStatus.Valid` | method | stable | 是否八值之一；零值 → false |
+| `OrderStatus.Terminal` | method | stable | `filled` / `cancelled` / `rejected` / `expired` → true；`unknown` **不是**终态 |
+| `OrderRequest` | type | stable | 7 字段；`quantity` 是**整股 `int`**；`limit_price` **`omitempty`**（市价单不出现该键） |
+| `OrderAck` | type | stable | 7 字段；`broker_order_id` / `code` / `reason` **`omitempty`**；`accepted_at` 恒出现（非指针） |
+| `CancelRequest` | type | stable | 2 字段，都 **`omitempty`**：至少一个非空，优先按 `client_order_id` 幂等 |
+| `OrderState` | type | stable | 9 字段；`filled_quantity` / `avg_fill_price` / `remaining_quantity` **无 omitempty**（零也出现） |
+| `Fill` | type | stable | 11 字段；`broker_order_id` **`omitempty`**；`stamp_tax` 零值也出现 |
+| `Position` | type | stable | 7 字段；`quantity` / `available_quantity` 是**整股 `int`**（不是 `domain.Position.Quantity` 的 `float64`） |
+| `Cash` | type | stable | `total` / `available`（float64） |
+| `Fees` | type | stable | `commission` / `stamp_tax` / `transfer_fee`（float64，零值也出现） |
+| `AccountSnapshot` | type | stable | 6 字段；`positions` 空时出 `[]` **不是 `null`**（生产侧恒非 nil） |
+| `FlattenedPosition` | type | stable | 7 字段；只放**已真实提交并确认**的平仓成交 |
+| `SkippedPosition` | type | stable | 4 字段；未提交 / 被拒 / 状态未知的一律进这里，不得计入 `sold` |
+| `EmergencyFlattenResult` | type | stable | 6 字段；`sold` / `skipped` 空时出 `[]`；`sold_total` 是整股 |
+
 <!-- surface:end -->
 
 ---
@@ -747,6 +791,25 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 > **迁移边界（如实）**：本单只交付契约形状、向量与语料。orchestration 改别名、core `orchestrationworker`
 > 改用契约类型、analytics 提交报文改用契约类型，**都是各自仓的单**（CT-04 ⑥）；本单落地时三处仍各自持有副本。
 > `docs/ARCHITECTURE.md` 与 README 兼容矩阵同步登记本包。
+
+### 5.8 交易通道 wire 面（`broker/`，CT-05——✅ 2026-11-07 新建，**stable 不是 frozen**）
+
+形状来源与判据（证据为 2026-11-07 实测）：
+
+| 判据 | 口径 | 证据 |
+|---|---|---|
+| 订单三件套 | `OrderRequest`（7）/ `OrderAck`（7）/ `OrderState`（9）逐字段对齐；`limit_price` / `broker_order_id` / `code` / `reason` 带 `omitempty`，其余零值也出现 | `tellurion-broker:internal/gateway/model.go`；`tellurion-broker:docs/api-schema.md` §1.5 逐字段表 |
+| 账户族 | `Fill`（11）/ `Position`（7）/ `Cash`（2）/ `Fees`（3）/ `AccountSnapshot`（6）；空持仓出 `[]` 不是 `null` | 同上；`internal/httpapi` 的键集合用例 |
+| 紧急清仓 | `EmergencyFlattenResult`（6）+ `FlattenedPosition`（7）/ `SkippedPosition`（4）；未确认成交一律进 `skipped`，不得计入 `sold` | 同上；`SVC-BROKER-G1` 端点清单 |
+| 与 `domain` 的三处差异 | `quantity` 整股 `int`（vs `float64`）、`Side` 两值（vs `Direction` 四值）、`OrderType` 两值（vs 四值）；**禁止**类型别名等同 | `docs/api-schema.md` §3.2；`domain/types.go` 对照 |
+| 对拍腿 | 期望字节由 `tellurion-broker` 生产类型 `json.Marshal` 打出后逐字节抄入；改字段名 / tag / 顺序立即红 | `broker/wire_test.go` |
+| 跨仓语料 | `conformance/broker_cases.json`（10 例，单独文件，理由同 §5.7） | `conformance/broker_conformance_test.go` |
+| 不迁清单 | XTP 适配器内部类型、`OrderRequest.Fingerprint`、12 个契约哨兵、`broker.order_acks` DDL | §4 `broker/` 表注；材料 §3.3 / CT-05 ④ |
+
+> **迁移边界（如实，2026-11-07）**：本单交付契约形状、向量与语料；`tellurion-broker` 删本地形状改引本包
+> （CT-05 ⑤③ 的后半条）**未执行**——`v0.9.0` tag 未推远端（本机纪律只 commit 不 push），
+> `go get …@v0.9.0` 解析不到，broker 切 `go.mod` 会破坏单仓可构建。解除前置后由 broker 一笔做，
+> 判据是「同一条报文快照改前 / 改后逐字节一致」。
 
 ---
 

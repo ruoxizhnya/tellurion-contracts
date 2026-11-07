@@ -1,3 +1,34 @@
+broker/AccountSnapshot struct{AccountID string; AsOf time.Time; Cash Cash; TotalAssets float64; Positions []Position; Fees Fees}
+broker/CancelRequest struct{ClientOrderID string; BrokerOrderID string}
+broker/Cash struct{Total float64; Available float64}
+broker/EmergencyFlattenResult struct{Sold []FlattenedPosition; Skipped []SkippedPosition; SoldTotal int; StartedAt time.Time; CompletedAt time.Time; Reason string}
+broker/Fees struct{Commission float64; StampTax float64; TransferFee float64}
+broker/Fill struct{FillID string; ClientOrderID string; BrokerOrderID string; Symbol string; Side Side; Quantity int; Price float64; Commission float64; StampTax float64; TransferFee float64; FilledAt time.Time}
+broker/FlattenedPosition struct{AccountID string; Symbol string; Quantity int; ClientOrderID string; BrokerOrderID string; AvgFillPrice float64; FilledAt time.Time}
+broker/OrderAccepted OrderStatus
+broker/OrderAck struct{ClientOrderID string; BrokerOrderID string; Status OrderStatus; IdempotentReplay bool; AcceptedAt time.Time; Code string; Reason string}
+broker/OrderCancelled OrderStatus
+broker/OrderExpired OrderStatus
+broker/OrderFilled OrderStatus
+broker/OrderLimit OrderType
+broker/OrderMarket OrderType
+broker/OrderPartiallyFilled OrderStatus
+broker/OrderPending OrderStatus
+broker/OrderRejected OrderStatus
+broker/OrderRequest struct{ClientOrderID string; AccountID string; Symbol string; Side Side; OrderType OrderType; Quantity int; LimitPrice float64}
+broker/OrderState struct{ClientOrderID string; BrokerOrderID string; Status OrderStatus; FilledQuantity int; AvgFillPrice float64; RemainingQuantity int; LastUpdate time.Time; Code string; Reason string}
+broker/OrderStatus string
+broker/OrderStatus.Terminal() bool
+broker/OrderStatus.Valid() bool
+broker/OrderType string
+broker/OrderType.Valid() bool
+broker/OrderUnknown OrderStatus
+broker/Position struct{AccountID string; Symbol string; Quantity int; AvailableQuantity int; AvgCost float64; MarketValue float64; AsOf time.Time}
+broker/Side string
+broker/Side.Valid() bool
+broker/SideBuy Side
+broker/SideSell Side
+broker/SkippedPosition struct{AccountID string; Symbol string; Quantity int; Reason string}
 dataprotocol/DataTypeAnnounce = "announcements"
 dataprotocol/DataTypeCapitalFlow = "capital_flow"
 dataprotocol/DataTypeDailyBasic = "daily_basic"

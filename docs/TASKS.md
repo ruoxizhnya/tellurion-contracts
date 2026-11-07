@@ -265,7 +265,7 @@ verified-by: CT-04 编排 wire 契约腿（2026-11-07：新建 `run/` 包 ——
   - 发版：本地 annotated tag `v0.8.0`。**未 push**（本轮纪律：只 commit 不 push）。
   - **未执行（如实）**：① orchestration 改别名、core `internal/orchestrationworker` 改用契约类型、analytics `internal/upstream` 提交报文改用契约类型 —— 都是各自仓的单（⑥），本单落地时三处仍各自持有副本。② 三仓升 pin `v0.8.0` —— `go get` 要求 tag 已在远端，未 push 前升 pin 会让 `go build` 拉不到模块。⇒ `run/` 包今天**零 import**（与 `dataprotocol` / `risk` 落库时同型的有意取舍）。
 
-### CT-05 · broker DTO（order intent / fill / account） [P1] ⛔（前置 = `SVC-BROKER-G1`；§4 口径已于 CT-04 裁为 A；**死锁已裁，G1 先行**）
+### CT-05 · broker DTO（order intent / fill / account） [P1] 🔶（2026-11-07：契约侧 `broker/` 已落；broker 删本地形状改引本包 = 未执行，等 tag 推远端）
 
 > 正文 = 材料 §5 的 CT-05，材料 §4.3 对 ③ 的建议是**先不做**，只出对表。⛔ 的两条前置是**互锁**的：`SVC-BROKER-G1`（订单 HTTP 面）当时的阻塞理由写在 `tellurion-broker:docs/TASKS.md:37`（现 `:37` 起，行号会漂；等 A 组 broker DTO），而本单的阻塞理由又写「等 `SVC-BROKER-G1` 落定」——**这条死锁已于 2026-10-26 裁定，不是待裁项**：见材料新增 **§3.1.1**（三条理由 + 代价 + 两条窗口判据），结论 = **G1 先行、本单事后收编**，broker 侧已据此把 G1 从 ⛔ 改判 ⬜（`tellurion-broker:docs/TASKS.md:37`）。
 > 本单剩下的前置因此**只剩 `SVC-BROKER-G1`**：§4 的 wire DTO 口径已于 2026-11-07 在 CT-04 代裁为 **A**
@@ -278,6 +278,38 @@ verified-by: CT-04 编排 wire 契约腿（2026-11-07：新建 `run/` 包 ——
 - **④ 约束与非目标**：不迁 XTP 适配器内部类型（`BusinessType` / `XTPConfig` / `XTPDeps`）；不在 HTTP 面定形前冻结报文；不动 `broker.order_acks` 的 DDL 与幂等语义（保留期归 `tellurion-broker:SVC-BROKER-G2`，R10 归 `SVC-BROKER-G4`）。
 - **⑤ 验收**：① 对表逐行可查（DTO × 字段 × 契约位 × 与 `domain` 的差异）；② `SVC-BROKER-G1` 已 ✅ 且有可指的端点清单；③ 若落包：对拍腿 + 四条护栏绿 + 破坏验证（改一个字段名 ⇒ 红 → 还原 → 绿）。
 - **⑥ 边界**：只做 broker 形状；真实 XTP（X6c ⛔）与 core `pkg/live` 退役（`tellurion:SVC-CORE-BROKER-RETIRE`）不在本单。
+
+> **施工记录（2026-11-07 · 契约侧落包）**
+>
+> **前置复核（当场实测，不照抄文档）**：① `SVC-BROKER-G1` 已 ✅（`tellurion-broker:docs/TASKS.md` 头部与正文，含 12 端点清单与
+> 逐字段报文表）；② 窗口期两条义务已满足——`tellurion-broker:docs/api-schema.md` §1.5 有订单 / 成交 / 账户三族逐字段表
+> （字段名 + 可空性 + 类型），`internal/httpapi` 有序列化键集合用例；③ 材料 §3.3 三处差异已对照 `internal/gateway/model.go:80-186` 逐条核过。
+>
+> **落点**：新建 `broker/`（`enums.go` / `orders.go` / `account.go`）——31 个导出符号（12 `const` + 3 枚举类型 + 12 struct + 4 谓词方法）。
+> **不迁**（④ + 本单另判）：XTP 适配器内部类型、`OrderRequest.Fingerprint`（幂等指纹是 broker 的仓储规则）、12 个契约哨兵
+> （进程内错误值；HTTP 消费方按键值码判定）、`broker.order_acks` DDL。⇒ ③ 的「哨兵是否随迁」裁定 = **不迁**。
+>
+> **⑦ 字节来源（关键判据）**：期望值**不是**按契约侧反推的——在 `tellurion-broker` 加一次性取证用例
+> （`internal/gateway/zz_capture_tmp_test.go`，跑完即删），把 13 条代表值（含空数组、`omitempty` 缺席、零时间）
+> 由生产类型 `json.Marshal` 打出 `CAP|<id>|<bytes>`，逐字节抄进 `broker/wire_test.go` 与 `conformance/broker_cases.json`（10 例）。
+>
+> **登记**：`docs/API.md` §4 `broker/` 表（31 行）+ §5.8；`docs/api-schema.md` §3.2（三处差异 + 哨兵不迁）；
+> `check_contract_shape` 加 `broker` 根（六条 → 七条，含绿基座、白名单夹具与命名红用例）；`docs/api-surface.txt` 用 `-update` 重生成。
+> `README.md` 兼容矩阵加 `v0.9` 行；`CHANGELOG.md` 新建 `## [v0.9.0] - 2026-11-07`（并把 CT-06 的破坏性条目归位到它实际随发的 `v0.8.0` 节）；
+> `AGENTS.md` §1 / `docs/ARCHITECTURE.md`（包图、§3 表、§8 表）同步。
+>
+> **验收（真实输出，2026-11-07）**：`gofmt -l broker conformance` 空；`go test ./broker ./conformance -count=1` 全绿；
+> `go run ./tools/check_api_surface` → **458 代码符号 / 458 登记符号，17 个代码包 / 9 个登记包，EXIT=0**；
+> `go run ./tools/check_surface_freeze -update` → 基线 **417 → 448 行（+31 / −0）**，复跑 `448 = 448` EXIT=0；
+> `go run ./tools/check_contract_shape` → **17 个包 / 48 个非测试文件 / 白名单 7 个，七条契约根目录都在，EXIT=0**；
+> `go run ./tools/check_release_matrix` 见下一条。
+>
+> **破坏验证（两条，真做真还原）**：① 把 `OrderRequest.LimitPrice` 的 `,omitempty` 去掉 ⇒ `winner` 腿红
+> （`broker/wire_test.go` 的 `order_request_market` 多出 `"limit_price":0`，`conformance` 同名用例同红）；逐字节还原后复绿。
+> ② 把 `OrderStatus.Terminal` 的 `OrderExpired` 从终态集合删掉 ⇒ `TestEnums_BrokerVocabularyIsClosed` 红；还原后复绿。
+>
+> **未执行（如实，本单保持 🔶）**：`tellurion-broker` 删本地形状改引 `contracts/broker`——`v0.9.0` tag **未 push**，
+> `go get …@v0.9.0` 解析不到，切 `go.mod` 会让 broker 单仓不可构建；解除前置后由 broker 一笔做，判据 = 同一条报文快照改前 / 改后逐字节一致。
 
 ### CT-06 · `domain/` core-only 根名的回收（重跑：119 根名） [P3] 🔶（0 使用方已删；61 个单使用方迁回待跨仓单）
 
