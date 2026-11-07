@@ -106,6 +106,20 @@ host API 的 abi 版本、内存区所有权、枚举上限。冻结集合是 **
 | `artifact_hash` | 策略字节码本体 |
 | `version_hash` | 策略**源码版本**（QT-22：`strategy_id` + `carrier` + `abi_version` + `scope` + `entry` + `source` 六项，域 `tellurion.strategy_version_hash.v1`）。**不是**字节码身份（那是 `artifact_hash`），也不含 `capability` / `params_defaults` |
 
+### 3.1 子 run 幂等键（CT-04 定死）
+
+- **二选一结论 = 整段迁入契约**（不是「只迁形状」）：`run.ChildIdempotencyKey(parentJobID, childIndex)`
+  = `parent:<parent_job_id>:<child_index>`。理由：① 它是纯函数（ADR-0004 四条全满足：无 I/O、无时钟、
+  输入输出都是值）；② CT-04 ⑤ 的破坏验证要求「期望键由契约侧实现产出」，只迁形状无法产出可被改坏的期望值。
+- **冻结**：`run.ChildKeyPrefix = "parent"`、`run.ChildKeySeparator = ":"`。改任一个或改派生规则
+  = **MAJOR**（全部子 run 的幂等身份改变）；`CHANGELOG` 必须按「破坏性：<旧 → 新>」留账。
+- **父 id 的语义**：它是计划身份（plan hash）在库里的行 id —— 同一份计划即使换幂等键提交也拿到同一个父 id，
+  因此重放派生出同一批键；不同计划必然不同父 id，不会串键。调用方自造幂等键**不得**使用 `parent:` 前缀。
+- **契约只派生、不判定**：幂等冲突检测、重放返回、`409` 语义仍在编排服务（`internal/parents`），
+  契约仓不做 decode / 默认值填充 / 幂等判定（CT-04 ④）。
+- **对拍**：`run/run_test.go` 的重建腿 + `conformance/run_cases.json` 的 `child_idempotency_key` 用例各钉一次；
+  生产侧出处 `tellurion-orchestration:internal/parents/service.go`。
+
 ## 4. 版本与兼容
 
 - **0.x 阶段**（现在 → 1.0）：允许 breaking，但必须 **bump MINOR + 写 CHANGELOG 条目**。

@@ -406,3 +406,12 @@ risk/Snapshot.Clone() Snapshot
 risk/Snapshot.Hash() (string, error)
 risk/Snapshot.Verify() error
 risk/SnapshotRule struct{RuleID string; Revision int; Scope Scope; Type RuleType; Params json.RawMessage; VersionHash string}
+run/ChildIdempotencyKey(string, int) string
+run/ChildKeyPrefix = "parent"
+run/ChildKeySeparator = ":"
+run/ClaimView struct{RunID string; RunSpec json.RawMessage; Attempts int; MaxAttempts int; LeaseUntil *time.Time; CancelRequested bool; ParentJobID string}
+run/ParentBatchRequest struct{BaseRunSpec json.RawMessage; Grid map[string][]json.RawMessage}
+run/ParentSubmitRequest struct{IdempotencyKey string; Kind string; Batch *ParentBatchRequest; WalkForward *ParentWalkForwardRequest}
+run/ParentWalkForwardRequest struct{BaseRunSpec json.RawMessage; Windows ParentWindows; TradingDays []string}
+run/ParentWindows struct{TrainDays int; TestDays int; StepDays int; MinTrainDays int}
+run/ProvenanceView struct{RunID string; RunSpecHash string; DatasetSnapshotHash string; RiskRulesHash string; StrategyRef string; ArtifactURI *string; ArtifactHash *string; VersionHash *string; ParamsHash string; Seed *int64; Kernel string; EngineVersion string; FillTiming string; ResultStatus *string; CreatedAt *time.Time}

@@ -613,6 +613,28 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `ErrInvalidParams` | var | stable | `"rule params are invalid"` |
 | `ErrSnapshotMismatch` | var | stable | `"snapshot hash does not match content"` |
 
+### `run/` — 包 `run`（编排 wire 面三份形状；2026-11-07 CT-04 新建，`v0.8.0`）
+
+> **字段名 / 可空性 / 声明顺序逐字冻结**：三份形状分别对应
+> `tellurion-orchestration:internal/httpapi/workers.go` 的 `claimView`、
+> `internal/httpapi/provenance.go` 的 `provenanceView`、`internal/httpapi/parents.go` 的提交请求族。
+> 改任一处 = breaking（已上 wire 的字节改变）。语义与对拍判据见 §5.7。
+> **不迁**（按 CT-04 ④）：`RunRecord` / `ParentRecord` / `WorkerRecord`（队列与租约状态机）、
+> `jobView` / `parentView` / `parentChildView` / `parentCountsView`（编排读面投影）、
+> `ArtifactStore`（带写语义）、`run_artifacts` 的 DDL。包内**零 I/O、零时钟、零 decode**。
+
+| 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
+|---|---|---|---|
+| `ClaimView` | type | stable | 7 字段：`RunID` / `RunSpec`（`json.RawMessage`，完整 RunSpec 原样字节）/ `Attempts` / `MaxAttempts` / `LeaseUntil`（`*time.Time`，出 `null`）/ `CancelRequested` / `ParentJobID`（**`omitempty`**：普通 run 不出现该键） |
+| `ProvenanceView` | type | stable | 15 字段（`run_id` … `created_at`）。`ArtifactURI` / `ArtifactHash` / `VersionHash` / `Seed` / `ResultStatus` / `CreatedAt` 为指针，**出 `null` 而不是省略键**；`RiskRulesHash` 空串 = 未登记，不是「无规则」 |
+| `ParentSubmitRequest` | type | stable | `IdempotencyKey` / `Kind` / `Batch` / `WalkForward`；两个载荷都非 `nil` 或都 `nil` = 歧义请求，由服务侧 400（契约不猜） |
+| `ParentBatchRequest` | type | stable | `BaseRunSpec`（`json.RawMessage`）+ `Grid map[string][]json.RawMessage` |
+| `ParentWalkForwardRequest` | type | stable | `BaseRunSpec` + `Windows` + `TradingDays []string`（调用方传入的交易日历，契约不自造） |
+| `ParentWindows` | type | stable | `TrainDays` / `TestDays` / `StepDays` / `MinTrainDays`（int） |
+| `ChildKeyPrefix` | const | **frozen** | `"parent"`：子 run 幂等键的保留前缀；调用方自造键不得使用 |
+| `ChildKeySeparator` | const | **frozen** | `":"`：改它 = 全部子 run 的幂等身份改变（MAJOR） |
+| `ChildIdempotencyKey` | func | **frozen** | 纯函数 `parent:<parent_job_id>:<child_index>`；逐字节对齐 `tellurion-orchestration:internal/parents/service.go`。改规则 = MAJOR |
+
 <!-- surface:end -->
 
 ---
@@ -707,6 +729,24 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 > 的判据订正**归 risk 仓**；core 的 `bundle → RiskPolicy` 接线归 `tellurion:SVC-CORE-RISK-RETIRE`。
 > ⇒ **本节落地的真实消费方今天仍为零**（risk 的 F3 未接、core 全仓 `ParseBundle` 零调用点）。
 > 这是「先冻结形状、后续线」的有意取舍（与 `dataprotocol` 落库时同型）；代价是这段时间契约里多一个没人 `import` 的包。
+
+### 5.7 编排 wire 面（`run/`，CT-04——✅ 2026-11-07 新建，**stable 不是 frozen**）
+
+三份形状的来源与判据（证据为 2026-11-07 实测）：
+
+| 判据 | 口径 | 证据 |
+|---|---|---|
+| claim 形状 | 7 字段，`parent_job_id` 带 `omitempty`；`run_spec` 是完整 RunSpec 原样字节 | `tellurion-orchestration:internal/httpapi/workers.go`；core 镜像 `tellurion:internal/orchestrationworker/client.go` |
+| provenance 形状 | 15 字段；6 个可空字段**显式 `null`**，键不得省略；字段顺序即字节顺序 | `tellurion-orchestration:internal/httpapi/provenance.go`；core `tellurion:docs/openapi.yaml` 的 `BacktestProvenance`（原文 `must not drift`） |
+| 子 run 入队形状 | `parentSubmitRequest` 族四个类型；`kind` 决定 `batch` / `walkforward` 二选一 | `tellurion-orchestration:internal/httpapi/parents.go`；analytics 镜像 `tellurion-analytics:internal/upstream/sensitivity.go` |
+| 子 run 幂等键 | `parent:<parent_job_id>:<child_index>`；父 id 是计划身份的行 id，重放派生出同一批键 | `tellurion-orchestration:internal/parents/service.go` 的 `ChildIdempotencyKey` |
+| 对拍腿 | 三份形状的 wire 字节由生产侧形状**独立重建**（字面量），与本包实现逐字节比对；改 `omitempty` 或分隔符立即红 | `run/run_test.go` 的三个 `Test*_MatchesOrchestration*` |
+| 跨仓语料 | `conformance/run_cases.json`（与 `cases.json` 同形，但**单独文件**：core / agent 的加载器只认三侧，混入新侧会卡住下游 pin 升级）；期望值由本仓实现产出后写死，生产仓断言相同 | `conformance/run_conformance_test.go` |
+| 不迁清单 | `RunRecord` / `ParentRecord` / `WorkerRecord` / `jobView` / `parentView` / `parentChildView` / `parentCountsView` / `ArtifactStore` / `run_artifacts` DDL | §4 `run/` 表注；材料 §2.2 |
+
+> **迁移边界（如实）**：本单只交付契约形状、向量与语料。orchestration 改别名、core `orchestrationworker`
+> 改用契约类型、analytics 提交报文改用契约类型，**都是各自仓的单**（CT-04 ⑥）；本单落地时三处仍各自持有副本。
+> `docs/ARCHITECTURE.md` 与 README 兼容矩阵同步登记本包。
 
 ---
 

@@ -81,6 +81,7 @@ go run ./tools/check_pr_body          # 仅 PR 事件用（stdin 传 PR 正文�
 <!-- matrix:begin -->
 | 契约版本 | 状态 | 支持的 core（`tellurion`） | 支持的 agent（`tellurion-agent`） |
 |---|---|---|---|
+| `v0.8` | 已发版（2026-11-07，CT-04；**本地 annotated tag `v0.8.0`，未 push**）。`core` / `analytics` / `orchestration` 的 pin 升级与改用契约类型**未执行**（各自仓的单；`go get` 要求 tag 已在远端，推版归协调者） | 未切（实测仍 `v0.6.0`；`run/` 包今天零 import） | 未切（实测仍 `v0.6.0`） |
 | `v0.7` | 已发版（2026-11-07，CT-03；**本地 annotated tag `v0.7.0`，未 push**）。`core` / `risk` / `agent` 的 pin 升级**未执行**——`go get` 要求 tag 已在远端，推版归协调者 | 未切（实测仍 `v0.6.0`；`risk/` 包今天零 import） | 未切（实测仍 `v0.6.0`） |
 | `v0.6` | 已发版（2026-10-24，`main` + tag 已于 2026-10-25 推远端）；**core / data / agent 三仓已切**（2026-10-25 实测；`dataprotocol` 三处本地副本已收编）。strategy / risk / analytics / orchestration / broker 未切（无消费点） | 已切 `v0.6.0`（`go.mod` 实测；`pkg/data/source/unified.go` 与 `pkg/storage/bulk_insert.go` 两份副本改别名，构造器留 core） | 已切 `v0.6.0`（`go.mod` 实测；`replace tellurion` 在册期间与 core 同批升） |
 | `v0.5` | 已发版（2026-10-24）；core / agent / data / strategy **四仓已切**（G4，2026-10-24 实测；agent 的 `replace tellurion` 在册期间与 core 同批升） | 已切 `v0.5.0`（`go.mod` 实测；QT-22 新增符号，core 暂无消费点） | 已切 `v0.5.0`（`go.mod` 实测；`replace tellurion` 在册不改） |

@@ -24,6 +24,7 @@ verified-by: QT-05 ③-① 落码完成本仓侧（§2 订正「只依赖 kit」
               + 三类哨兵与 abi 常量：**已裁决不独立成包**，随本包走（[`adr/0003`](adr/0003-哨兵与-abi-不独立成包.md)）
   dataprotocol/  数据面共享协议：UnifiedDataPoint（七字段）+ DataType 取值集（✅ 2026-10-24 新建，18 个导出符号）
   risk/       风控规则快照：Snapshot / SnapshotRule / Scope / RuleType + hash 纯函数 + 4 哨兵（✅ 2026-11-07 新建，22 个导出符号）
+  run/        编排 wire 面：ClaimView / ProvenanceView / 父作业提交请求族 + 子 run 幂等键（✅ 2026-11-07 新建，9 个导出符号）
   fees/       费率 / 滑点 / 成本模型的**定义**（算钱留在 core）
 ```
 
@@ -43,6 +44,7 @@ verified-by: QT-05 ③-① 落码完成本仓侧（§2 订正「只依赖 kit」
 | `engine/` | 回测四契约 + 路由接口 + **三类哨兵 + abi 常量**（同一包、`package contracts`） | 不含引擎实现；不把哨兵 / abi 拆成独立包（[`adr/0003`](adr/0003-哨兵与-abi-不独立成包.md)：拆了没有调用点能少 import 一个包） |
 | `dataprotocol/` | 数据面共享协议：`UnifiedDataPoint`（七字段，含 `VisibleAt`）+ `DataType*` 取值集 + 去重坐标 | 零 I/O、零时钟（无构造器，`IngestTime` 由调用方注入）；不放聚合器 / 端口；不重复 `TimeSemantics`（住 `domain/market`）；迁移期 core / data 的副本由各自单删除（见 `docs/API.md` §5.5） |
 | `risk/` | 风控规则快照的形状与 hash 纯函数：`Snapshot` / `SnapshotRule` / `Scope` / `RuleType` + 4 个跨仓哨兵 | 零 I/O、零时钟；**编码逐字节冻结**（禁换 `engine.NewCanonical`）；不迁 `Bundle` / `ParseBundle` / `ForScope` 与服务私有 7 哨兵；不做裁决、不连库（见 `docs/API.md` §5.6） |
+| `run/` | 编排 wire 面的三份共享形状：`ClaimView` / `ProvenanceView` / 父作业提交请求族 + 子 run 幂等键纯函数 | 零 I/O、零时钟、零 decode；**字段名 / 可空性 / 顺序逐字冻结**；不迁 `RunRecord` / `ParentRecord` / `WorkerRecord` / `jobView` / `parentView` / `ArtifactStore` / DDL；不做幂等判定（见 `docs/API.md` §5.7） |
 | `fees/` | 成本模型的形状 | 不算钱（成交额 × 费率、最低佣金兜底在 core 的 tracker / mock_trader；本包实测零算术，见 `docs/API.md` §8 #3 的裁决依据） |
 
 ## 4. 三份契约（功能的边界就在这三份文件里）
@@ -87,3 +89,4 @@ tellurion-contracts
 | QT-19 | 版本规则表 + 兼容矩阵 + CHANGELOG | ✅ 已随 CT-02 落地（2026-10-22，护栏 `tools/check_release_matrix` 进 CI） |
 | QT-40 X1a | `dataprotocol/` 新包（`UnifiedDataPoint` 收编；§8 #4 选 (a) 先迁） | ✅ 已落（2026-10-24，`v0.6.0`）：导出面 447 → 465，冻结基线 430 → 448 行；**下游腿未做**——core 删两份副本、data 镜像改 import 归各自仓的单 |
 | CT-03 | `risk/` 新包（快照形状 + 冻结词表 + hash 纯函数 + 4 哨兵；第三轮裁决 ②） | ✅ 已落（2026-11-07，本地 tag `v0.7.0`，**未 push**）：导出面 465 → 487，冻结基线 448 → 470 行；**下游腿未做**——risk 改别名归 risk 仓、core `bundle → RiskPolicy` 接线归 `SVC-CORE-RISK-RETIRE`、三仓 pin 升级待 tag 推远端 |
+| CT-04 | `run/` 新包（claim / provenance / 父作业提交三份 wire 形状 + 子 run 幂等键；§4 口径 A + 第六轮 #9 解除） | ✅ 已落（2026-11-07，本地 tag `v0.8.0`，**未 push**）：导出面 418 → 427，冻结基线 408 → 417 行；**下游腿未做**——orchestration 改别名、core `orchestrationworker` 改用契约类型、analytics 提交报文改用契约类型归各自仓的单 |

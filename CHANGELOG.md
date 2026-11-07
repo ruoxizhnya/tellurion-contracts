@@ -26,6 +26,33 @@
     已在 §6.1 登记「迁回（待跨仓单）」，本轮不执行。`CaliberRank` / `CaliberRaw` 虽 0 外部引用，
     但属 `FactorCaliber` 封闭词表且被 `Valid()` 依赖，保留不改语义。
 
+## [v0.8.0] - 2026-11-07
+
+MINOR 发版：CT-04 新增 `run/` 包（**只增不改**），导出面 418 → 427（+9：2 个 `const` +
+6 个 struct + 1 个纯函数），冻结基线 408 → 417 行（`git diff --numstat docs/api-surface.txt` 实测 +9 / −0）。
+无破坏性变更；既有六个包一字未动。
+
+### 新增（MINOR 级：新包）
+
+- **CT-04 契约腿（2026-11-07）**：`run/` —— 把编排仓已在三处**手写复刻**的 wire 形状收成唯一实现：
+  - `ClaimView` 七字段（`claimView` 镜像；`ParentJobID` 带 `omitempty`，普通 run 不出现该键）。
+  - `ProvenanceView` 十五字段（`provenanceView` 镜像；六个可空字段**出 `null` 而不是省略键**）。
+    core `docs/openapi.yaml` 的 `BacktestProvenance` 原文 `must not drift`，本包把它变成机械判据。
+  - `ParentSubmitRequest` / `ParentBatchRequest` / `ParentWalkForwardRequest` / `ParentWindows`
+    （`parentSubmitRequest` 族镜像；`kind` 决定 batch / walkforward 二选一，契约不猜）。
+  - `ChildKeyPrefix = "parent"` / `ChildKeySeparator = ":"` / `ChildIdempotencyKey(parentID, childIndex)`
+    —— 纯函数 `parent:<parent_job_id>:<child_index>`，逐字节对齐编排仓。
+    **⚠️ 改此派生规则 = MAJOR**（全部子 run 的幂等身份改变）。
+  - **对拍**：三份形状的 wire 字节由生产侧形状独立重建（字面量），`run/run_test.go` 逐字节断言；
+    `conformance/run_cases.json` 是单独一份语料（与 `cases.json` 同形，但 core / agent 的加载器
+    只认 `contracts` / `core` / `agent` 三侧，混入新侧会卡住下游 pin 升级），期望值由本仓实现产出后写死。
+  - **不迁**（按 CT-04 ④）：`RunRecord` / `ParentRecord` / `WorkerRecord`（队列与租约状态机）、
+    `jobView` / `parentView` / `parentChildView` / `parentCountsView`（编排读面投影）、
+    `ArtifactStore`（带写语义）、`run_artifacts` DDL。包内零 I/O、零时钟、零 decode。
+  - **未随本单落（如实）**：orchestration 改别名、core `orchestrationworker` 改用契约类型、
+    analytics 提交报文改用契约类型，都是各自仓的单（CT-04 ⑥）；本单落地时三处仍各自持有副本。
+    下游 pin 升级未执行（`go get` 要求 tag 已在远端）。
+
 ## [v0.7.0] - 2026-11-07
 
 MINOR 发版：CT-03 新增 `risk/` 包（**只增不改**），导出面 465 → 487

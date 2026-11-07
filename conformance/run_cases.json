@@ -1,0 +1,92 @@
+[
+  {
+    "id": "run-claim/with-parent",
+    "kind": "claim_view_json",
+    "sides": ["contracts"],
+    "input": {
+      "run_id": "run-01",
+      "run_spec": {"strategy_ref": "momentum", "start": "2026-01-02", "end": "2026-03-31"},
+      "attempts": 1,
+      "max_attempts": 3,
+      "lease_until": "2026-11-07T08:00:00Z",
+      "cancel_requested": false,
+      "parent_job_id": "parent-abc"
+    },
+    "expect": {
+      "json": "{\"run_id\":\"run-01\",\"run_spec\":{\"strategy_ref\":\"momentum\",\"start\":\"2026-01-02\",\"end\":\"2026-03-31\"},\"attempts\":1,\"max_attempts\":3,\"lease_until\":\"2026-11-07T08:00:00Z\",\"cancel_requested\":false,\"parent_job_id\":\"parent-abc\"}"
+    }
+  },
+  {
+    "id": "run-claim/without-parent",
+    "kind": "claim_view_json",
+    "sides": ["contracts"],
+    "input": {
+      "run_id": "run-02",
+      "run_spec": null,
+      "attempts": 0,
+      "max_attempts": 5,
+      "lease_until": null,
+      "cancel_requested": true
+    },
+    "expect": {
+      "json": "{\"run_id\":\"run-02\",\"run_spec\":null,\"attempts\":0,\"max_attempts\":5,\"lease_until\":null,\"cancel_requested\":true}"
+    }
+  },
+  {
+    "id": "run-provenance/all-fields",
+    "kind": "provenance_view_json",
+    "sides": ["contracts"],
+    "input": {
+      "run_id": "run-01",
+      "run_spec_hash": "run-spec-hash",
+      "dataset_snapshot_hash": "dataset-snapshot-hash",
+      "risk_rules_hash": "risk-rules-hash",
+      "strategy_ref": "momentum",
+      "artifact_uri": "s3://artifacts/run-01.wasm",
+      "artifact_hash": "artifact-hash",
+      "version_hash": "version-hash",
+      "params_hash": "params-hash",
+      "seed": 42,
+      "kernel": "go",
+      "engine_version": "0.1.0",
+      "fill_timing": "next_open",
+      "result_status": "completed",
+      "created_at": "2026-11-07T07:45:42.7539Z"
+    },
+    "expect": {
+      "json": "{\"run_id\":\"run-01\",\"run_spec_hash\":\"run-spec-hash\",\"dataset_snapshot_hash\":\"dataset-snapshot-hash\",\"risk_rules_hash\":\"risk-rules-hash\",\"strategy_ref\":\"momentum\",\"artifact_uri\":\"s3://artifacts/run-01.wasm\",\"artifact_hash\":\"artifact-hash\",\"version_hash\":\"version-hash\",\"params_hash\":\"params-hash\",\"seed\":42,\"kernel\":\"go\",\"engine_version\":\"0.1.0\",\"fill_timing\":\"next_open\",\"result_status\":\"completed\",\"created_at\":\"2026-11-07T07:45:42.7539Z\"}"
+    }
+  },
+  {
+    "id": "run-provenance/nulls-stay-explicit",
+    "kind": "provenance_view_json",
+    "sides": ["contracts"],
+    "input": {
+      "run_id": "run-02"
+    },
+    "expect": {
+      "json": "{\"run_id\":\"run-02\",\"run_spec_hash\":\"\",\"dataset_snapshot_hash\":\"\",\"risk_rules_hash\":\"\",\"strategy_ref\":\"\",\"artifact_uri\":null,\"artifact_hash\":null,\"version_hash\":null,\"params_hash\":\"\",\"seed\":null,\"kernel\":\"\",\"engine_version\":\"\",\"fill_timing\":\"\",\"result_status\":null,\"created_at\":null}"
+    }
+  },
+  {
+    "id": "run-child-key/first",
+    "kind": "child_idempotency_key",
+    "sides": ["contracts"],
+    "input": {"parent_job_id": "parent-abc", "child_index": 0},
+    "expect": {"key": "parent:parent-abc:0"}
+  },
+  {
+    "id": "run-child-key/twelfth",
+    "kind": "child_idempotency_key",
+    "sides": ["contracts"],
+    "input": {"parent_job_id": "parent-abc", "child_index": 12},
+    "expect": {"key": "parent:parent-abc:12"}
+  },
+  {
+    "id": "run-child-key/plan-id",
+    "kind": "child_idempotency_key",
+    "sides": ["contracts"],
+    "input": {"parent_job_id": "3866fdc02b693c0a9a6b006669f7900c", "child_index": 7},
+    "expect": {"key": "parent:3866fdc02b693c0a9a6b006669f7900c:7"}
+  }
+]
