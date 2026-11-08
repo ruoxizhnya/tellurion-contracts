@@ -81,19 +81,19 @@ go run ./tools/check_pr_body          # 仅 PR 事件用（stdin 传 PR 正文�
 <!-- matrix:begin -->
 | 契约版本 | 状态 | 支持的 core（`tellurion`） | 支持的 agent（`tellurion-agent`） |
 |---|---|---|---|
-| `v0.9` | 已发版（2026-11-07，CT-05；**本地 annotated tag `v0.9.0`，未 push**）。`broker` 的 pin 升级与改用契约类型**未执行**——`tellurion-broker` 今天 `go.mod` 无 contracts 依赖，`go get` 又要求 tag 已在远端，推版归协调者 | 未切（实测仍 `v0.6.0`；`broker/` 包今天零 import） | 未切（实测仍 `v0.6.0`） |
-| `v0.8` | 已发版（2026-11-07，CT-04；**本地 annotated tag `v0.8.0`，未 push**）。`core` / `analytics` / `orchestration` 的 pin 升级与改用契约类型**未执行**（各自仓的单；`go get` 要求 tag 已在远端，推版归协调者） | 未切（实测仍 `v0.6.0`；`run/` 包今天零 import） | 未切（实测仍 `v0.6.0`） |
-| `v0.7` | 已发版（2026-11-07，CT-03；**本地 annotated tag `v0.7.0`，未 push**）。`core` / `risk` / `agent` 的 pin 升级**未执行**——`go get` 要求 tag 已在远端，推版归协调者 | 未切（实测仍 `v0.6.0`；`risk/` 包今天零 import） | 未切（实测仍 `v0.6.0`） |
+| `v0.9` | 已发版（2026-11-07，CT-05；**tag `v0.9.0` 与 `main` 已于 2026-11-08 推远端**）。`broker` 消费方 `tellurion-broker` 今天 `go.mod` 无 contracts 依赖（按裁决 #9 本轮零 contracts）⇒ 未切是**有意**，不是欠账 | 已切 `v0.9.0`（2026-11-08，裁决 #6；`go.mod` 实测） | 已切 `v0.9.0`（2026-11-08，裁决 #6；`go.mod` 实测） |
+| `v0.8` | 已发版（2026-11-07，CT-04；**tag `v0.8.0` 与 `main` 已于 2026-11-08 推远端**）。`analytics` / `orchestration` 今天无 contracts 依赖（裁决 #9 延后到各自 G1/G3 接线），core 经 `v0.9.0` 已覆盖 `run/` 包 | 已覆盖（`v0.9.0` ⊃ `v0.8.0`；`run/` 包暂无调用点） | 已覆盖（`v0.9.0` ⊃ `v0.8.0`） |
+| `v0.7` | 已发版（2026-11-07，CT-03；**tag `v0.7.0` 与 `main` 已于 2026-11-08 推远端**）。`risk` 包由 core / agent 经 `v0.9.0` 消费；`tellurion-risk` 今天 `go.mod` 无 contracts 依赖 ⇒ 无可切 | 已覆盖（`v0.9.0` ⊃ `v0.7.0`；`risk/` 包暂无调用点） | 已覆盖（`v0.9.0` ⊃ `v0.7.0`） |
 | `v0.6` | 已发版（2026-10-24，`main` + tag 已于 2026-10-25 推远端）；**core / data / agent 三仓已切**（2026-10-25 实测；`dataprotocol` 三处本地副本已收编）。strategy / risk / analytics / orchestration / broker 未切（无消费点） | 已切 `v0.6.0`（`go.mod` 实测；`pkg/data/source/unified.go` 与 `pkg/storage/bulk_insert.go` 两份副本改别名，构造器留 core） | 已切 `v0.6.0`（`go.mod` 实测；`replace tellurion` 在册期间与 core 同批升） |
 | `v0.5` | 已发版（2026-10-24）；core / agent / data / strategy **四仓已切**（G4，2026-10-24 实测；agent 的 `replace tellurion` 在册期间与 core 同批升） | 已切 `v0.5.0`（`go.mod` 实测；QT-22 新增符号，core 暂无消费点） | 已切 `v0.5.0`（`go.mod` 实测；`replace tellurion` 在册不改） |
 | `v0.4` | 已发版（2026-10-24） | 已切 `v0.4.0`（G13，2026-10-24 实测；QT-20 的请求字段消费属 core G1，QT-41b 的错误族消费属 strategy 仓） | 已切 `v0.4.0`（G13 同批切，2026-10-24 实测；`replace tellurion` 在册期间与 core 同批升） |
 | `v0.3` | 已发版（2026-10-23） | 已切 `v0.3.0`（core `go.mod` 2026-10-24 实测） | 已切 `v0.3.0`（agent `go.mod` 2026-10-24 实测；`replace tellurion` 在册不改） |
 | `v0.2` | 已发版（2026-10-23） | `v0.2.0`（QT-62 wasm 腿随同批切 pin；QT-16 契约腿同批收编） | `v0.2.0`（`replace tellurion` 在册期间与 core 同批升） |
 | `v0.1` | 已发版（2026-10-23） | `v0.1.1`（QT-07 ⑤ 切 pin；`v0.1.0` 为 S2-b 首版） | `v0.1.1`（同批切；`replace tellurion` 在册期间与 core 同批升） |
-| `main`（未发版） | 开发基线，**不做兼容承诺** | 已切 `v0.6.0` | 已切 `v0.6.0` |
+| `main`（未发版） | 开发基线，**不做兼容承诺** | 已切 `v0.9.0` | 已切 `v0.9.0` |
 <!-- matrix:end -->
 
-首个版本 `v0.1.0` 已于 **2026-10-23** 打在 `main` 上并 push（QT-07 ③-S2-a）；`v0.1.1` 同日发出，唯一目的（PATCH 级，导出面零变化）是把 `conformance/` 语料**打进 tag** —— `v0.1.0` 打在语料落地之前，下游按它取语料必然落空。0.x 阶段按上面的规则允许 breaking，但每一处都在 `CHANGELOG.md` 留了账。使用方一律 `require` 兼容矩阵里最新那一行（今天 `v0.6.0`），**不写 `replace`**（ADR-D31 / D29 §9 C1）。
+首个版本 `v0.1.0` 已于 **2026-10-23** 打在 `main` 上并 push（QT-07 ③-S2-a）；`v0.1.1` 同日发出，唯一目的（PATCH 级，导出面零变化）是把 `conformance/` 语料**打进 tag** —— `v0.1.0` 打在语料落地之前，下游按它取语料必然落空。0.x 阶段按上面的规则允许 breaking，但每一处都在 `CHANGELOG.md` 留了账。使用方一律 `require` 兼容矩阵里最新那一行（今天 `v0.9.0`），**不写 `replace`**（ADR-D31 / D29 §9 C1）。
 
 ## 发版流程
 
