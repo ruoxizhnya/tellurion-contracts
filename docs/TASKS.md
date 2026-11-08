@@ -264,8 +264,9 @@ verified-by: CT-04 编排 wire 契约腿（2026-11-07：新建 `run/` 包 ——
   - **破坏验证（两条，均真做真还原）**：① 去掉 `ClaimView.ParentJobID` 的 `omitempty` ⇒ `go test ./run -run TestClaimView_MatchesOrchestrationEncoding` **EXIT=1**（`without_parent_job` 子用例：多出 `"parent_job_id":""`），`go test ./conformance -run TestRunCases_ContractSide/run-claim/without-parent` 同 **EXIT=1**；逐字节还原后 `sha256=63AC5CEDC148056294F4B17E86BD010A4EE158B225309929461E5D7119D0D398` 与改坏前一致，复绿。② `ChildKeySeparator` 由 `":"` 改 `"-"` ⇒ `go test ./run -run TestChildIdempotencyKey_MatchesOrchestrationRule` **EXIT=1**（常量守卫直接点名 `sep="-"`），`conformance` 三条 child-key 用例全红（`parent-parent-abc-0` vs `parent:parent-abc:0`）；同样逐字节还原，`sha256` 同上、复绿。
   - 发版：本地 annotated tag `v0.8.0`。**未 push**（本轮纪律：只 commit 不 push）。
   - **未执行（如实）**：① orchestration 改别名、core `internal/orchestrationworker` 改用契约类型、analytics `internal/upstream` 提交报文改用契约类型 —— 都是各自仓的单（⑥），本单落地时三处仍各自持有副本。② 三仓升 pin `v0.8.0` —— `go get` 要求 tag 已在远端，未 push 前升 pin 会让 `go build` 拉不到模块。⇒ `run/` 包今天**零 import**（与 `dataprotocol` / `risk` 落库时同型的有意取舍）。
+  - **订正（2026-11-08）**：`v0.8.0` / `v0.9.0` tag 与 `main` 已推远端、core 已 pin `v0.9.0`（补裁 #13-2）⇒ 上面「未 push / 升 pin 会拉不到」的前提**已失效**；`run/` 仍零 import 是**未施工**，不是被 push 卡住。
 
-### CT-05 · broker DTO（order intent / fill / account） [P1] 🔶（2026-11-07：契约侧 `broker/` 已落；broker 删本地形状改引本包 = 未执行，等 tag 推远端）
+### CT-05 · broker DTO（order intent / fill / account） [P1] 🔶（2026-11-07：契约侧 `broker/` 已落；broker 删本地形状改引本包 = 未执行；tag 已于 2026-11-08 推远端，前置全解除）
 
 > 正文 = 材料 §5 的 CT-05，材料 §4.3 对 ③ 的建议是**先不做**，只出对表。⛔ 的两条前置是**互锁**的：`SVC-BROKER-G1`（订单 HTTP 面）当时的阻塞理由写在 `tellurion-broker:docs/TASKS.md:37`（现 `:37` 起，行号会漂；等 A 组 broker DTO），而本单的阻塞理由又写「等 `SVC-BROKER-G1` 落定」——**这条死锁已于 2026-10-26 裁定，不是待裁项**：见材料新增 **§3.1.1**（三条理由 + 代价 + 两条窗口判据），结论 = **G1 先行、本单事后收编**，broker 侧已据此把 G1 从 ⛔ 改判 ⬜（`tellurion-broker:docs/TASKS.md:37`）。
 > 本单剩下的前置因此**只剩 `SVC-BROKER-G1`**：§4 的 wire DTO 口径已于 2026-11-07 在 CT-04 代裁为 **A**
@@ -308,8 +309,7 @@ verified-by: CT-04 编排 wire 契约腿（2026-11-07：新建 `run/` 包 ——
 > （`broker/wire_test.go` 的 `order_request_market` 多出 `"limit_price":0`，`conformance` 同名用例同红）；逐字节还原后复绿。
 > ② 把 `OrderStatus.Terminal` 的 `OrderExpired` 从终态集合删掉 ⇒ `TestEnums_BrokerVocabularyIsClosed` 红；还原后复绿。
 >
-> **未执行（如实，本单保持 🔶）**：`tellurion-broker` 删本地形状改引 `contracts/broker`——`v0.9.0` tag **未 push**，
-> `go get …@v0.9.0` 解析不到，切 `go.mod` 会让 broker 单仓不可构建；解除前置后由 broker 一笔做，判据 = 同一条报文快照改前 / 改后逐字节一致。
+> **未执行（如实，本单保持 🔶）**：`tellurion-broker` 删本地形状改引 `contracts/broker`——**前置已全部解除**（2026-11-08 补裁 #13-3）：`v0.9.0` tag 与 `main` 已推远端、`SVC-BROKER-G1` 已 ✅，`go get …@v0.9.0` 可解析；由 broker 一笔做，判据 = 同一条报文快照改前 / 改后逐字节一致。原文「tag 未 push ⇒ 会不可构建」已被证伪。
 
 ### CT-06 · `domain/` core-only 根名的回收（重跑：119 根名） [P3] 🔶（0 使用方已删；61 个单使用方迁回待跨仓单）
 
@@ -319,6 +319,7 @@ verified-by: CT-04 编排 wire 契约腿（2026-11-07：新建 `run/` 包 ——
 - **④ 约束与非目标**：不改任何仍在用的形状；不动 `engine/canonical.go:44-66` 的 8 个 `Domain*`（禁区，材料 §4.4）；不借回收改字段名或语义；不在本单引入 kit/依赖；不代删 core 侧的实现包。
 - **⑤ 验收**：① 一份「根名 × 使用方仓 × 处置（迁回/删/保留）」清单，每行有 grep 出处；② `go run ./tools/check_api_surface` 与 `check_surface_freeze` 绿，且导出符号数的**减少量**与清单逐条对得上；③ 消费方（core / agent / 各服务仓）在下一版 pin 上 `go build ./...` 绿；④ 破坏验证：随便删一个仍被 agent 用的名字 ⇒ agent 编译失败（证明清单的「0 使用方」判据不是空话）。
 - **⑥ 边界**：本仓导出面回收；core 侧 `pkg/*` 的包级退役归各 `SVC-CORE-*-RETIRE` 单。
+- **跨仓裁决（2026-11-08 补裁 #12，**待主任追认**）**：61 个「仅 1 使用方」根名**按原建议迁回**，不放宽 C4；拆两笔——`CT-06-A`（agent 的 `BuiltinHypothesisFor`，单仓单点，先做）与 `CT-06-B`（core 60 个，按「兼容别名 / 实类型」分类：别名类只在 core 建同形别名、身份不变；实类型类才物理搬家并同批改签）。每笔 = 本仓删符号 + 使用方本地定义 + `CHANGELOG` 记 breaking + `api-surface.txt -update`。**本轮只裁决与拆分，不施工**；正文见 `tellurion:docs/design/qt-decoupling/cross-repo-decision-record-2026-10-26.md` §四.12。
 - **施工记录（2026-11-07）**：
   - **重跑取证（取代 2026-10-22 的「81」）**：`go run ./tools/check_api_surface -list` 实测 `domain/` 根包 **176 符号 / 119 根名**（方法并回类型）。11 个同级仓（`C:\Users\ruoxi\Workspace\tellurion*`，排除本仓；`*.go` 含测试；只统计导入 `contracts/domain` 的文件）逐名 grep `\bdomain\.<Name>\b`，命令与逐名 `repo:path:line` 出处见 `docs/API.md` §6.1。
   - **处置结果**：**删除 22 根名 / 69 符号**（公司行为族 68：`CorporateAction` / `ActionType` / `CashDividend` / `BonusShare` / `CorporateActionSplit` / `RightsIssue` / `Placement` / `ActionEngine` / `ApplyResult` / `ApplyOutcome` 及构造函数与方法，整文件 `domain/corporate_action.go` 与测试同删；旧名别名 `MarketDataProvider` 1）——11 仓全部 0 命中；**保留 34 根名**（≥2 使用方，含 core+agent / core+data）；**保留 2 根名**（`CaliberRank` / `CaliberRaw`，0 外部引用但属 `FactorCaliber` 封闭词表且 `Valid()` 依赖，删会改语义）；**迁回建议 61 根名**（均只有 1 个使用方：`tellurion` 60 + `tellurion-agent` 1 `BuiltinHypothesisFor`），本轮**不执行**——迁回须改 core / agent 并删本仓公共符号，超出「只改本仓」边界。grep 初筛后用 Go AST（`go/parser` 只数 `SelectorExpr`）复核，排除字符串/注释：`OHLCV` / `OrderType` / `OrderTypeLimit` / `OrderTypeMarket` / `Portfolio` 的 agent 命中在 `pkg/ai/prompts.go` 提示词代码示例字符串里，从「2 仓」改判为「1 仓（core）」。
