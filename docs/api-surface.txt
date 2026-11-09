@@ -53,7 +53,6 @@ domain/BacktestParams struct{StrategyName string; StockPool []string; StartDate 
 domain/BacktestResult struct{StartDate time.Time; EndDate time.Time; TotalReturn float64; AnnualReturn float64; SharpeRatio float64; SortinoRatio float64; MaxDrawdown float64; MaxDrawdownDate time.Time; WinRate float64; TotalTrades int; WinTrades int; LoseTrades int; AvgHoldingDays float64; CalmarRatio float64; PortfolioValues []PortfolioValue; Trades []Trade; UniverseMaxSize *int; InvalidReasons []string}
 domain/BuiltinFactorDefinitions []FactorDefinition
 domain/BuiltinFactorHypotheses []FactorHypothesis
-domain/BuiltinHypothesisFor(FactorType) (FactorHypothesis, bool)
 domain/CaliberRank FactorCaliber
 domain/CaliberRaw FactorCaliber
 domain/CaliberZScore FactorCaliber

@@ -336,7 +336,17 @@ verified-by: CT-05 收编完成（2026-11-09：`tellurion-broker` 删本地 DTO 
   - **验收（真退出码）**：`gofmt -l .` 空（exit 0）；`go build ./...` **0**；`go vet ./...` **0**；`go test ./... -count=1` **0**（12 个包全绿）；`check_api_surface` **418/418**、exit **0**；`check_surface_freeze` **408 = 408**、exit **0**；`check_contract_shape` exit **0**；`check_release_matrix` exit **0**。
   - **破坏验证（真做真还原）**：在仓外临时模块 `%TEMP%\ct06-destru` 用 `replace` 指向本仓，引用 agent 在用的 `domain.WalkForwardParams`（agent 侧 11 命中，`pkg/ai/http_runner.go:189`）→ `go build ./...` **exit 0**；临时删掉 `domain/backtest.go` 的该类型声明 → 同一模块 **exit 1**（`undefined: domain.WalkForwardParams`）；逐字节还原后 **exit 0**，本仓 `go build ./...` **exit 0**，`git diff domain/backtest.go` 为空。
   - **未执行（如实）**：① 消费方（core / agent / data）在「下一版 pin」上 `go build ./...` —— 本轮不打 tag / 不 push，`go get` 拉不到新版本，未执行；② 56 个单使用方根名的迁回（需跨仓单，且会删本仓公共符号）；③ tag / push（纪律禁止）。
-  - 状态保持 **🔶** 的原因：0 使用方已删净，但 56 个「仅 1 使用方」尚未迁回，导出面还未达到 C4 的「只剩 ≥2 使用方」。
+  - **施工记录（CT-06-A，2026-11-09，已执行）**：按 2026-11-08 补裁 #12 的拆分，先做 agent 侧单点。
+  `tellurion-agent` 的 `pkg/ai/tools/builtin/factor_hypothesis_tool{,_test}.go` 三处 `domain.BuiltinHypothesisFor` 调用改为本包私有
+  `builtinHypothesisFor`（同文件内实现，遍历仍留在契约的 `domain.BuiltinFactorHypotheses`）；本仓 `domain/factor.go` 删除该导出函数。
+  内置表有 core + agent 两个使用方，按 C4 **保留在本仓**。`CHANGELOG.md` `[Unreleased]` 记 breaking；`docs/API.md` §4 删行、§6/§6.1 标「已迁回」、
+  统计改为 106 符号 / 96 根名（待迁回 60 个 core 根名）；`docs/api-surface.txt` 用 `check_surface_freeze -update` 重生成。
+  **验收**：contracts `gofmt -l .` 空、`go build ./...` / `go vet ./...` / `go test ./... -count=1` 全 0、`check_api_surface`（457/457）与 `check_surface_freeze`（447=447）绿；
+  agent `go build ./...` / `go vet ./...` / `go test ./pkg/ai/tools/builtin/... -count=1` 全 0。
+  **破坏验证（仓外临时模块，`replace` 指本仓）**：引用保留名 `domain.BuiltinFactorHypotheses` → `go build ./...` **exit 0**；
+  加一行 `domain.BuiltinHypothesisFor(...)` → **exit 1**（`undefined: domain.BuiltinHypothesisFor`）——证明删除真实生效、保留名的判据不是空话。
+  **CT-06-B（core 60 个根名）仍未执行**，本单保持 🔶。
+- 状态保持 **🔶** 的原因：0 使用方已删净，但 56 个「仅 1 使用方」尚未迁回，导出面还未达到 C4 的「只剩 ≥2 使用方」。
 
 ---
 

@@ -7,7 +7,13 @@
 
 ## [Unreleased]
 
-（无）
+### 破坏性（CT-06-A，2026-11-09）
+
+- **破坏性：`domain.BuiltinHypothesisFor`（func）— 删除 → 由唯一使用方 `tellurion-agent` 本地私有实现 `builtinHypothesisFor` 承接。**
+  依据：11 仓重跑 + Go AST 复核，该符号只有 `tellurion-agent` 一个编译使用方，不满足准入规则 C4（≥2 使用方）。
+  内置表 `domain.BuiltinFactorHypotheses` 仍有 core + agent 两个使用方，**保留不迁**。
+  0.x 版本规则允许 breaking（删符号 = MINOR），本条随下一个 MINOR 发版；`docs/API.md` §4/§6.1 与
+  `docs/api-surface.txt` 已同步。
 
 ## [v0.9.0] - 2026-11-07
 

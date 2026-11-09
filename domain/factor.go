@@ -211,19 +211,6 @@ var BuiltinFactorHypotheses = []FactorHypothesis{
 	},
 }
 
-// BuiltinHypothesisFor 查内置因子的假设来源。
-//
-// 找不到时返回 ok=false —— 调用方应当据此如实上报"来源未记录"，
-// 而不是编一个。
-func BuiltinHypothesisFor(ft FactorType) (FactorHypothesis, bool) {
-	for _, h := range BuiltinFactorHypotheses {
-		if h.FactorName == ft {
-			return h, true
-		}
-	}
-	return FactorHypothesis{}, false
-}
-
 type FactorCacheEntry struct {
 	ID         int64      `json:"id"`
 	Symbol     string     `json:"symbol"`
