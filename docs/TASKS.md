@@ -1,7 +1,7 @@
 ---
 status: active
-last-verified: 2026-11-07
-verified-by: CT-04 编排 wire 契约腿（2026-11-07：新建 `run/` 包 —— `ClaimView` 七字段 / `ProvenanceView` 十五字段 / 父作业提交请求族 + `ChildIdempotencyKey` 纯函数；三份形状逐字节对拍编排仓 + `conformance/run_cases.json` 七用例；`contractRoots` 五根 → 六根；导出面 418 → 427、基线 408 → 417；本地 tag `v0.8.0` **未 push**，三仓改类型与 pin **未执行**；§4 口径代裁为 A、第六轮 #9 解除；施工记录见「一、本仓任务」）+ CT-03 契约腿（2026-11-07：新建 `risk/` 包 —— 快照形状 + 冻结词表 + `Snapshot.Hash()`/`Verify()`/`Clone()` + 4 哨兵；编码逐字节搬运、固定向量 `14ecab86…` + 跨仓对拍腿；`contractRoots` 四根 → 五根；导出面 465 → 487、基线 448 → 470；本地 tag `v0.7.0` **未 push**，三仓 pin **未执行**；施工记录见「一、本仓任务」）+ A 组三个形状包决策材料（2026-10-26：只出材料、0 代码、三单未立；六条派工前提逐条复现 + 破坏验证实跑；施工记录见「一、本仓任务」）+ QT-40 X1a 契约腿（2026-10-24：新增 `dataprotocol/` 包 —— `UnifiedDataPoint` 七字段（含 `VisibleAt`）+ `ToJSON`/`DeduplicateKey` + 15 个 `DataType*` 常量；无构造器、不读时钟；`v0.6.0` 已打 tag **且已 push**（2026-10-26 实测 `git ls-remote --tags origin` 有 `refs/tags/v0.6.0` → peel `5ee7fae`；此前记的「待 push」是 2026-10-24/25 的旧账。⚠️ 但本仓 `main` 领先 `origin/main` **1 笔**（`3055b6e` 未推）——tag 在远端 ≠ 分支已同步）；施工记录见「一、本仓任务」）+ G4 执行组（2026-10-24：core / agent / data / strategy 四仓升 pin `v0.5.0`；`check_contract_pin` GREEN 6 pin、conformance 2/2 零跳过；施工记录见「一、本仓任务」）+ G2 执行组（2026-10-24：QT-22 契约腿 `StrategyVersionInput` 六项 + `DomainStrategyVersionHash`，`v0.5.0` 已发版；施工记录见「一、本仓任务」）+ G0 执行组（2026-10-24：QT-20 契约腿 + QT-41b ④ 错误族，`v0.4.0` 已发；施工记录见「一、本仓任务」）+ G0D 裁决材料（QT-22 / QT-40 X1a / 服务 DTO 三份，只出材料、0 代码）；QT-09 本仓侧交接（2026-10-23：② examples/ + ③ conformance 语料与契约侧自检腿 + ④ PR 模板/check_pr_body + ⑤ check_contract_shape + surface 冻结 check_surface_freeze/api-surface.txt，全部接进 CI；三条工具另补表驱动单测）；QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；推送回写（2026-10-22：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`，`go get` 实测可解析，CI 429/429；§8 #4 登记为 X1a 待办）；**2026-10-25 B6-1**：QT-07 ⑥ S3 结案回写——agent 删掉 `replace tellurion => ../tellurion`（零 import / 零 require / CI 不 checkout core），core 侧同批清空 `check_contract_pin.py` 的白名单与 `check_repo_autonomy.py` 的 R1 死登记；本仓 AGENTS §3 的「唯一过渡例外」改为无豁免禁令、ADR-0001 附「例外收回记录」、QT-05 在册余项清零转 ✅
+last-verified: 2026-11-09
+verified-by: CT-05 收编完成（2026-11-09：`tellurion-broker` 删本地 DTO 改引 `contracts/broker` 类型别名 + 13 组报文改前/改后逐字节 golden；broker build/vet/test 全 0）+ CT-04 编排 wire 契约腿（2026-11-07：新建 `run/` 包 —— `ClaimView` 七字段 / `ProvenanceView` 十五字段 / 父作业提交请求族 + `ChildIdempotencyKey` 纯函数；三份形状逐字节对拍编排仓 + `conformance/run_cases.json` 七用例；`contractRoots` 五根 → 六根；导出面 418 → 427、基线 408 → 417；本地 tag `v0.8.0` **未 push**，三仓改类型与 pin **未执行**；§4 口径代裁为 A、第六轮 #9 解除；施工记录见「一、本仓任务」）+ CT-03 契约腿（2026-11-07：新建 `risk/` 包 —— 快照形状 + 冻结词表 + `Snapshot.Hash()`/`Verify()`/`Clone()` + 4 哨兵；编码逐字节搬运、固定向量 `14ecab86…` + 跨仓对拍腿；`contractRoots` 四根 → 五根；导出面 465 → 487、基线 448 → 470；本地 tag `v0.7.0` **未 push**，三仓 pin **未执行**；施工记录见「一、本仓任务」）+ A 组三个形状包决策材料（2026-10-26：只出材料、0 代码、三单未立；六条派工前提逐条复现 + 破坏验证实跑；施工记录见「一、本仓任务」）+ QT-40 X1a 契约腿（2026-10-24：新增 `dataprotocol/` 包 —— `UnifiedDataPoint` 七字段（含 `VisibleAt`）+ `ToJSON`/`DeduplicateKey` + 15 个 `DataType*` 常量；无构造器、不读时钟；`v0.6.0` 已打 tag **且已 push**（2026-10-26 实测 `git ls-remote --tags origin` 有 `refs/tags/v0.6.0` → peel `5ee7fae`；此前记的「待 push」是 2026-10-24/25 的旧账。⚠️ 但本仓 `main` 领先 `origin/main` **1 笔**（`3055b6e` 未推）——tag 在远端 ≠ 分支已同步）；施工记录见「一、本仓任务」）+ G4 执行组（2026-10-24：core / agent / data / strategy 四仓升 pin `v0.5.0`；`check_contract_pin` GREEN 6 pin、conformance 2/2 零跳过；施工记录见「一、本仓任务」）+ G2 执行组（2026-10-24：QT-22 契约腿 `StrategyVersionInput` 六项 + `DomainStrategyVersionHash`，`v0.5.0` 已发版；施工记录见「一、本仓任务」）+ G0 执行组（2026-10-24：QT-20 契约腿 + QT-41b ④ 错误族，`v0.4.0` 已发；施工记录见「一、本仓任务」）+ G0D 裁决材料（QT-22 / QT-40 X1a / 服务 DTO 三份，只出材料、0 代码）；QT-09 本仓侧交接（2026-10-23：② examples/ + ③ conformance 语料与契约侧自检腿 + ④ PR 模板/check_pr_body + ⑤ check_contract_shape + surface 冻结 check_surface_freeze/api-surface.txt，全部接进 CI；三条工具另补表驱动单测）；QT-05 ③-① 本仓侧收官（四包 429/429 + §8 #1~#3 裁决 + 下游腿交接单）+ 自审订正（ADR 文件名死链、方法类别、EngineRunner 返回值、fees 注释失真；新增 ADR-0004）；CT-02 结案归档（版本规则表 + 兼容矩阵 + CHANGELOG + check_release_matrix 进 CI）；推送回写（2026-10-22：6 个 commit 已进 `origin/main`，该批 HEAD = `fbe9a2d`，`go get` 实测可解析，CI 429/429；§8 #4 登记为 X1a 待办）；**2026-10-25 B6-1**：QT-07 ⑥ S3 结案回写——agent 删掉 `replace tellurion => ../tellurion`（零 import / 零 require / CI 不 checkout core），core 侧同批清空 `check_contract_pin.py` 的白名单与 `check_repo_autonomy.py` 的 R1 死登记；本仓 AGENTS §3 的「唯一过渡例外」改为无豁免禁令、ADR-0001 附「例外收回记录」、QT-05 在册余项清零转 ✅
 ---
 
 # TASKS — tellurion-contracts 未完成项
@@ -266,7 +266,7 @@ verified-by: CT-04 编排 wire 契约腿（2026-11-07：新建 `run/` 包 ——
   - **未执行（如实）**：① orchestration 改别名、core `internal/orchestrationworker` 改用契约类型、analytics `internal/upstream` 提交报文改用契约类型 —— 都是各自仓的单（⑥），本单落地时三处仍各自持有副本。② 三仓升 pin `v0.8.0` —— `go get` 要求 tag 已在远端，未 push 前升 pin 会让 `go build` 拉不到模块。⇒ `run/` 包今天**零 import**（与 `dataprotocol` / `risk` 落库时同型的有意取舍）。
   - **订正（2026-11-08）**：`v0.8.0` / `v0.9.0` tag 与 `main` 已推远端、core 已 pin `v0.9.0`（补裁 #13-2）⇒ 上面「未 push / 升 pin 会拉不到」的前提**已失效**；`run/` 仍零 import 是**未施工**，不是被 push 卡住。
 
-### CT-05 · broker DTO（order intent / fill / account） [P1] 🔶（2026-11-07：契约侧 `broker/` 已落；broker 删本地形状改引本包 = 未执行；tag 已于 2026-11-08 推远端，前置全解除）
+### CT-05 · broker DTO（order intent / fill / account） [P1] ✅（2026-11-09：broker 已删本地形状改引本包，逐字节快照对拍通过）
 
 > 正文 = 材料 §5 的 CT-05，材料 §4.3 对 ③ 的建议是**先不做**，只出对表。⛔ 的两条前置是**互锁**的：`SVC-BROKER-G1`（订单 HTTP 面）当时的阻塞理由写在 `tellurion-broker:docs/TASKS.md:37`（现 `:37` 起，行号会漂；等 A 组 broker DTO），而本单的阻塞理由又写「等 `SVC-BROKER-G1` 落定」——**这条死锁已于 2026-10-26 裁定，不是待裁项**：见材料新增 **§3.1.1**（三条理由 + 代价 + 两条窗口判据），结论 = **G1 先行、本单事后收编**，broker 侧已据此把 G1 从 ⛔ 改判 ⬜（`tellurion-broker:docs/TASKS.md:37`）。
 > 本单剩下的前置因此**只剩 `SVC-BROKER-G1`**：§4 的 wire DTO 口径已于 2026-11-07 在 CT-04 代裁为 **A**
@@ -309,7 +309,15 @@ verified-by: CT-04 编排 wire 契约腿（2026-11-07：新建 `run/` 包 ——
 > （`broker/wire_test.go` 的 `order_request_market` 多出 `"limit_price":0`，`conformance` 同名用例同红）；逐字节还原后复绿。
 > ② 把 `OrderStatus.Terminal` 的 `OrderExpired` 从终态集合删掉 ⇒ `TestEnums_BrokerVocabularyIsClosed` 红；还原后复绿。
 >
-> **未执行（如实，本单保持 🔶）**：`tellurion-broker` 删本地形状改引 `contracts/broker`——**前置已全部解除**（2026-11-08 补裁 #13-3）：`v0.9.0` tag 与 `main` 已推远端、`SVC-BROKER-G1` 已 ✅，`go get …@v0.9.0` 可解析；由 broker 一笔做，判据 = 同一条报文快照改前 / 改后逐字节一致。原文「tag 未 push ⇒ 会不可构建」已被证伪。
+> **收编完成（2026-11-09，broker 腿，判据 = 改前 / 改后逐字节一致）**：`tellurion-broker` 的 `internal/gateway/model.go` 现只剩
+> `contracts/broker` 的**类型别名**（枚举常量也改为对契约常量的别名），不再持有任何 DTO 字段定义；`OrderRequest.Fingerprint`
+> 按本单「不迁」清单留在 broker，因契约类型不能加方法而改为自由函数 `gateway.Fingerprint(req)`（`internal/gateway/mock.go` 同步）。
+> `tellurion-broker:go.mod` 新增 `github.com/ruoxizhnya/tellurion-contracts v0.9.0`（direct，`go mod tidy` 后）。
+> **逐字节证据**：迁移前在 broker 用一次性取证用例把 13 组代表值 `json.Marshal` 打出 `CAP|id|bytes`；迁移后同一组值写成
+> `internal/gateway/wire_shape_test.go` 的 golden 断言（订单请求市价/限价、回执含重放、撤单、订单状态、成交、持仓、账户快照、
+> 平仓成功/跳过、紧急清仓空/非空）。任何字段名 / 顺序 / `omitempty` / 空值漂移都会红。
+> **门禁（真实退出码）**：broker `go build ./...` = 0、`go vet ./...` = 0、`go test ./... -count=1` = 0（5 个包 ok）、`gofmt -l .` 空。
+> 12 个契约哨兵按本单裁定**未随迁**，仍在 `tellurion-broker:internal/gateway/errors.go`；`broker.order_acks` DDL 未动。
 
 ### CT-06 · `domain/` core-only 根名的回收（重跑：119 根名） [P3] 🔶（0 使用方已删；61 个单使用方迁回待跨仓单）
 
