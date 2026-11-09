@@ -15,13 +15,13 @@ func TestAlias_MarketTypesIdentical(t *testing.T) {
 	// without any conversion. If the alias is broken (e.g. someone
 	// writes `type OHLCV market.OHLCV` instead of `type OHLCV =
 	// market.OHLCV`), these lines fail to compile.
+	// CT-06-B (2026-11-10)：IndexConstituent / FundamentalData 两个别名只有
+	// core 一个使用方，已从本包删除（core 侧直接别名 market 的同名类型）。
 	var _ OHLCV = market.OHLCV{}
 	var _ Stock = market.Stock{}
-	var _ IndexConstituent = market.IndexConstituent{}
 	var _ Split = market.Split{}
 	var _ Dividend = market.Dividend{}
 	var _ Fundamental = market.Fundamental{}
-	var _ FundamentalData = market.FundamentalData{}
 
 	// Runtime sanity: zero values are interchangeable in slices/maps.
 	ohlcv := OHLCV{Symbol: "000001.SZ"}

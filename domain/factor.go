@@ -3,8 +3,9 @@ package domain
 // ─── 因子名册：兼容薄壳（D3 起降级） ───
 //
 // 本文件的 FactorType 常量曾是因子注册表的「代码冻结」形态。D3 起，
-// 计算注册表的唯一权威是 factor_def_seed.go 的 BuiltinFactorDefinitions
-// （库里公式种子）+ `tellurion:pkg/data` 的 Registry（加载时分派）；名册常量降级为
+// 计算注册表的唯一权威是 `tellurion:pkg/domain/factor_def_seed.go` 的
+// BuiltinFactorDefinitions（库里公式种子；CT-06-B 2026-11-10 迁回 core）
+// + `tellurion:pkg/data` 的 Registry（加载时分派）；名册常量降级为
 // **兼容薄壳**——保留原因（引用面盘点，2026-10-14）：
 //
 //   - `tellurion:pkg/backtest/cache/factor_cache.go`：回测预热清单（存量，D6 收敛）；
@@ -24,11 +25,8 @@ package domain
 // 变更纪律走正式变更：加名 + 种子定义带 D3 十字段骨架 + D4 登记四样
 // （公式/哈希/登记人/生效日）+ 蓝图与 SPEC 同步留痕。后续新因子沿用
 // 本路径，不放宽任何校验。
-
-import (
-	"encoding/json"
-	"time"
-)
+// CT-06-B (2026-11-10): FactorCacheEntry / FactorReturn / ICEntry 只有 core
+// 一个使用方，已迁回 `tellurion:pkg/domain/factor.go`；本包不再导出。
 
 type FactorType string
 
@@ -209,40 +207,4 @@ var BuiltinFactorHypotheses = []FactorHypothesis{
 			"关注度信号。",
 		Reference: "Barber & Odean (2008) All That Glitters；D5 样板（daily_basic 换手率族）",
 	},
-}
-
-type FactorCacheEntry struct {
-	ID         int64      `json:"id"`
-	Symbol     string     `json:"symbol"`
-	TradeDate  time.Time  `json:"trade_date"`
-	FactorName FactorType `json:"factor_name"`
-	RawValue   float64    `json:"raw_value"`
-	ZScore     float64    `json:"z_score"`
-	Percentile float64    `json:"percentile"`
-	// Citation is the stored provenance of this row's source batches, of the
-	// form [{"content_hash":"<64hex>"}]. It is deliberately json.RawMessage:
-	// the stored (hash-only) shape and the output shape (ADR-022 §5 five-tuple,
-	// expanded by the handler) differ, and the stored form must stay losslessly
-	// upgradable. Empty citation is '[]' — "no A→B chain established yet",
-	// never null (ODR-061).
-	Citation json.RawMessage `json:"citation,omitempty"`
-}
-
-type FactorReturn struct {
-	ID               int64      `json:"id"`
-	FactorName       FactorType `json:"factor_name"`
-	TradeDate        time.Time  `json:"trade_date"`
-	Quintile         int        `json:"quintile"`
-	AvgReturn        float64    `json:"avg_return"`
-	CumulativeReturn float64    `json:"cumulative_return"`
-	TopMinusBot      float64    `json:"top_minus_bot"`
-}
-
-type ICEntry struct {
-	ID         int64      `json:"id"`
-	FactorName FactorType `json:"factor_name"`
-	TradeDate  time.Time  `json:"trade_date"`
-	IC         float64    `json:"ic"`
-	PValue     float64    `json:"p_value"`
-	TopIC      float64    `json:"top_ic"`
 }

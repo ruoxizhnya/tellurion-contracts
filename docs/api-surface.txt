@@ -47,48 +47,24 @@ dataprotocol/DataTypeTopList = "top_list"
 dataprotocol/UnifiedDataPoint struct{Symbol string; TradeTime time.Time; Source string; DataType string; Data map[string]interface{}; IngestTime time.Time; VisibleAt time.Time}
 dataprotocol/UnifiedDataPoint.DeduplicateKey() string
 dataprotocol/UnifiedDataPoint.ToJSON() ([]byte, error)
-domain/ActionRegister RegistrationAction
-domain/ActionRollback RegistrationAction
-domain/BacktestParams struct{StrategyName string; StockPool []string; StartDate time.Time; EndDate time.Time; InitialCapital float64; RiskFreeRate float64; LookbackDays int; FillTiming string; Kernel string; IndexCode string; Params map[string]any}
 domain/BacktestResult struct{StartDate time.Time; EndDate time.Time; TotalReturn float64; AnnualReturn float64; SharpeRatio float64; SortinoRatio float64; MaxDrawdown float64; MaxDrawdownDate time.Time; WinRate float64; TotalTrades int; WinTrades int; LoseTrades int; AvgHoldingDays float64; CalmarRatio float64; PortfolioValues []PortfolioValue; Trades []Trade; UniverseMaxSize *int; InvalidReasons []string}
-domain/BuiltinFactorDefinitions []FactorDefinition
 domain/BuiltinFactorHypotheses []FactorHypothesis
-domain/CaliberRank FactorCaliber
-domain/CaliberRaw FactorCaliber
-domain/CaliberZScore FactorCaliber
-domain/DefaultExecutionConfig() ExecutionConfig
 domain/Direction string
 domain/DirectionClose Direction
 domain/DirectionHold Direction
 domain/DirectionLong Direction
 domain/DirectionShort Direction
 domain/Dividend = market.Dividend
-domain/ETFConstituent struct{ETFCode string; Symbol string; Weight float64; ObsDate time.Time; Source string; AsOf time.Time}
-domain/ExecutionConfig struct{OrderType OrderType; SlippageModel string; CommissionRate float64; MinCommission float64; InitialCapital float64; SlippageRate float64; ImpactSigma float64; ImpactLiquidityFactor float64}
-domain/FactorCacheEntry struct{ID int64; Symbol string; TradeDate time.Time; FactorName FactorType; RawValue float64; ZScore float64; Percentile float64; Citation json.RawMessage}
-domain/FactorCaliber string
-domain/FactorCaliber.Valid() bool
 domain/FactorContractLiabilityRatio FactorType
-domain/FactorDefinition struct{Name FactorType; Kernel FactorKernel; Formula string; Validity string; CodeRef string; Caliber FactorCaliber; InputFields []string; EffectiveFrom string; Lookahead string; Lookback int}
-domain/FactorDefinition.Validate() error
-domain/FactorDefinition.VersionHash() string
 domain/FactorGrossMarginTrend FactorType
 domain/FactorGrowth FactorType
 domain/FactorHypothesis struct{FactorName FactorType; SourceKind string; Hypothesis string; Reference string}
 domain/FactorInventoryTurnoverDelta FactorType
-domain/FactorKernel string
-domain/FactorKernel.Valid() bool
 domain/FactorMarketActivity FactorType
-domain/FactorMiningRecord struct{FactorName FactorType; VersionHash string; SourceKind string; Generator string; Generation int; Rationale string; NumTrials int; FailedTrials int; SandboxHash string; Admitted bool; RejectReason string; OverfitRawP float64; OverfitAdjP float64; OverfitFlag bool; OOSInSample float64; OOSOutSample float64; OOSPass bool; CreatedAt time.Time}
-domain/FactorMiningRecord.Validate() error
 domain/FactorMomentum FactorType
 domain/FactorOCFToNetProfit FactorType
-domain/FactorOutput struct{Factor string; Date time.Time; Symbol string; Value *float64; Caliber FactorCaliber; Frequency market.Frequency; VisibleAt time.Time}
 domain/FactorQuality FactorType
 domain/FactorROEDuPontLeverage FactorType
-domain/FactorRegistration struct{Definition FactorDefinition; VersionHash string; Registrar string; Status RegistrationStatus; RegisteredAt time.Time; RolledBackAt *time.Time; RolledBackBy string; RollbackReason string}
-domain/FactorRegistration.Validate() error
-domain/FactorReturn struct{ID int64; FactorName FactorType; TradeDate time.Time; Quintile int; AvgReturn float64; CumulativeReturn float64; TopMinusBot float64}
 domain/FactorSize FactorType
 domain/FactorSourceAI = "ai_hypothesis"
 domain/FactorSourceAdHoc = "ad_hoc"
@@ -98,54 +74,15 @@ domain/FactorType string
 domain/FactorValue FactorType
 domain/FactorVolatility FactorType
 domain/Fundamental = market.Fundamental
-domain/FundamentalData = market.FundamentalData
-domain/FundamentalsDetailRow struct{TsCode string; EndDate time.Time; AnnDate time.Time; FieldCode string; RawFieldName string; Value *float64; Unit string; Source string; FetchedAt time.Time; SnapshotURI string}
-domain/ICEntry struct{ID int64; FactorName FactorType; TradeDate time.Time; IC float64; PValue float64; TopIC float64}
-domain/IndexConstituent = market.IndexConstituent
 domain/IndexDaily = market.IndexDaily
-domain/IndustryVitality struct{IndustryCode string; Metric string; ObsDate time.Time; Value float64; Unit string; Source string; AsOf time.Time}
-domain/KernelCode FactorKernel
-domain/KernelFormula FactorKernel
-domain/KernelLeaf FactorKernel
-domain/KernelPending FactorKernel
 domain/MacroSeries struct{Indicator string; Freq string; ObsDate time.Time; Value float64; Unit string; Source string; AsOf time.Time}
 domain/MarketActivity struct{Symbol string; TradeDate time.Time; TurnoverRate *float64; TurnoverRateF *float64; VolumeRatio *float64; Source string; AsOf time.Time}
 domain/MarketRegime struct{Trend string; Volatility string; Sentiment float64; Timestamp time.Time}
 domain/OHLCV = market.OHLCV
-domain/Order struct{ID string; Symbol string; Direction Direction; OrderType OrderType; Quantity float64; LimitPrice float64; ExecAlgo string; ExecSlices int; ExecProfile []float64; StopPrice float64; TrailAmount float64; TrailPercent float64; HighWaterMark float64; Timestamp time.Time; FilledQty float64; FillPrice float64; Status string; Notes string}
-domain/OrderType string
-domain/OrderTypeLimit OrderType
-domain/OrderTypeMarket OrderType
-domain/OrderTypeStop OrderType
-domain/OrderTypeTrailing OrderType
 domain/ParseFactorType(string) (FactorType, bool)
-domain/Portfolio struct{Cash float64; Positions map[string]Position; TotalValue float64; DailyReturn float64; UpdatedAt time.Time}
 domain/PortfolioValue struct{Date time.Time; TotalValue float64; Cash float64; Positions float64}
-domain/Position struct{Symbol string; Quantity float64; AvgCost float64; CurrentPrice float64; MarketValue float64; UnrealizedPnL float64; RealizedPnL float64; Weight float64; EntryDate time.Time; BuyDate time.Time; QuantityToday float64; QuantityYesterday float64; Metadata map[string]any}
-domain/PositionSize struct{Size float64; Weight float64; StopLoss float64; TakeProfit float64; RiskScore float64}
-domain/RegistrationAction string
-domain/RegistrationActive RegistrationStatus
-domain/RegistrationAuditEntry struct{Name FactorType; VersionHash string; Action RegistrationAction; Actor string; Reason string; Detail string; At time.Time}
-domain/RegistrationRolledBack RegistrationStatus
-domain/RegistrationStatus string
-domain/RegistrationStatus.Valid() bool
-domain/RelationIndustryMember = "industry_member"
-domain/RiskManager interface{CalculatePosition func(context.Context, Signal, *Portfolio, *MarketRegime, float64, []OHLCV) (PositionSize, error); DetectRegime func(context.Context, []OHLCV) (*MarketRegime, error); CheckStopLoss func(context.Context, []Position, map[string]float64) ([]StopLossEvent, error)}
-domain/RiskMetrics struct{Volatility float64; Beta float64; SharpeRatio float64; SortinoRatio float64; MaxDrawdown float64; MaxDrawdownDate time.Time; VaR95 float64; CVaR95 float64}
-domain/SWIndustryNode struct{Code string; ParentCode string; Level int; Name string; IsLeaf bool; Source string; AsOf time.Time}
-domain/ScreenFilters struct{PE_min *float64; PE_max *float64; PB_min *float64; PB_max *float64; PS_min *float64; PS_max *float64; ROE_min *float64; ROA_min *float64; DebtToEquity_max *float64; GrossMargin_min *float64; NetMargin_min *float64; MarketCap_min *float64}
-domain/ScreenRequest struct{Filters ScreenFilters; Date string; Limit int}
-domain/ScreenResult struct{TsCode string; PE *float64; PB *float64; PS *float64; ROE *float64; ROA *float64; DebtToEquity *float64; GrossMargin *float64; NetMargin *float64; MarketCap *float64}
-domain/Sector struct{SectorCode string; SectorName string; Category string; TradeDate time.Time; ChangePct *float64; LeadingSymbol string; Source string}
-domain/Signal struct{Symbol string; Date time.Time; Direction Direction; Strength float64; CompositeScore float64; Factors map[string]float64; Metadata map[string]any; LimitPrice float64; OrderType OrderType; ExecAlgo string; ExecSlices int; ExecProfile []float64}
 domain/Split = market.Split
 domain/Stock = market.Stock
-domain/StockIndustry struct{Symbol string; Industry string}
-domain/StockSector struct{Symbol string; SectorCode string; SectorName string; Source string}
-domain/StopLossEvent struct{Symbol string; Type string; Price float64; Quantity float64; Reason string}
-domain/StrategyConfig struct{ID int64; StrategyID string; Name string; Description string; StrategyType string; Params string; IsActive bool; CreatedAt time.Time; UpdatedAt time.Time}
-domain/SupplyChainEdge struct{Upstream string; Downstream string; Relation string; Weight float64; Source string; AsOf time.Time}
-domain/TargetPosition struct{Symbol string; TargetQty float64; ActualQty float64; PendingQty float64; LastUpdated time.Time}
 domain/Trade struct{ID string; Symbol string; Direction Direction; Quantity float64; Price float64; Commission float64; TransferFee float64; StampTax float64; Timestamp time.Time; PendingQty float64; FilledQty float64}
 domain/WalkForwardParams struct{TrainDays int; TestDays int; StepDays int; MinTrainDays int}
 domain/WalkForwardReport struct{StrategyID string; Universe string; Windows []*WalkForwardResult; AvgTestSharpe float64; AvgTestReturn float64; AvgTestMaxDD float64; AvgDegradation float64; PassRate float64; OverallPass bool; StdTestSharpe float64; StdDegradation float64; OverfitScore float64; ProbNoOverfit float64; StabilityScore float64}

@@ -220,9 +220,11 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 
 > **迁入形状**：23 个文件（16 非测试 + 7 测试）自 core 拷入，刻意的改动只有三类：① import 换成本仓路径（`domain/market`、`fees`）；② **删掉 5 个零引用的部署配置类型**（`Config` / `DatabaseConfig` / `RedisConfig` / `ServiceConfig` / `TushareConfig`——core 与 agent 实测 0 引用；`Config` 还带 `Password` 字段，不该进公开库；裁决见 §8 #2 与 [`adr/0002`](adr/0002-config-族的边界处置.md)）；③ 随之删掉只为它们存在、且断言恒真的 `TestConfig_Types`。
 > **等价性证据**：剥注释 + 归一化 import 后，20/23 文件与 core 完全相同；`execution_test.go` 只差 gofmt 的 import 顺序；`types.go` / `types_test.go` 只差被删的那两段（−31 / −24 行）。
-> **稳定性口径（本节）**：`frozen` = SPEC 互锁（`OHLCV` / `Fundamental` 别名）；`stable` = 引擎 / 策略 / 风控的领域词汇（改 = MINOR，破坏 = MAJOR）；`experimental` = 配置形状（§8 #2）与 core-only 数据族（QT-05 ③-⑨ 回收清单）。core-only 的族按 §6 的功能分组标 stable，并在备注里写明「core-only，③-⑨」——两处判断都留痕。
-> **别名不是重复真相**：`OHLCV` / `Stock` / … / `FundamentalData` 的实体在 `domain/market`，这里只为兼容旧拼写（`domain.X` 与 `market.X` 是**同一个类型**）。
+> **稳定性口径（本节）**：`frozen` = SPEC 互锁（`OHLCV` / `Fundamental` 别名）；`stable` = 引擎 / 策略 / 风控的领域词汇（改 = MINOR，破坏 = MAJOR）；`experimental` = §8 #2 的遗留形状与跨仓数据族（core + `tellurion-data`）。core-only 的族按 §6 的功能分组标 stable，并在备注里写明「core-only，③-⑨」——两处判断都留痕。
+> **别名不是重复真相**：`OHLCV` / `Stock` / `IndexDaily` / `Split` / `Dividend` / `Fundamental` 的实体在 `domain/market`，这里只为兼容旧拼写（`domain.X` 与 `market.X` 是**同一个类型**）。`FundamentalData` / `IndexConstituent` 两个根别名按 CT-06-B 删除——需要时直接 import `domain/market` 用同名类型。
 > **方法体边界**：本包里的 `Validate` / `VersionHash` 是**纯函数行为**，随值对象迁入；判据（无 I/O、依赖受限、无跨调用持久状态、不替代服务）见 [`adr/0004`](adr/0004-值对象上的纯函数行为随类型走.md)。
+>
+> **CT-06-B（2026-11-10，补裁 #12）**：`domain/` 根包里**只有 core 一个编译使用方**的根名已物理迁回 `tellurion:pkg/domain`（core 新建该包承载，market 别名在 core 侧同形重建）。本仓本包因此只剩 ≥2 使用方的形状 + 6 个 market 别名（其中 `Fundamental` 仍被 `tellurion-data` 直接使用；其余 5 个是同一类型别名，零第二份真相）。迁出清单：`Signal` / `Order` / `Position` / `Portfolio` / `RiskMetrics` / `TargetPosition` / `PositionSize` / `StopLossEvent` / `RiskManager` / `OrderType` 族；`BacktestParams`；因子族 `FactorKernel` / `FactorCaliber` / `FactorDefinition` / `FactorRegistration` / `FactorMiningRecord` / `FactorOutput` / `FactorCacheEntry` / `FactorReturn` / `ICEntry` / `BuiltinFactorDefinitions`；core-only 数据族 `Screen*` / `SWIndustryNode` / `RelationIndustryMember` / `SupplyChainEdge` / `IndustryVitality` / `ETFConstituent` / `FundamentalsDetailRow` / `ExecutionConfig`。**0 使用方直接删除、不在 core 重建**：`StrategyConfig`、`Sector` / `StockSector` / `StockIndustry`（11 仓重跑 0 命中）。逐名处置见 §6.1。
 
 | 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
 |---|---|---|---|
@@ -231,30 +233,11 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `DirectionShort` | const | stable | `"short"` |
 | `DirectionClose` | const | stable | `"close"`（平仓；卖出方向判定印花税时按它） |
 | `DirectionHold` | const | stable | `"hold"`（不动作） |
-| `OrderType` | type | stable | 订单类型枚举（P1-3 / ODR-016）；JSON 字面量是契约 |
-| `OrderTypeMarket` | const | stable | `"market"`：立即按当前价成交 |
-| `OrderTypeLimit` | const | stable | `"limit"`：仅价格穿越限价时成交 |
-| `OrderTypeStop` | const | stable | `"stop"`：触及 `StopPrice` 后转市价 |
-| `OrderTypeTrailing` | const | stable | `"trailing"`：跟踪 HWM 动态调整止损价 |
-| `Signal` | type | stable | 策略信号（v1 强度流）：`Symbol` / `Date` / `Direction` / `Strength` / `CompositeScore` / `Factors` / `Metadata` / `LimitPrice` / `OrderType` + K17 可选执行算法三字段（`ExecAlgo` / `ExecSlices` / `ExecProfile`）。零值 `ExecAlgo` = 不拆单（默认路径逐字节不变） |
-| `Order` | type | stable | 订单（含 K17 执行算法字段）。⚠️ 改字段要看 SPEC 的 RunSpec/ResultSpec 互锁，别只看本表 |
-| `Position` | type | stable | 持仓：含 T+1 结算三字段（`BuyDate` / `QuantityToday` / `QuantityYesterday`）与 `Metadata` 开放槽。⚠️ T+1 字段是 A 股规则载体，删/改 = 破坏回测正确性 |
-| `Portfolio` | type | stable | 组合快照（`Cash` / `Positions` / `TotalValue` / `DailyReturn` / `UpdatedAt`） |
-| `TargetPosition` | type | stable | 目标仓位跟踪（目标 / 实际 / 未成交数量），供对账 |
-| `PositionSize` | type | stable | 风控给出的仓位建议（大小 / 权重 / 止损 / 止盈 / 风险分） |
-| `StopLossEvent` | type | stable | 止损 / 止盈触发事件（`Type` 是**裸字符串** `"stop_loss"` / `"take_profit"`，不是枚举——改字面量 = 破坏下游判定） |
 | `MarketRegime` | type | stable | 市场状态（趋势 / 波动 / 情绪分 / 时间戳）。`Trend` / `Volatility` 也是裸字符串 |
-| `RiskMetrics` | type | stable | 组合风险指标（波动 / Beta / Sharpe / Sortino / 最大回撤 / VaR …） |
-| `RiskManager` | interface | stable | 风控**同步裁决**接口（零网络，留在进程内——ADR-023 / 分仓边界）。加方法对实现方是破坏性变更 |
-| `RiskManager.CalculatePosition` | method | stable | 给定信号 + 组合 + 状态 + 现价 + bar，返回 `PositionSize`；错误即拒绝下单，**不许静默降级为 0 仓位以外的默认** |
-| `RiskManager.DetectRegime` | method | stable | 由 bar 序列识别市场状态 |
-| `RiskManager.CheckStopLoss` | method | stable | 扫描持仓 + 价格表，返回触发事件（空切片 = 无触发） |
 | `OHLCV` | type | **frozen** | `= market.OHLCV`（别名）。字段集由 core 的 `spec_drift_test.go` 与 `tellurion:docs/SPEC.md` 互锁——加字段 core 侧红 |
 | `Stock` | type | stable | `= market.Stock`（别名）。`DelistDate` nil = 仍在市（幸存者偏差） |
 | `Fundamental` | type | **frozen** | `= market.Fundamental`（别名）。数值字段全指针（缺失 ≠ 0）；SPEC 互锁 |
-| `FundamentalData` | type | stable | `= market.FundamentalData`（别名，持久化视图） |
 | `IndexDaily` | type | stable | `= market.IndexDaily`（别名，指数日线，身份列 `Code`） |
-| `IndexConstituent` | type | stable | `= market.IndexConstituent`（别名） |
 | `Split` | type | stable | `= market.Split`（别名；Tushare 风格的拆股记录） |
 | `Dividend` | type | stable | `= market.Dividend`（别名） |
 
@@ -278,43 +261,12 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `FactorInventoryTurnoverDelta` | const | stable | `"inventory_turnover_delta"`（桥 B1） |
 | `FactorMarketActivity` | const | stable | `"market_activity"`（D5 新数据源样板：相对自身近 20 日均值的换手率异常度） |
 | `ParseFactorType` | func | stable | 词表查找；未命中 → `("", false)`（**不回退默认因子**） |
-| `FactorKernel` | type | stable | 因子内核类型（四种：leaf / formula / code / pending） |
-| `KernelLeaf` | const | stable | `"leaf"`：直接取字段，无公式 |
-| `KernelFormula` | const | stable | `"formula"`：公式文本，由 `tellurion:pkg/expression` 求值 |
-| `KernelCode` | const | stable | `"code"`：代码引用（`CodeRef`），必须能过编译校验 |
-| `KernelPending` | const | stable | `"pending"`：未定型；**不可注册为生效**（`FactorRegistration.Validate` 拒） |
-| `FactorKernel.Valid` | method | stable | 是否在四种词表内；零值 → false |
-| `FactorCaliber` | type | stable | 因子口径（z-score / rank / raw）——**未知口径 fail-closed，不默认成 z-score**（默认恰是要显式化的隐含假设） |
-| `CaliberZScore` | const | stable | `"z-score"`：截面标准化 |
-| `CaliberRank` | const | stable | `"rank"`：截面分位 |
-| `CaliberRaw` | const | stable | `"raw"`：原始值 |
-| `FactorCaliber.Valid` | method | stable | 是否在三种词表内 |
-| `FactorDefinition` | type | stable | 因子定义（名 / 内核 / 公式 / 校验 / 代码引用 / 口径 / 输入字段 / 生效日 / 前视规则 / 回看窗口）。`Lookahead` **必填**（蓝图 §5.2 硬要求） |
-| `FactorDefinition.Validate` | method | stable | 结构自洽 fail-closed：名字必须在冻结词表、kernel/caliber 合法、`Lookahead` 非空、`EffectiveFrom` 必须是 `YYYY-MM-DD`、非 pending 的 `InputFields` 至少一个且不得重复；leaf/formula 必须有公式且**不得**带 `code_ref`，code 必须带 `code_ref` 且**不得**带公式，pending 的公式 / `code_ref` / `InputFields` 都必须为空。**跨层校验（公式可解析 / 字段在注册表）由 data 包加载时做**——domain 不 import expression |
-| `FactorDefinition.VersionHash` | method | stable | canonical JSON（输入字段**排序**后）的 SHA-256 hex。改公式 → 哈希天然变；**方法而非字段**：没有可篡改的存储入口，库里的哈希加载时重新 derive 校验 |
 | `FactorHypothesis` | type | stable | 因子假设（可证伪预测 / 依据 / 来源等），供 AI 挖掘链路记录 |
-| `BuiltinFactorDefinitions` | var | stable | 内置因子定义种子（**内容是数据**：加条目 = MINOR；别当冻结清单照抄） |
 | `BuiltinFactorHypotheses` | var | stable | 内置因子假设种子（同上） |
 | `FactorSourceLiterature` | const | stable | `"literature"`（有公开文献支撑） |
 | `FactorSourceSupplyChain` | const | stable | `"supply_chain"`（产业链逻辑推导） |
 | `FactorSourceAI` | const | stable | `"ai_hypothesis"`（AI 提出；**必须过可证伪检验**才可用） |
 | `FactorSourceAdHoc` | const | stable | `"ad_hoc"`（临时 / 未记录来源；能用但别太当真） |
-| `FactorRegistration` | type | stable | 因子登记（定义 + 版本哈希 + 登记人 + 状态 + 回滚留痕）。四样齐备才算登记：公式 / 哈希 / 登记人 / 生效日 |
-| `FactorRegistration.Validate` | method | stable | 四样 + 状态校验：定义合法且**不是 `KernelPending`**、`VersionHash` 必须等于 `Definition.VersionHash()` 派生值、`Registrar` 非空白、状态只能是 active / rolled_back |
-| `RegistrationStatus` | type | stable | 登记状态枚举（active / rolled_back） |
-| `RegistrationActive` | const | stable | `"active"` |
-| `RegistrationRolledBack` | const | stable | `"rolled_back"` |
-| `RegistrationStatus.Valid` | method | stable | 是否在词表内；零值 → false |
-| `RegistrationAction` | type | stable | 审计动作（register / rollback） |
-| `ActionRegister` | const | stable | `"register"`（注意：这是**因子登记审计**的动作，与公司行为的 `Action*` 常量无关） |
-| `ActionRollback` | const | stable | `"rollback"` |
-| `RegistrationAuditEntry` | type | stable | 登记审计条目（谁 / 何时 / 对哪个版本 / 做了什么 / 为什么） |
-| `FactorMiningRecord` | type | stable | 因子挖掘记录（来源 / 生成器 / 代数 / 试验次数与失败数 / 沙箱证明 / 过拟合与 OOS 指标 / 采纳与否） |
-| `FactorMiningRecord.Validate` | method | stable | 名字在冻结词表、`VersionHash` 长度必须是 64（sha-256 hex 的长度；**不做字符集校验**）、`Generator` 非空、`SourceKind` 合法、`NumTrials > 0`；**采纳的必须带与版本绑定的沙箱哈希**（`SandboxHash == VersionHash`），**未采纳的必须写拒绝理由** |
-| `FactorOutput` | type | stable | 因子产出 schema（「所有因子一个样」；D1 冻结字段形状）：值 + 口径 + 频率 + `VisibleAt`。与 `OHLCV` / `Fundamental` 并列构成规范层三类字段 |
-| `FactorCacheEntry` | type | stable | 因子缓存行（原始值 / z-score / 分位 + `Citation`）。⚠️ `Citation` 是 `json.RawMessage`：存储形态是 hash 链、输出形态是五元组，空引用必须是 `'[]'` 而**不是 null**（ODR-061） |
-| `FactorReturn` | type | stable | 分层回测结果（五分位平均 / 累计收益 + top-minus-bottom） |
-| `ICEntry` | type | stable | IC 检验结果（IC / p 值 / 头部 IC） |
 
 **回测输入输出（§6「回测输入输出」）**
 
@@ -323,32 +275,16 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `BacktestResult` | type | stable | 单次回测结果（指标 + 净值曲线 + 成交列表）。指标口径受 `tellurion:docs/SPEC.md` 冻结节约束。⚠️ **它没有也不该有 `Status`**（三值属响应层 `BacktestResponse`）。`UniverseMaxSize` 是**指针**：nil = 未评估/未知，0 = 明确为空票池（OBS-01：把未知编码成 0 会造出假红灯）；`InvalidReasons` 由引擎用 `CheckValidity` 算一次后挂上，消费方**只读不重算** |
 | `PortfolioValue` | type | stable | 净值曲线的一个点（日期 / 总市值 / 现金 / 持仓市值） |
 | `Trade` | type | stable | 成交记录（方向 / 数量 / 价格 / 三项费用 / 时间戳 / 未成交与已成交数量） |
-| `BacktestParams` | type | stable | 回测参数（策略 / 票池 / 区间 / 初始资金 / 无风险利率 / 回看窗）。⚠️ `FillTiming` 与 `Kernel` 是**裸 string**（不能引 contracts 的类型——contracts import domain，反向会成环）：由请求解析点写入**实际生效值**，空值 = **口径未知**而不是「默认收盘成交」；`IndexCode` 保留票池来源，供 `run_spec_hash` 记录 |
 | `WalkForwardParams` | type | stable | 滚动窗口参数（训练 / 测试 / 步长 / 最小训练窗） |
 | `WalkForwardResult` | type | stable | 单窗口结果（两段回测 + Sharpe + 收益 + 回撤）。⚠️ `OOSvsTrain` 名实不符（REV-20）：当前没有参数优化步骤，它只反映「B 段相对 A 段的衰减」，**不是**过拟合度量；json tag 是历史遗留，改名 = 破坏 API |
 | `WalkForwardReport` | type | stable | 多窗口汇总（均值 / 标准差 / 通过率 / 总体是否通过）。⚠️ `OverfitScore` / `ProbNoOverfit` 同样是历史名（REV-20），当前语义是分段衰减的分档映射 |
 
-**core-only 数据族（QT-05 ③-⑨ 回收清单；agent 侧 0 命中 ⇒ 标 experimental，下游不要依赖）**
+**跨仓数据族（core + `tellurion-data` 两个使用方 ⇒ 留本仓；标 experimental，下游不要依赖）**
 
 | 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
 |---|---|---|---|
-| `ScreenFilters` | type | experimental | 多因子筛选条件（PE / PB / PS / ROE / ROA / 负债率 / 毛利率 / 净利率 / 市值，全部**指针**：nil = 不限，不是 0） |
-| `ScreenRequest` | type | experimental | 筛选请求（条件 + 日期 + 上限） |
-| `ScreenResult` | type | experimental | 筛选命中行（指标全指针，语义同 `ScreenFilters`） |
-| `Sector` | type | experimental | 板块行情行（代码 / 名称 / 分类 / 涨跌幅 / 领涨股 / 来源） |
-| `StockSector` | type | experimental | 股票 ↔ 板块归属 |
-| `StockIndustry` | type | experimental | 股票 ↔ 行业归属（**无 json tag**：字段名即形状，改字段名 = 破坏兼容） |
-| `SWIndustryNode` | type | experimental | 申万行业树节点（代码 / 父节点 / 层级 / 是否叶子 / 来源 / as-of） |
-| `RelationIndustryMember` | const | experimental | `"industry_member"`（产业链关系字面量） |
-| `SupplyChainEdge` | type | experimental | 产业链边（上游 → 下游 / 关系 / 权重 / 来源 / as-of） |
-| `IndustryVitality` | type | experimental | 行业景气度指标行（指标 / 观测日 / 值 / 单位 / 来源 / as-of） |
-| `ETFConstituent` | type | experimental | ETF 成分与权重（ETF 代码 / 成分 / 权重 / 观测日 / 来源） |
 | `MacroSeries` | type | experimental | 宏观序列行（指标 / 频率 / 观测日 / 值 / 单位 / 来源 / as-of） |
 | `MarketActivity` | type | experimental | 市场活跃度行（换手率 / 自由流通换手率 / 量比，全指针：nil = 上游未给） |
-| `FundamentalsDetailRow` | type | experimental | 深财务明细行（PIT 键是 `AnnDate`；`Value` 指针：nil = 源侧缺失 ≠ 0；`SnapshotURI` 回指归档原始响应，`RawFieldName` 保留源字段名以便追溯） |
-| `StrategyConfig` | type | experimental | 策略配置的**存储行**（定义见 §8 #2：ADR-0001 ③ 禁 `Config` 命名，本类型按豁免保留原名——core 4 个文件在用；③-⑨ 待回收，**最可能的家是 `tellurion-strategy`**，不是本仓） |
-| `ExecutionConfig` | type | experimental | 执行配置（订单类型 / 滑点模型 / 费率 / 冲击模型参数）。§8 #2：名字按豁免保留（core 21 个文件在用）；③-⑨ 待回收，**执行留在 core**，所以它大概率也该回 core |
-| `DefaultExecutionConfig` | func | experimental | 默认执行配置；费率字段取自 `fees.Default*`（单一来源，S7-P1-4 修过 0.00025 与 0.0003 漂移） |
 
 ### `engine/` — 包 `contracts`（四契约 / 内核路由 / 成交口径 / canonical 身份 / abi；2026-10-22 自 `tellurion:pkg/backtest/contracts` 逐字迁入）
 
@@ -814,18 +750,18 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 
 ## 6. 值对象面（`domain/`，S1 整包迁入——✅ 2026-10-22 已落）
 
-来源与再生成：**本仓内**跑 `go run ./tools/check_api_surface -list`（今天输出全部 418 个；本节覆盖其中 `domain` 一侧的 166 个 = `fees` 13 + `domain/market` 46 + `domain` 107，根包 0，`engine` 的 194 个见 §4/§5）。`domain/` 根包 107 个符号折 **97 个根名**（CT-06 按 0 使用方删除 69 个符号后；删除前为 176 符号 / 119 根名）。
+来源与再生成：**本仓内**跑 `go run ./tools/check_api_surface -list`（逐符号清单以该命令当场输出为准，本节不抄数字——一抄就会漂）。`engine` 的符号见 §4/§5。
 **逐符号清单不在这里手抄**——抄一份就会漂；落码时用上面这条命令生成 §4 的表，再按下面分组填稳定性。
 
 | 组 | 代表符号 | 稳定性 | 备注 |
 |---|---|---|---|
-| 回测输入输出 | `BacktestResult`、`BacktestParams`、`PortfolioValue`、`Trade`、`RiskMetrics`、`WalkForward*` | stable（`BacktestResult` 的**指标口径**受 SPEC 冻结节约束） | `BacktestResult` **没有也不该有 `Status`**——三值属响应层，见 `tellurion-agent:docs/TASKS.md` OBS-01-R2-A 的 core 裁决 (b) |
-| 仪器域行情 | `OHLCV`、`Stock`、`Fundamental(Data)`、`IndexDaily`、`IndexConstituent`、`Dividend`、`Split`（多为 `market/` 的类型别名） | stable | 别名不是重复真相：实体在 `domain/market`，根包别名保兼容 |
+| 回测输入输出 | `BacktestResult`、`PortfolioValue`、`Trade`、`WalkForward*` | stable（`BacktestResult` 的**指标口径**受 SPEC 冻结节约束） | `BacktestResult` **没有也不该有 `Status`**——三值属响应层，见 `tellurion-agent:docs/TASKS.md` OBS-01-R2-A 的 core 裁决 (b)。`BacktestParams` / `RiskMetrics` 只有 core 使用，已按 CT-06-B 迁回 `tellurion:pkg/domain` |
+| 仪器域行情 | `OHLCV`、`Stock`、`Fundamental`、`IndexDaily`、`Dividend`、`Split`（`market/` 的类型别名） | stable | 别名不是重复真相：实体在 `domain/market`，根包别名保兼容。`FundamentalData` / `IndexConstituent` 根别名按 CT-06-B 删除（实体仍在 `domain/market`） |
 | 时间/频率语义 | `Frequency`、`FrequencySpec`、`TimeSemantics`、`AsiaShanghai`、`Visible*`、`DailyVisibleAt` | **frozen** | PIT 红线：`tellurion:docs/SPEC.md` §「时间语义（PIT 红线）」。⚠️ 说清来源——core「冻结 schema 变更评审」点名的名单是三契约（RunSpec/ResultSpec/SignalSpec），这一行的 frozen 是**本文件按 §2 定义给的标注**，依据是它已有注册期闸门（D2）与逐源钉子（`tellurion:pkg/data/source/registry_rev05_test.go` 等把每个 connector 的 `TimeSemantics` 钉死）；改语义同样要先让那些测试红 |
-| 信号与订单 | `Signal`、`Direction`、`Order`、`OrderType`、`Position(Size)`、`Portfolio`、`TargetPosition`、`StopLossEvent`、`MarketRegime` | stable | — |
-| 因子族 | `FactorDefinition`、`FactorHypothesis`、`FactorType`、`FactorKernel`、`FactorCaliber`、`FactorRegistration`、`FactorMiningRecord`、`FactorOutput`、`ICEntry`、`FactorValue` + 内置定义/假设种子变量 | stable（`VersionHash` 语义受「版本哈希纪律」节约束） | 封闭词表扩展 = 加名 + 加实现 + 同步 SPEC 对应节 |
-| 配置形状 | ~~`Config`、`ServiceConfig`、`DatabaseConfig`、`RedisConfig`、`TushareConfig`~~（**已按 §8 #2 裁决删除：零引用 + 含 `Password`**）、`StrategyConfig`、`ExecutionConfig` | ⚠️ **experimental（单使用方 core，CT-06 迁回待办）** | 命中 `adr/0001` ③ 的 `Config` 命名禁令；裁决见 **§8 #2 + [`adr/0002`](adr/0002-config-族的边界处置.md)**：前五个不迁（core 侧随 sed 删除），后两个按原名保留、进回收清单。`engine/` 的 `TradingConfig` / `PriceLimitConfig` 另按「冻结面伴生名」保留（同一条 ADR ③） |
-| 单使用方（core / agent） | CT-06 重跑后仍只有 1 个使用方的 60 个根名（见 §6.1）；含 `Screen*`、`Sector`/`StockSector`/`SWIndustryNode`、`SupplyChainEdge`、`mining` 族、`FactorDefinition`/`FactorRegistration`/`FactorOutput`、`RiskManager`、`Signal`/`Order`、`FundamentalsDetailRow`、`ETFConstituent`、`IndustryVitality` 等 | **experimental + 待回收** | **本轮不迁**：迁回要改 core / agent 仓并删本仓公共符号，超出「只改本仓」边界；已按 CT-06 ② 登记为「迁回（待跨仓单）」。**下游不要依赖这一组**。判定与 grep 出处见 §6.1。`BuiltinHypothesisFor` 已于 2026-11-09 按 CT-06-A 迁回 `tellurion-agent`，不再在册。 |
+| 信号与订单 | `Direction`（4 个常量）、`MarketRegime` | stable | `Signal` / `Order` / `OrderType` 族 / `Position` / `Portfolio` / `RiskMetrics` / `TargetPosition` / `PositionSize` / `StopLossEvent` / `RiskManager` 只有 core 使用，已按 CT-06-B 迁回 `tellurion:pkg/domain` |
+| 因子族 | `FactorType` + 名册常量、`ParseFactorType`、`FactorSource*`、`FactorHypothesis`、`BuiltinFactorHypotheses` | stable（名册词表扩展 = 加名 + 定义 + 同步 SPEC） | 其余因子形状（`FactorKernel` / `FactorCaliber` / `FactorDefinition` / `FactorRegistration` / `FactorMiningRecord` / `FactorOutput` / `FactorCacheEntry` / `FactorReturn` / `ICEntry` / `BuiltinFactorDefinitions`）只有 core 使用，已按 CT-06-B 迁回 `tellurion:pkg/domain`；`BuiltinFactorHypotheses` 因 core + agent 两个使用方留本仓 |
+| 配置形状 | ~~`Config`、`ServiceConfig`、`DatabaseConfig`、`RedisConfig`、`TushareConfig`~~（**已按 §8 #2 裁决删除：零引用 + 含 `Password`**）、~~`StrategyConfig`~~（CT-06-B 删除：0 使用方）、`ExecutionConfig`（CT-06-B 迁回 core） | — | 本节已无 `*Config` 登记行；`engine/` 的 `TradingConfig` / `PriceLimitConfig` 另按「冻结面伴生名」保留（[`adr/0002`](adr/0002-config-族的边界处置.md) ③） |
+| 单使用方残留 | 5 个 market 别名（`OHLCV` / `Stock` / `IndexDaily` / `Split` / `Dividend`）+ `Fundamental` | 别名为 stable | CT-06-B 只迁**实类型**：这 6 个是 `domain/market` 的同一类型别名，删它们没有收益（零第二份真相），且 `Fundamental` 仍被 `tellurion-data` 直接使用；core 侧已在 `tellurion:pkg/domain` 重建同形别名。逐名处置见 §6.1 |
 
 > **公司行为族已删除（CT-06，2026-11-07）**：`CorporateAction` / `ActionType` / `CashDividend` / `BonusShare` / `CorporateActionSplit` / `RightsIssue` / `Placement` / `ActionEngine` / `ApplyResult` / `ApplyOutcome` 及构造函数共 68 个符号，连同旧名别名 `MarketDataProvider`（1 个符号），11 仓重跑均 0 使用方，已从 §4 与代码中删除。破坏性记录见 `CHANGELOG.md`。
 
@@ -840,6 +776,13 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 > **处置统计**：删除 22 个根名（69 个符号，含 `MarketDataProvider`）；保留 36 个根名（34 个 ≥2 使用方 + `CaliberRank` / `CaliberRaw` 两个封闭词表成员）；迁回建议 61 个根名（均只有 1 个使用方：`tellurion` 60 + `tellurion-agent` 1，本轮因跨仓边界不执行）。删除后 `domain/` 根包 107 符号 / 97 根名。
 >
 > **CT-06-A 已执行（2026-11-09）**：`tellurion-agent` 侧唯一使用方 `BuiltinHypothesisFor` 1 个符号已迁回该仓（`pkg/ai/tools/builtin` 内私有 `builtinHypothesisFor`），本仓同步删除；`domain/` 根包变为 **106 符号 / 96 根名**，迁回待办剩 **60 个根名（全部属 core）**。内置表 `BuiltinFactorHypotheses` 因 core + agent 两个使用方，留在本仓不迁。
+>
+> **CT-06-B 已执行（2026-11-10，补裁 #12）**：60 个 core-only 根名处理完毕。下表「处置」列保留 2026-11-07 判定原貌（历史证据不追改），实际落地以本块为准，分三类：
+> 1. **迁回 core**：本仓已删同名导出，实类型迁入 `tellurion:pkg/domain`（core 新建包承载；market 别名在 core 侧同形重建，不重导出共享符号）。本仓对应删掉 `domain/` 13 个文件，并收缩 `types.go` / `backtest.go` / `factor.go`。
+> 2. **删除且不在 core 重建（11 仓实测 0 编译使用方）**：`StrategyConfig`；`Sector` / `StockSector` / `StockIndustry`（`domain/sector.go` 整文件删除）；`IndexConstituent` / `FundamentalData` 两个**根别名**（实体仍在 `domain/market/`，需要时直接 import 该包）。
+> 3. **留本仓**：6 个 market 别名（`Fundamental` 仍被 `tellurion-data` 直接使用；其余是同一类型别名）；`FactorMarketActivity`（`FactorType` 名册成员，随 `ParseFactorType` 留）；`MacroSeries` / `MarketActivity`（core + `tellurion-data`）；`BuiltinFactorHypotheses`（core + agent）。
+>
+> 破坏性记录见 `CHANGELOG.md`；core 侧调用点已同批切至 `tellurion/pkg/domain`（见 core 仓同笔 commit 与 `internal/repoguard/contract_identity_test.go` 的腿 A/C 口径）。
 
 | 根名 | 使用方仓数 | 处置 | grep 出处（repo:path:line / 命令 + 命中数） |
 |---|---|---|---|

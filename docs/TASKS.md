@@ -319,7 +319,7 @@ verified-by: CT-05 收编完成（2026-11-09：`tellurion-broker` 删本地 DTO 
 > **门禁（真实退出码）**：broker `go build ./...` = 0、`go vet ./...` = 0、`go test ./... -count=1` = 0（5 个包 ok）、`gofmt -l .` 空。
 > 12 个契约哨兵按本单裁定**未随迁**，仍在 `tellurion-broker:internal/gateway/errors.go`；`broker.order_acks` DDL 未动。
 
-### CT-06 · `domain/` core-only 根名的回收（重跑：119 根名） [P3] 🔶（0 使用方已删；61 个单使用方迁回待跨仓单）
+### CT-06 · `domain/` core-only 根名的回收（重跑：119 根名） [P3] 🔶（实类型回收已执行；仅余 6 个 market 别名按「别名豁免」留仓，待主任追认）
 
 - **① 目标**：把 QT-05 ③-⑨ 产出、被两句「先别删 / S2 后回收」押下的 core-only 导出面回收掉，让本仓的导出面只剩**真有 ≥2 使用方**的形状（准入规则 C4）。
 - **② 上下文**：本仓 `docs/TASKS.md:159`（QT-05 ③-⑨ 的实测：`domain/` 根包 176 个导出符号折 **119 个根名**，agent import 38，**0 命中 81**；清单以命令输出为准，**不手抄**）与 `:193`（「那 81 个根名先别删：S1 整包迁的容忍条款到 S2 后才回收」）；S2 / S3 均已 ✅（core `docs/TASKS.md` 阶梯表），登记的容忍条款已到期；清单落点 `docs/API.md` §6 的 core-only 行。
@@ -345,8 +345,17 @@ verified-by: CT-05 收编完成（2026-11-09：`tellurion-broker` 删本地 DTO 
   agent `go build ./...` / `go vet ./...` / `go test ./pkg/ai/tools/builtin/... -count=1` 全 0。
   **破坏验证（仓外临时模块，`replace` 指本仓）**：引用保留名 `domain.BuiltinFactorHypotheses` → `go build ./...` **exit 0**；
   加一行 `domain.BuiltinHypothesisFor(...)` → **exit 1**（`undefined: domain.BuiltinHypothesisFor`）——证明删除真实生效、保留名的判据不是空话。
-  **CT-06-B（core 60 个根名）仍未执行**，本单保持 🔶。
-- 状态保持 **🔶** 的原因：0 使用方已删净，但 56 个「仅 1 使用方」尚未迁回，导出面还未达到 C4 的「只剩 ≥2 使用方」。
+  **CT-06-B（core 60 个根名）于 2026-11-10 执行**（见下条施工记录），本单余项只剩「market 别名豁免」的追认。
+  - **施工记录（CT-06-B，2026-11-10，已执行）**：按补裁 #12 处理 core 侧 60 个根名。
+    - **裁决冲突与用户批准**：core 的 `internal/repoguard/contract_identity_test.go` 腿 A 原本禁止 core 重建 `pkg/domain`（QT-05 B1 反棘轮），与「迁回 core」直接冲突。**主任裁决（AskUserQuestion，2026-11-10）：重建 core `pkg/domain` 并改护栏**——core 新建包承载迁回形状，腿 A 的遗留清单收窄为 `pkg/domain/market` / `pkg/fees` / `pkg/backtest/contracts`，保留腿 C 的「同名双份真相」反棘轮。
+    - **本仓动作**：`domain/` 删 14 个文件（`execution.go` / `screen.go` / `supply_chain.go` / `fundamentals_detail.go` / `factor_def.go` / `factor_def_seed.go` / `factor_output.go` / `factor_registration.go` / `mining.go` + 4 个对应测试，另 `sector.go`）；`types.go` / `backtest.go` / `factor.go` 收缩为只留 ≥2 使用方形状 + 6 个 market 别名。
+    - **分类落地**：① 实类型迁回 core（`tellurion:pkg/domain` 新建承载；market 别名在 core 侧同形重建、**不重导出共享符号**，避免消费方被静默翻转）；② 0 使用方删除且不重建：`StrategyConfig`、`Sector` / `StockSector` / `StockIndustry`（11 仓实测 0 编译使用方）、`IndexConstituent` / `FundamentalData` 两个根别名（实体仍在 `domain/market/`）；③ 留仓：6 个 market 别名（`Fundamental` 仍被 `tellurion-data` 使用）、`FactorMarketActivity`（`FactorType` 名册成员）、`MacroSeries` / `MarketActivity`（core + data）、`BuiltinFactorHypotheses`（core + agent）。
+    - **分组偏差（如实登记）**：`FactorCaliber` 是封闭词表（`CaliberZScore` / `CaliberRank` / `CaliberRaw` + `Valid()` 互相依赖），按「整组随 `factor_output.go` 迁 core」处理——本仓不再保留 `CaliberRank` / `CaliberRaw` 这两个原本按「封闭词表成员」留仓的名字；词表权威现在 core `pkg/domain/factor_output.go`。
+    - **登记与基线（实测）**：`docs/API.md` §4 删 66 条失效登记行（63 个迁回/删除符号 + `Sector` 族 3 个）、§6 分组表重写、§6.1 加「CT-06-B 已执行」块（逐名处置保留 2026-11-07 判定原貌作历史证据）；`check_api_surface` → **391 符号 / 登记 391**；`check_surface_freeze -update` 后基线 **447 → 384 行**（`git diff --numstat docs/api-surface.txt` = 0 / −63，方法符号折进类型指纹行故少于 66）。
+    - **验收（真退出码）**：contracts `gofmt -l .` 空、`go build ./...` / `go vet ./...` / `go test ./... -count=1` 全 **0**；`check_api_surface` **0**（391/391）、`check_surface_freeze` **0**（384 = 384）、`check_contract_shape` **0**、`check_release_matrix` **0**；core `gofmt -l` 空、`go build ./...` / `go vet ./...` / `go test ./... -count=1` 全 **0**（含 `internal/repoguard`）。
+    - **破坏验证（仓外临时模块 `%TEMP%\ct06b-destru`，`replace` 指本仓，真做真还原）**：引用保留名 `domain.DirectionLong` / `domain.MacroSeries` / `domain.OHLCV` / `domain.MarketRegime` → `go build ./...` **exit 0**；加一行 `domain.Signal{}` → **exit 1**（`undefined: domain.Signal`）；还原后 **exit 0**，临时目录已删除。
+    - **未执行（如实）**：① 本仓不打 tag / 不 push（纪律禁止）；② core pin 仍为 `v0.9.0`，bump 到含本条目的版本未做——core 侧腿 C 以 36 条「版本滞后」白名单临时登记这批同名类型，**bump 后必须删除**（反向棘轮会判红）；③ 6 个 market 别名的去留（是否也按 C4 删净）未裁，现状按「别名不是重复真相」豁免，标**待主任追认**。
+- 状态保持 **🔶** 的原因：60 个 core-only 根名已按补裁 #12 处理完（迁回 / 删除 / 留仓见 CT-06-B 记录），但 **6 个 market 别名仍只有 1 个或 0 个编译使用方**（`Fundamental` 1 个在 `tellurion-data`，其余 5 个是同一类型别名）——按 C4 字面尚未达标，本轮按「别名不是重复真相」豁免，**待主任追认**后方可转 ✅。
 
 ---
 

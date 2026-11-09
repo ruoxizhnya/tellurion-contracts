@@ -7,6 +7,28 @@
 
 ## [Unreleased]
 
+### 破坏性（CT-06-B，2026-11-10）
+
+- **破坏性：`domain/` 根包里 63 个「只有 core 一个编译使用方」的登记符号 → 删除本仓导出，实类型迁入 `tellurion:pkg/domain`；另 3 个 0 使用方形状（`Sector` / `StockSector` / `StockIndustry`）与 `StrategyConfig` 直接删除、不在 core 重建。**
+  依据：补裁 #12（contracts C4：本仓只留 ≥2 使用方的形状）+ 11 仓 grep / Go AST 复核；逐名处置见 `docs/API.md` §6.1 的「CT-06-B 已执行」块。
+  - **迁回 core**（实类型物理搬家；market 别名在 core 侧同形重建）：`Signal` / `Order` / `Position` / `Portfolio` / `RiskMetrics` /
+    `TargetPosition` / `PositionSize` / `StopLossEvent` / `RiskManager` / `OrderType` 族；`BacktestParams`；
+    `FactorKernel` / `FactorCaliber` / `FactorDefinition` / `FactorRegistration` / `FactorMiningRecord` / `FactorOutput` /
+    `FactorCacheEntry` / `FactorReturn` / `ICEntry` / `BuiltinFactorDefinitions`；
+    `ScreenFilters` / `ScreenRequest` / `ScreenResult` / `SWIndustryNode` / `RelationIndustryMember` / `SupplyChainEdge` /
+    `IndustryVitality` / `ETFConstituent` / `FundamentalsDetailRow` / `ExecutionConfig` / `DefaultExecutionConfig`。
+  - **删除且不重建**：`StrategyConfig`；`Sector` / `StockSector` / `StockIndustry`（`domain/sector.go` 整文件）；
+    `IndexConstituent` / `FundamentalData` 两个**根别名**（实体仍在 `domain/market/`）。
+  - **保留**：6 个 market 别名（`Fundamental` 仍被 `tellurion-data` 直接使用）；`FactorMarketActivity`（`FactorType` 名册成员）；
+    `MacroSeries` / `MarketActivity`（core + `tellurion-data`）；`BuiltinFactorHypotheses`（core + agent）。
+  - **实测**：`go run ./tools/check_api_surface` → 391 符号 / 登记 391（改前 457）；冻结基线
+    `git diff --numstat docs/api-surface.txt` → 0 / −63（447 → 384 行）；`docs/API.md` §4 删 66 条失效登记行。
+    本仓 `domain/` 删 14 个文件（13 个迁出 + `sector.go`），`types.go` / `backtest.go` / `factor.go` 收缩。
+  - **下游影响**：core 侧调用点已同批切至 `tellurion/pkg/domain`（core 仓同笔 commit）。core 当前仍 pin `v0.9.0`，
+    在 bump 到含本条目的版本前，core `internal/repoguard/contract_identity_test.go` 的腿 C 以「版本滞后」白名单
+    临时登记这批同名类型；**bump 后必须删除，反向棘轮会判红**。0.x 版本规则允许 breaking（删符号 = MINOR），
+    本条随下一个 MINOR 发版。
+
 ### 破坏性（CT-06-A，2026-11-09）
 
 - **破坏性：`domain.BuiltinHypothesisFor`（func）— 删除 → 由唯一使用方 `tellurion-agent` 本地私有实现 `builtinHypothesisFor` 承接。**
