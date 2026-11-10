@@ -22,6 +22,66 @@ verified-by: CT-06 收口（2026-11-10：CT-06-A/B 已执行；余下 6 个 mark
 - **⑥ 边界**：形状与版本纪律归本仓；下游迁移与 pin 归各仓。
 - **重开条件**：core / agent / data 三仓完成 `domain/market.*` 迁移并同批 pin bump。
 
+#### 执行手册（前置就绪后才做；**本仓今天不执行**）
+
+**A. 前置条件（缺一不动，逐条留证）**
+
+1. 下列三仓的 Go 代码对六名的引用为 0（只数 `.go`，排除本仓 `docs/`、`CHANGELOG` 与归档文本）：
+   ```bash
+   grep -rn --include='*.go' -E 'domain\.(OHLCV|Stock|IndexDaily|Split|Dividend|Fundamental)\b' <repo>
+   ```
+   - `tellurion`（core）
+   - `tellurion-agent`
+   - `tellurion-data`
+   每仓附 `git rev-parse HEAD` + 上面命令的**空输出**。另外 8 仓同样跑一遍；未引入 contracts 的仓附 `go.mod` 无依赖行即可（`grep tellurion-contracts go.mod` 为空）。
+2. 三仓 `go.mod` 的 contracts pin 已升到删除别名后的版本（见 D 的顺序），且 `go build ./...` 绿。
+3. 另一条会话已明确回报「三仓已迁完」；本条由用户转达，未收到前保持 ⏸。
+
+**B. 删除清单（本仓，按序执行，一次提交）**
+
+| # | 文件 | 动作 |
+|---|---|---|
+| 1 | `domain/types.go` | 删 `type ( OHLCV … Fundamental )` 别名块及上方 S7-P3-4 / CT-06-B 注释；保留 `MarketRegime`；改写包注释（不再说「本包 re-export market 类型」） |
+| 2 | `domain/market_alias_test.go` | **整文件删除**（它断言 6 个别名与 `market.*` 同一类型，留着必红） |
+| 3 | `domain/market/doc.go` | 删「`domain.OHLCV` — type alias」兼容段，只留 canonical 说明 |
+| 4 | `docs/API.md` §4 登记区 | 删 6 行：`OHLCV` / `Stock` / `Fundamental` / `IndexDaily` / `Split` / `Dividend`（别名行，非 `market/` 实体行） |
+| 5 | `docs/API.md` §6 / §6.1 | 把「留本仓」处置改为「已删除（CT-06-ALIAS-EXIT，v0.10.0），改用 `domain/market.*`」；同步 §6.1 的命中数表 |
+| 6 | `docs/api-surface.txt` | `go run ./tools/check_surface_freeze -update` 重生成（预期比基线少 6 行） |
+| 7 | `CHANGELOG.md` | 新增 `## [v0.10.0] - <日期>`，条目写明「**破坏性**：删除 `domain.OHLCV` / `Stock` / `IndexDaily` / `Split` / `Dividend` / `Fundamental` 六个根别名 → 改用 `domain/market.*`」 |
+| 8 | `README.md` 兼容矩阵 | 新增 `v0.10` 行；版本规则表不用改（0.x 删符号 = bump MINOR 的既有规则） |
+
+> 版本目标：`v0.9.0` → **`v0.10.0`**（0.x 阶段删符号 = MINOR，见 README「0.x 阶段」）。不跳 `v1.0.0`。
+
+**C. 四道护栏（删除后逐条跑，全绿才提交）**
+
+```bash
+go run ./tools/check_api_surface       # 期望：385 符号 / 登记 385（今天 391，-6）；无「未登记」
+go run ./tools/check_surface_freeze    # 期望：与第 6 步重生成后的基线逐行一致
+go run ./tools/check_contract_shape    # 期望：绿（删符号不触发形状/依赖规则）
+go run ./tools/check_release_matrix    # 期望：CHANGELOG v0.10.0 ↔ 矩阵 v0.10 ↔ tag 三件套一致
+```
+
+- `check_api_surface`：先跑 `-list` 取当场数字，**不要把 385 抄进文档**（会漂）；红 = 登记区与导出面不一致。
+- `check_surface_freeze`：必须先 `-update` 再校验；只删基线不删登记（或反之）两边都会红。
+- `check_contract_shape`：不因本次删除放宽任何白名单。
+- `check_release_matrix`：tag 只有 push 后才被下游 `go get`；本地 tag 不算发版。
+
+**D. 跨仓 pin 升级顺序（谁先升、为什么）**
+
+1. **本仓先发** `v0.10.0` 并 push annotated tag（不 push 的 tag 无法 `go get`）。
+2. 消费仓按「消费面从窄到宽」升，每仓独立 PR（`go get …@v0.10.0` → `go build ./...` → `go vet ./...`）：
+   - **`tellurion-data` 先升**：只直接使用 `Fundamental`，改动面最小，先暴露问题。
+   - **`tellurion-agent` 次之**：命中集中在 `pkg/ai/prompts.go` 的提示词字符串（非编译使用方），改动面小。
+   - **`tellurion`（core）最后升**：AST 复核 nontest 262 处、test 533 处，成本最高；它升完才把矩阵的「已切」标注改为 `v0.10.0`。
+3. 其余仓（analytics / strategy / risk / broker / orchestration / kit / ui）无 contracts 依赖或只经上面三仓间接消费，**不需要单独动作**；逐个 `grep tellurion-contracts go.mod` 留证即可。
+4. 回滚策略：任一仓 `go build` 红 ⇒ **该仓留在 `v0.9.0`**，本仓不回退已发布版本（只前进）。红的原因写进该仓 TASKS，不改本仓导出面。
+
+**E. 非目标（避免做成新债）**
+
+- 不留 `// Deprecated` 兼容 shim，不留第二份 `domain.OHLCV = market.OHLCV`。
+- 不在 core 重建「指回本仓」的别名：core 的 `pkg/domain` 是 CT-06-B 已定的自有同形类型，不随本单改。
+- 不为「少改下游」把删除拆成多批 —— 6 个是一次性同一语义（同一类型别名），拆开只会让版本矩阵多出无意义的中间态。
+
 ## 二、跨仓指针（不在本仓，勿双写）
 
 | 事项 | 去哪 |
