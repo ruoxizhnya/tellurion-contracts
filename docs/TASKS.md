@@ -9,7 +9,7 @@ verified-by: CT-06 收口（2026-11-10：CT-06-A/B 已执行；余下 6 个 mark
 > 本仓**唯一**任务台账。跨仓任务只在 §二 留指针，**不镜像正文**（双写必然漂移）。
 > 状态：`⬜ 待做` / `🔶 进行中` / `⛔ 阻塞（有未解除前置）` / `✅ 完成（附日期）`
 >
-> **台账终扫（2026-11-10）**：任务标题带 `⬜` / `🔶` / `⛔` 的 = **0 条**；正文旧标记以标题与最新「收口」块为准。**无开放项**；6 个 `market` 别名按「别名豁免」留仓（代裁，待主任追认）。
+> **台账终扫（2026-11-10）**：任务标题带 `⬜` / `🔶` / `⛔` 的 = **0 条**；正文旧标记以标题与最新「收口」块为准。**无开放项**；6 个 `market` 别名**已追认保留**（2026-11-11；依据与删除重开条件见 CT-06 收口）。
 
 > **第三轮裁决指针（2026-10-25）**：② risk 快照迁 contracts = **新建 `risk` 包**，迁 `Snapshot` / `SnapshotRule` / `Scope` / `RuleType` + 冻结词表 + hash 纯函数 + 4 个哨兵；`Bundle` / `ParseBundle` / `ForScope` 不迁；**编码逐字节搬运，禁止换 Canonical**；必须带固定向量 + 与 risk 仓的对拍腿。建议发 MINOR（`v0.7.0`）。正文见 `tellurion:docs/design/qt-decoupling/cross-repo-decision-record-2026-10-25.md` §五。
 > 每张单六字段（① 目标 ② 上下文 ③ 要求 ④ 约束与非目标 ⑤ 验收 ⑥ 边界），判据见 `tellurion:AGENTS.md` §8.5。
@@ -321,7 +321,7 @@ verified-by: CT-06 收口（2026-11-10：CT-06-A/B 已执行；余下 6 个 mark
 > **门禁（真实退出码）**：broker `go build ./...` = 0、`go vet ./...` = 0、`go test ./... -count=1` = 0（5 个包 ok）、`gofmt -l .` 空。
 > 12 个契约哨兵按本单裁定**未随迁**，仍在 `tellurion-broker:internal/gateway/errors.go`；`broker.order_acks` DDL 未动。
 
-### CT-06 · `domain/` core-only 根名的回收（重跑：119 根名） [P3] ✅（2026-11-10 收口：CT-06-A/B 已执行；6 个 market 别名按「别名豁免」留仓，**代裁·待主任追认**）
+### CT-06 · `domain/` core-only 根名的回收（重跑：119 根名） [P3] ✅（2026-11-10 收口：CT-06-A/B 已执行；6 个 market 别名 **2026-11-11 追认保留**）
 
 - **① 目标**：把 QT-05 ③-⑨ 产出、被两句「先别删 / S2 后回收」押下的 core-only 导出面回收掉，让本仓的导出面只剩**真有 ≥2 使用方**的形状（准入规则 C4）。
 - **② 上下文**：本仓 `docs/TASKS.md:159`（QT-05 ③-⑨ 的实测：`domain/` 根包 176 个导出符号折 **119 个根名**，agent import 38，**0 命中 81**；清单以命令输出为准，**不手抄**）与 `:193`（「那 81 个根名先别删：S1 整包迁的容忍条款到 S2 后才回收」）；S2 / S3 均已 ✅（core `docs/TASKS.md` 阶梯表），登记的容忍条款已到期；清单落点 `docs/API.md` §6 的 core-only 行。
@@ -356,8 +356,12 @@ verified-by: CT-06 收口（2026-11-10：CT-06-A/B 已执行；余下 6 个 mark
     - **登记与基线（实测）**：`docs/API.md` §4 删 66 条失效登记行（63 个迁回/删除符号 + `Sector` 族 3 个）、§6 分组表重写、§6.1 加「CT-06-B 已执行」块（逐名处置保留 2026-11-07 判定原貌作历史证据）；`check_api_surface` → **391 符号 / 登记 391**；`check_surface_freeze -update` 后基线 **447 → 384 行**（`git diff --numstat docs/api-surface.txt` = 0 / −63，方法符号折进类型指纹行故少于 66）。
     - **验收（真退出码）**：contracts `gofmt -l .` 空、`go build ./...` / `go vet ./...` / `go test ./... -count=1` 全 **0**；`check_api_surface` **0**（391/391）、`check_surface_freeze` **0**（384 = 384）、`check_contract_shape` **0**、`check_release_matrix` **0**；core `gofmt -l` 空、`go build ./...` / `go vet ./...` / `go test ./... -count=1` 全 **0**（含 `internal/repoguard`）。
     - **破坏验证（仓外临时模块 `%TEMP%\ct06b-destru`，`replace` 指本仓，真做真还原）**：引用保留名 `domain.DirectionLong` / `domain.MacroSeries` / `domain.OHLCV` / `domain.MarketRegime` → `go build ./...` **exit 0**；加一行 `domain.Signal{}` → **exit 1**（`undefined: domain.Signal`）；还原后 **exit 0**，临时目录已删除。
-    - **未执行（如实）**：① 本仓不打 tag / 不 push（纪律禁止）；② core pin 仍为 `v0.9.0`，bump 到含本条目的版本未做——core 侧腿 C 以 36 条「版本滞后」白名单临时登记这批同名类型，**bump 后必须删除**（反向棘轮会判红）；③ 6 个 market 别名的去留（是否也按 C4 删净）未裁，现状按「别名不是重复真相」豁免，标**待主任追认**。
-- **收口（2026-11-10，**代裁·待主任追认**）**：60 个 core-only 根名已按补裁 #12 处理完（迁回 / 删除 / 留仓见 CT-06-B 记录）；余下 6 个 `domain` 根名是对 `domain/market` 的**类型别名**（`OHLCV = market.OHLCV` / `Stock` / `IndexDaily` / `Split` / `Dividend` / `Fundamental`，见 `domain/types.go:43-48`），按「别名不是重复真相」**豁免留仓**，不按 C4 的「单使用方迁回」逐名物理搬家——别名只在 core 一个编译面接线，迁回会制造同名双份形状、与腿 C 的反棘轮相悖。跨 11 仓实测引用（`\bdomain\.<Name>\b`，含测试）：`OHLCV` = core 769 / agent 4、`Fundamental` = core 64 / data 3、`Stock` 93 / `IndexDaily` 9 / `Split` 11 / `Dividend` 9 均仅 core。本单据此转 ✅；若主任否决豁免，则须另立「别名去重」单（删本仓别名 + core 本地定义 + 下游 pin bump），不属本单回收范围。
+    - **未执行（如实）**：① 本仓不打 tag / 不 push（纪律禁止）；② core pin 仍为 `v0.9.0`，bump 到含本条目的版本未做——core 侧腿 C 以 36 条「版本滞后」白名单临时登记这批同名类型，**bump 后必须删除**（反向棘轮会判红）；③ 6 个 market 别名的去留按「别名不是重复真相」保留，**2026-11-11 追认保留**（依据与重开条件见下方收口）。
+- **收口（2026-11-10 收口；2026-11-11 追认保留）**：60 个 core-only 根名已按补裁 #12 处理完（迁回 / 删除 / 留仓见 CT-06-B 记录）；余下 6 个 `domain` 根名是对 `domain/market` 的**类型别名**（`OHLCV = market.OHLCV` / `Stock` / `IndexDaily` / `Split` / `Dividend` / `Fundamental`，见 `domain/types.go:42-49`），**追认保留**，不按 C4 的「单使用方迁回」逐名物理搬家——别名只在 core 一个编译面接线，迁回会制造同名双份形状、与腿 C 的反棘轮相悖。跨 11 仓实测引用（`\bdomain\.<Name>\b`，含测试；2026-11-11 重跑）：`OHLCV` = core 769 / agent 5、`Fundamental` = core 64 / data 3、`Stock` 93 / `IndexDaily` 9 / `Split` 11 / `Dividend` 9 均仅 core。本单据此转 ✅。
+  - **保留依据**：① 6 个别名都是**同一类型**（`domain.X` 与 `market.X` 可互换，不需要转换），不制造第二份真相；② 使用方文本层仍按旧拼写引用，但当前各仓 pin 的是**已发布版本**（core / agent `v0.9.0`、data `v0.6.0`，均无 `replace`），本地删别名不会立刻弄红构建——破坏发生在**下一次 pin bump**；按本仓「删符号 = MAJOR」的发布规则，必须先让下游迁到 `domain/market.X` 再发版；③ 本轮禁改 core / agent，跨仓迁移无法同批完成。
+  - **破坏验证（如实）**：临时删 `Fundamental` 别名后，data `go build ./...` 仍 **exit 0**（pin `v0.6.0` 把本地改动隔离了）；因此本项**不做**「删掉即红」的破坏证明，保留依据改以「文本层使用方 + 发布规则」为准。还原后 contracts 门禁复绿。
+  - **删除前置（另立「别名去重」单）**：使用方先把 `domain.X` 改为 `market.X` 并在下一版 pin 上 `go build ./...` 绿 → 本仓删别名 + `check_surface_freeze -update` + 更新 `docs/API.md` §4/§6.1 与 `CHANGELOG.md` 破坏性条目。
+  - **重开条件**：core / agent / data 全部完成上述迁移；或 `domain/market` 出现第二份同名形状（那时别名不再等价，必须立即拆）。不属本单回收范围。
 
 ---
 
