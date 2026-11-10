@@ -12,15 +12,15 @@ verified-by: CT-06 收口（2026-11-10：CT-06-A/B 已执行；余下 6 个 mark
 
 ## 一、未做 / 挂起 / 外部依赖
 
-### CT-06-ALIAS-EXIT · 6 个 `market` 别名的删除前置 [P2] ⏸
+### CT-06-ALIAS-EXIT · 6 个 `market` 别名的删除前置 [P2] ⏸（2026-11-11 复核：agent 仍阻）
 
 - **① 目标**：给「6 个别名是否删」一个可执行的前置与退出动作，避免长期悬空。
-- **② 上下文**：`OHLCV` / `Stock` / `IndexDaily` / `Split` / `Dividend` / `Fundamental` 六个 `domain` 根名是 `domain/market` 的类型别名，**不是重复真相**；11 仓逐名 grep（2026-11-11）仍有 core / agent / data 的文本层引用，各仓 pin 的是已发布版本（core/agent `v0.9.0`、data `v0.6.0`，无 `replace`）⇒ 本仓本地删除**不会立刻弄红下游构建**，破坏发生在下一次 pin bump。按「删符号 = MAJOR」必须先做下游迁移。裁决与证据见 `CT-06` 收口块（已归档）。
+- **② 上下文**：`OHLCV` / `Stock` / `IndexDaily` / `Split` / `Dividend` / `Fundamental` 六个 `domain` 根名是 `domain/market` 的类型别名，**不是重复真相**。2026-11-11 删除前复核：data 已迁完（`62bcc25`，`market.Fundamental`，build/vet/test 绿）；core 0（`pkg/domain/aliases.go` 的六名指向 `market.*`，`cdom` 只用于 `Direction` 等非六名）；**agent 仍有 8 处文本引用**（代码模板 / 提示词 / 会编译片段的测试，见 §F）⇒ 删除会把 agent 的模板产物与 `TestValidateCompilation_CanResolveProjectImports` 弄红。按「删符号 = MINOR（0.x）」必须先做下游迁移。裁决与证据见 `CT-06` 收口块（已归档）。
 - **③ 要求**：① 下游（core / agent / data）先把引用迁到 `domain/market.*`；② 三仓同时 pin bump 到删除别名后的 MINOR/MAJOR 版本；③ 本仓再删别名并更新 `docs/API.md`、跑四道护栏。
 - **④ 约束与非目标**：本仓不先删；不为「凑数」改接口；不做兼容 shim 之外的新机制。
 - **⑤ 验收**：11 仓 grep 对六名的引用为 0；`check_api_surface` / `check_surface_freeze` / `check_contract_shape` / `check_release_matrix` 全绿。
 - **⑥ 边界**：形状与版本纪律归本仓；下游迁移与 pin 归各仓。
-- **重开条件**：core / agent / data 三仓完成 `domain/market.*` 迁移并同批 pin bump。
+- **重开条件**：data 已完成；core 已 0；**agent 把 8 处文本引用（模板 / 提示词 / 测试片段）换成 `market.OHLCV` + `contracts/domain/market` 后**，三仓同批 pin bump 再重开。
 
 #### 执行手册（前置就绪后才做；**本仓今天不执行**）
 
@@ -71,7 +71,7 @@ go run ./tools/check_release_matrix    # 期望：CHANGELOG v0.10.0 ↔ 矩阵 v
 1. **本仓先发** `v0.10.0` 并 push annotated tag（不 push 的 tag 无法 `go get`）。
 2. 消费仓按「消费面从窄到宽」升，每仓独立 PR（`go get …@v0.10.0` → `go build ./...` → `go vet ./...`）：
    - **`tellurion-data` 先升**：只直接使用 `Fundamental`，改动面最小，先暴露问题。
-   - **`tellurion-agent` 次之**：命中集中在 `pkg/ai/prompts.go` 的提示词字符串（非编译使用方），改动面小。
+   - **`tellurion-agent` 次之**：8 处文本引用 —— `pkg/ai/templates/strategy.go.tmpl`（生成代码模板）、`pkg/ai/prompts.go`（2 处提示词）、`pkg/ai/pipeline/pipeline.go`（提示词）、`pkg/ai/validator/code_validator_test.go`（**测试会真正编译该片段**）、`pkg/ai/tools/builtin/datafetch.go`（注释）、`docs/archive/`（历史归档，不改）。模板与测试必须一起改，否则生成代码不可编译、validator 测试红。
    - **`tellurion`（core）最后升**：AST 复核 nontest 262 处、test 533 处，成本最高；它升完才把矩阵的「已切」标注改为 `v0.10.0`。
 3. 其余仓（analytics / strategy / risk / broker / orchestration / kit / ui）无 contracts 依赖或只经上面三仓间接消费，**不需要单独动作**；逐个 `grep tellurion-contracts go.mod` 留证即可。
 4. 回滚策略：任一仓 `go build` 红 ⇒ **该仓留在 `v0.9.0`**，本仓不回退已发布版本（只前进）。红的原因写进该仓 TASKS，不改本仓导出面。
@@ -81,6 +81,32 @@ go run ./tools/check_release_matrix    # 期望：CHANGELOG v0.10.0 ↔ 矩阵 v
 - 不留 `// Deprecated` 兼容 shim，不留第二份 `domain.OHLCV = market.OHLCV`。
 - 不在 core 重建「指回本仓」的别名：core 的 `pkg/domain` 是 CT-06-B 已定的自有同形类型，不随本单改。
 - 不为「少改下游」把删除拆成多批 —— 6 个是一次性同一语义（同一类型别名），拆开只会让版本矩阵多出无意义的中间态。
+
+**F. 2026-11-11 删除前复核（结论：未删，阻塞在 agent）**
+
+按「删前重跑 core / agent」的要求执行，逐仓结果：
+
+| 仓 | 六名引用 | 证据 |
+|---|---|---|
+| `tellurion-data` | **0** | 对方线 `62bcc25`：`internal/ingest/tushare_adapter.go` 已改 `market.Fundamental`，import 换 `contracts/domain/market`；build/vet/test 11 包绿。仍 import 根 `domain` 的三处只用 `MacroSeries` / `MarketActivity`（独立 struct，非别名，**勿删**） |
+| `tellurion`（core） | **0** | `pkg/domain/aliases.go` 的六名指向 `contracts/domain/market`（`market.*`），不是根别名；`cdom`（contracts 根）只用于 `Direction` 等非六名；dot-import 0 |
+| `tellurion-agent` | **8 处文本引用（阻）** | 见下 |
+| strategy / analytics / risk / broker / orchestration / kit / ui | **0** | 逐仓 `*.go` grep 空 |
+
+agent 的 8 处（`grep -rn 'domain\.(OHLCV|Stock|IndexDaily|Split|Dividend|Fundamental)'`）：
+
+| 位置 | 性质 | 删别名后 |
+|---|---|---|
+| `pkg/ai/templates/strategy.go.tmpl:64` | 生成策略代码的模板 | 生成的代码 import 根 `domain` + `domain.OHLCV` ⇒ **不可编译** |
+| `pkg/ai/prompts.go:43`、`:134` | 提示词里的示例代码 | 示例失真（且已引用不存在的 `domain.Portfolio`） |
+| `pkg/ai/pipeline/pipeline.go:605` | 提示词明文 | 失真 |
+| `pkg/ai/validator/code_validator_test.go:59` | **测试会真正编译该片段** | `TestValidateCompilation_CanResolveProjectImports` **必红**（今天实测 PASS） |
+| `pkg/ai/tools/builtin/datafetch.go:122` | 注释 | 失真 |
+| `docs/archive/contracts-import-replacement-2026-10-23.md:50,144` | 历史归档 | 不改 |
+
+**为什么停**：agent 无编译期引用（`go build` 不会红），但有模板产物与一条会编译片段的行为测试；删除别名 = 让 agent 的「生成 → 编译」链路与 validator 测试同时失效。按本单「任何仓出现残留引用就停下报告、不越仓改」的约束，本轮**未删任何别名**，CT-06 保持 ⏸。
+
+**解除办法（agent 侧，待授权/移交）**：把上述 6 处非归档文本改成 `market.OHLCV` + `import "github.com/ruoxizhnya/tellurion-contracts/domain/market"`，模板同步；`domain.Portfolio` 一并换成 core 的 `domain.Portfolio` 或删掉该示例参数。改完重跑 agent `go test ./pkg/ai/validator ./pkg/ai/...`，再重开本单。
 
 ## 二、跨仓指针（不在本仓，勿双写）
 
