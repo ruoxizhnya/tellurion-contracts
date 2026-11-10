@@ -522,6 +522,10 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 > **不迁**（按 CT-03 ④）：`Bundle` / `ParseBundle` / `ForScope` 带 decode、默认值填充与进程内索引，属服务策略；
 > 服务私有哨兵（`ErrRuleNotFound` 等 7 个）只经 wire code 消费，也不进契约。
 > **零 I/O、零时钟**：包内无构造器；`CreatedAt` 只是被承载的字段，不参与 hash（ADR-0004）。
+> **scope 语义（2026-11-11 主任裁决，正式口径）**：进程级策略源的选择顺序是 `global` → `strategy`
+> （global 提供组合级基线，strategy 提供单策略覆盖；回退是**正常优先级语义**，不是兜底）；
+> `account` / `symbol` 不参与进程级选择。选中 scope 内**四类规则各恰好一条**，缺一类或同类多条 ⇒ 拒。
+> `params` 的严格解码（未知键拒收）在消费方，冻结词典归 `tellurion-risk`；本包只做规范化与体积上限。
 
 | 符号 | 类别 | 稳定性 | 错误语义 / 判据 |
 |---|---|---|---|
@@ -538,11 +542,13 @@ go run ./tools/check_surface_freeze -update # 重生成冻结基线（改签名/
 | `ScopeStrategy` | const | **frozen** | `"strategy"` |
 | `ScopeSymbol` | const | **frozen** | `"symbol"` |
 | `Scope.Valid` | method | stable | 纯函数：是否在冻结四值内（ADR-0004）。零值 `""` → `false` |
+| `Scope.ProcessLevel` | method | stable | 纯函数：该 scope 是否参与进程级策略源选择。`global` / `strategy` → `true`；`account` / `symbol` 及未知值 → `false`（2026-11-11 裁决） |
 | `SnapshotRule` | type | stable | 六字段：`RuleID` / `Revision` / `Scope` / `Type` / `Params`（`json.RawMessage`，须为 JSON 对象）/ `VersionHash`。**字段顺序即位置化字面量的顺序** |
 | `Snapshot` | type | stable | 三字段：`RiskRulesHash` / `Rules` / `CreatedAt`。内容寻址：同 hash 同字节，原地改内容禁止 |
 | `Snapshot.Clone` | method | stable | 深拷贝 `Rules` 与每条 `Params`，避免与 Store / 来源共享可变内存 |
 | `Snapshot.Hash` | method | **frozen** | 由 `Rules` 派生 `risk_rules_hash`：按 `rule_id` 升序、长度前缀帧、逐条六字段。**不含** `CreatedAt` 与 `RiskRulesHash`（后者只参与 `Verify`）。错误族：空快照 / 重复 `rule_id` / 缺 `rule_id` / `Revision <= 0` / 缺 `version_hash` / 非法 params → `ErrInvalidParams`；未知 `Type` → `ErrInvalidRuleType`；未知 `Scope` → `ErrInvalidScope` |
 | `Snapshot.Verify` | method | stable | 重新 derive 并与 `RiskRulesHash` 比对；不符 → `ErrSnapshotMismatch`（fail-loud，不吞、不回退） |
+| `Snapshot.ValidateScope` | method | stable | 纯结构校验：指定 scope 下**四类规则各恰好一条**；缺一类或同类多条 → `ErrInvalidParams`，未知 scope → `ErrInvalidScope`，未知 type → `ErrInvalidRuleType`。不做 decode / 默认值 / 进程内索引；`global → strategy` 的 fallback 选择仍属服务策略（2026-11-11 裁决） |
 | `ErrInvalidRuleType` | var | stable | `"rule type is not in the frozen enum"`（文案与 risk 逐字一致） |
 | `ErrInvalidScope` | var | stable | `"scope is not in the frozen enum"` |
 | `ErrInvalidParams` | var | stable | `"rule params are invalid"` |

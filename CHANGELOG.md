@@ -37,6 +37,20 @@
   0.x 版本规则允许 breaking（删符号 = MINOR），本条随下一个 MINOR 发版；`docs/API.md` §4/§6.1 与
   `docs/api-surface.txt` 已同步。
 
+### 新增（risk 契约，2026-11-11）
+
+- **`risk/` 同步 scope 契约（纯加法，既有符号与编码一字未动）**：新增
+  `Scope.ProcessLevel()` 与 `Snapshot.ValidateScope(scope)`，把 2026-11-11 主任裁决的正式口径
+  编码成纯函数 / 纯结构校验：
+  - `global → strategy` 是**正常优先级回退**（global 组合级基线，strategy 单策略覆盖），
+    `account` / `symbol` 不参与进程级策略源；
+  - 选中 scope 内**四类规则各恰好一条**，缺一类或同类多条 ⇒ 拒（`ErrInvalidParams`），
+    未知 scope / type ⇒ `ErrInvalidScope` / `ErrInvalidRuleType`。
+- **边界不变**：`ForScope` 的 fallback 选择、`params` 的冻结词典严格解码仍属服务策略（CT-03 ④）；
+  本包只做结构判定，不做 decode / 默认值 / 进程内索引。
+- **下游影响**：纯加法、无编译破坏，**不需要即时升 pin**；`tellurion-risk` / core 可在下一个
+  MINOR（建议 `v0.10.0`）发版后选用。`docs/API.md` §4 与 `docs/api-surface.txt` 已同步。
+
 ## [v0.9.0] - 2026-11-07
 
 MINOR 发版：CT-05 新增 `broker/` 包（**只增不改**），导出面 427 → 458

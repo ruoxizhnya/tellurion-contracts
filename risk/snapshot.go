@@ -11,6 +11,15 @@
 //     的 `SnapshotHash` 产出同一个 hex。**禁止**改用 `engine.NewCanonical`：两套编码器的帧
 //     结构、域标签写法与参数规范化都不同（见 `docs/API.md` §5.6），换编码 = 全历史
 //     `risk_rules_hash` 作废，且 `quant.run_provenance` 与 `run.run_artifacts` 两处锚点同时失效。
+//
+// **scope 语义（2026-11-11 主任裁决，正式口径）**：core 的进程级策略源选择顺序是
+// `global` → `strategy` —— global 提供组合级基线，strategy 提供单策略覆盖，找不到
+// global 时回退 strategy 是**正常优先级语义**，不是兜底；`account` / `symbol` 不参与
+// 进程级选择。选中 scope 内**四类规则各恰好一条**，缺一类或同类多条 ⇒ 拒（歧义不猜）。
+// 每类 `params` 由消费方按冻结词典严格解码，未知键 ⇒ 拒。
+//
+// 本包只提供 `Scope.ProcessLevel` 与 `Snapshot.ValidateScope` 两个**纯判定**；
+// 真正的 fallback 选择（`ForScope`）仍属服务策略，不迁（CT-03 ④）。
 package risk
 
 import (
@@ -38,7 +47,8 @@ const DomainSnapshotHash = "tellurion.risk_snapshot_hash.v1"
 const MaxParamsBytes = 64 << 10
 
 // RuleType 是冻结的规则类型枚举。旧读者遇未知类型必须 fail-closed 拒收。
-// 新增类型 = MINOR；改既有取值的语义 = breaking。
+// 选中 scope 内**四类规则各恰好一条**；缺一类或同类多条 ⇒ 拒（歧义不猜，
+// 见 Snapshot.ValidateScope）。新增类型 = MINOR；改既有取值的语义 = breaking。
 type RuleType string
 
 const (
@@ -59,7 +69,9 @@ var ruleTypes = map[RuleType]struct{}{
 	RuleTypeTakeProfit:     {},
 }
 
-// Scope 是规则的适用范围。找不到对应 scope 的规则 = 没有规则，
+// Scope 是规则的适用范围。进程级策略源的选择顺序是 `global` → `strategy`
+// （global 组合级基线，strategy 单策略覆盖；global → strategy 回退是**正式优先级语义**，
+// 不是兜底）；`account` / `symbol` 不参与进程级选择。找不到可用规则 = 拒绝开跑，
 // **不许**回落到默认限额。
 //
 // ⚠️ 与 `engine/abi.go` 的 `ScopeSymbol`（`StrategyScope` 的取值 `"symbol"`，指
@@ -70,11 +82,11 @@ type Scope string
 const (
 	// ScopeGlobal 全局规则。
 	ScopeGlobal Scope = "global"
-	// ScopeAccount 账户级规则。
+	// ScopeAccount 账户级规则。**不参与**进程级策略源选择（core 的 pickScope 只读 global / strategy）。
 	ScopeAccount Scope = "account"
-	// ScopeStrategy 策略级规则。
+	// ScopeStrategy 策略级规则。global 无规则时作为进程级策略源（正常优先级回退）。
 	ScopeStrategy Scope = "strategy"
-	// ScopeSymbol 标的级规则。
+	// ScopeSymbol 标的级规则。**不参与**进程级策略源选择。
 	ScopeSymbol Scope = "symbol"
 )
 

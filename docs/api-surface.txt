@@ -363,6 +363,7 @@ risk/RuleTypeRegime RuleType
 risk/RuleTypeStopLoss RuleType
 risk/RuleTypeTakeProfit RuleType
 risk/Scope string
+risk/Scope.ProcessLevel() bool
 risk/Scope.Valid() bool
 risk/ScopeAccount Scope
 risk/ScopeGlobal Scope
@@ -371,6 +372,7 @@ risk/ScopeSymbol Scope
 risk/Snapshot struct{RiskRulesHash string; Rules []SnapshotRule; CreatedAt time.Time}
 risk/Snapshot.Clone() Snapshot
 risk/Snapshot.Hash() (string, error)
+risk/Snapshot.ValidateScope(Scope) error
 risk/Snapshot.Verify() error
 risk/SnapshotRule struct{RuleID string; Revision int; Scope Scope; Type RuleType; Params json.RawMessage; VersionHash string}
 run/ChildIdempotencyKey(string, int) string
