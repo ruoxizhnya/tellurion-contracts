@@ -1,6 +1,6 @@
 # TASKS 归档 — tellurion-contracts（2026-11）
 
-> **本文件是 `docs/TASKS.md` 的历史归档，进 git、不删除**。归档时间 2026-11-11；收录范围 = 截至 2026-11-10 已收口（✅）的任务原文与当时的施工记录，**逐字搬入、未改写**（原文件 frontmatter 留在新台账；任务标题与正文原样保留）。
+> **本文件是 `docs/TASKS.md` 的历史归档，进 git、不删除**。归档时间 2026-11-11；收录范围 = 截至 2026-11-11 已收口（✅）的任务原文与当时的施工记录，**逐字搬入、未改写**（原文件 frontmatter 留在新台账；任务标题与正文原样保留）。
 
 > **检索方式**：按任务 ID `grep -n "<ID>" docs/archive/tasks-archive-2026-11.md`；按 commit `grep -n "<sha>" docs/archive/tasks-archive-2026-11.md`；索引表在本节下方，含 ID / 标题 / 收口日期 / commit / 证据链接。
 
@@ -22,6 +22,7 @@
 | CT-04 | 编排三份 wire 形状（claim / `run_artifacts` / 子 run 入队） | 2026-11-07 | —（原文未记） | [原文](#CT-04) |
 | CT-05 | broker DTO（order intent / fill / account） | 2026-11-09 | —（原文未记） | [原文](#CT-05) |
 | CT-06 | `domain/` core-only 根名的回收（重跑：119 根名） | 2026-11-10 | —（原文未记） | [原文](#CT-06) |
+| CT-06-ALIAS-EXIT | 删除 `domain/` 根包 6 个 `market` 类型别名 | 2026-11-11 | —（本轮不 push，无 commit 哈希入账） | 本文件末节「CT-06-ALIAS-EXIT 收口」 |
 
 ---
 
@@ -427,3 +428,33 @@
 | QT-40（T2） | `dataprotocol` 要不要独立成包、何时迁 | 单在 `tellurion-data:docs/TASKS.md`（QT-40 的接口对表待办 T2）；本仓侧 **X1a 契约腿已落（2026-10-24，`v0.6.0`）**：§8 #4 定 (a)、(a) 的形状与本仓落点见 `docs/API.md` §4/§5.5。`tellurion:docs/design/qt-decoupling/data-service-contract-and-ownership.md` §4.1 注 ② 的回写归 core 侧协调者；core / data 的删副本与改 import 归各自单 |
 
 ---
+
+## CT-06-ALIAS-EXIT 收口（2026-11-11）
+
+**结论**：`domain/` 根包 6 个 `market` 类型别名已删除；11 仓重跑实测真实编译残留 0；本仓 `build/vet/test` 与四道护栏全绿。**未发版**（本轮不 push、不打 tag）：改动记 `CHANGELOG.md` 的 `## [Unreleased]`，随下一个 MINOR `v0.10.0` 发版。
+
+**删除面**
+
+- **代码**：`domain/types.go` 删 `type ( OHLCV / Stock / IndexDaily / Split / Dividend / Fundamental )` 别名块与 `market` import（保留 `Direction` 族 + `MarketRegime`），包注释改写；`domain/market_alias_test.go` 整文件删除；`domain/types_test.go` 删随别名走的 OHLCV / Stock 用例（实体在 `domain/market/types_test.go` 仍有覆盖）；`domain/market/doc.go` 删「`domain.OHLCV` = type alias」兼容段。
+- **登记 / 基线**：`docs/API.md` §4 删 6 行、§6 两处改写、§6.1 加「CT-06-ALIAS-EXIT 已执行」块；`docs/api-surface.txt` 由 `check_surface_freeze -update` 重生成（`git diff --numstat` = 0 / −6）；`CHANGELOG.md` 新增 `[Unreleased]` 破坏性条目；`README.md` 目录表 `domain/` 计数（176 → 34）与 `main` 矩阵行更新。
+
+**删除前复核（2026-11-11，11 仓）**：六名经**根包别名**的真实残留 = **0**；dot-import = 0；本地再别名 = 0。import 根 `domain` 的文件数：core 188 / agent 48 / data 3 / contracts 7，但均未使用六名；`"OHLCV"` 等字符串字面量不依赖类型别名。**先修后删**：`tellurion-agent:a6e7d02` 把 6 处非归档引用改为 `market.*` / core 的 `domain.Portfolio`；`tellurion-agent:0eaed19` 同批修客户端漂移（日历改指 data，listing-windows 腿删除）；`tellurion-data` 已在 `62bcc25` 改 `market.Fundamental`。
+
+**护栏实测（本仓，2026-11-11，真实退出码 0）**
+
+| 命令 | 结果 |
+|---|---|
+| `go build ./...` | 0 |
+| `go vet ./...` | 0 |
+| `go test ./... -count=1` | 全 `ok`（domain / domain/market / conformance / engine / fees / risk / run / broker / dataprotocol / 四个 tools 包） |
+| `gofmt -l .` | 空 |
+| `go run ./tools/check_api_surface` | `代码符号 387 / 登记符号 387` ✅ |
+| `go run ./tools/check_surface_freeze` | `代码 380 行指纹 / 基线 380 行` ✅（先 `-update`） |
+| `go run ./tools/check_contract_shape` | `17 个包 / 39 个非测试文件 / 白名单例外 7 个` ✅ |
+| `go run ./tools/check_release_matrix` | `矩阵序列 9 / CHANGELOG 版本节 10 / tag 10` ✅ |
+
+**未做 / 边界**
+
+- **不打 tag、不 push**（本轮约束）：按 `README.md`「不 push 的 tag 无法 `go get`，等于没发版」，故不新增 `v0.10.0` 版本节、不改矩阵序列；发版时把 `[Unreleased]` 搬进 `## [v0.10.0]`、加 `v0.10` 矩阵行、打 annotated tag 并 push。
+- 下游 `tellurion` / `tellurion-agent` / `tellurion-data` 仍 pin `v0.9.0`；因已不使用六名，继续可编译。升 pin 需远端 tag，另单（顺序 data → agent → core）。
+

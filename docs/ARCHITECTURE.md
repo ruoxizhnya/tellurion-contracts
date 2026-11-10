@@ -1,7 +1,7 @@
 ---
 status: active
 last-verified: 2026-11-11
-verified-by: 代码-文档对齐审计（2026-11-11：§2 导出面计数按 `docs/api-surface.txt` 基线校正 —— domain 40 / market 41 / engine 210；§3 ADR-0002 的 core-only 例外已由 CT-06-B 收口；v0.7~v0.9 tag 推送与下游 pin 状态复核）；QT-05 ③-① 落码完成本仓侧（§2 订正「只依赖 kit」为实测零依赖 + 四个包均标已落 + errors//abi/ 按 adr/0003 并入 engine；§3 四行按实测收紧；§5 依赖图同步订正；§6 ADR 索引补 0002~0004；§8 S1 补推送结论：6 个 commit 已进 `origin/main`（该批 HEAD = `fbe9a2d`），`go get` 实测可解析，下游腿待 core/agent 执行）
+verified-by: CT-06-ALIAS-EXIT（2026-11-11：`domain/` 根包 6 个 market 类型别名删除，§2 基线 40 → 34、§3 `domain/` 行去掉「兼容别名」；未发版，见 `CHANGELOG.md` `[Unreleased]`）；代码-文档对齐审计（2026-11-11：§2 导出面计数按 `docs/api-surface.txt` 基线校正 —— domain 40 / market 41 / engine 210；§3 ADR-0002 的 core-only 例外已由 CT-06-B 收口；v0.7~v0.9 tag 推送与下游 pin 状态复核）；QT-05 ③-① 落码完成本仓侧（§2 订正「只依赖 kit」为实测零依赖 + 四个包均标已落 + errors//abi/ 按 adr/0003 并入 engine；§3 四行按实测收紧；§5 依赖图同步订正；§6 ADR 索引补 0002~0004；§8 S1 补推送结论：6 个 commit 已进 `origin/main`（该批 HEAD = `fbe9a2d`），`go get` 实测可解析，下游腿待 core/agent 执行）
 ---
 
 # 架构 — tellurion-contracts
@@ -17,7 +17,7 @@ verified-by: 代码-文档对齐审计（2026-11-11：§2 导出面计数按 `do
 ```
 （被所有 Go 仓依赖）
 
-  domain/     值对象：Signal / Order / Position / Portfolio / 因子名册 / BacktestResult（✅ 2026-10-22 已落地；CT-06-A/B 回收后按 `docs/api-surface.txt` 基线 40 条）
+  domain/     值对象：Signal / Order / Position / Portfolio / 因子名册 / BacktestResult（✅ 2026-10-22 已落地；CT-06-A/B 回收 + CT-06-ALIAS-EXIT 删 6 个别名后按 `docs/api-surface.txt` 基线 34 条）
   domain/market/  行情值对象 + 频率/时间语义词表 + Provider（✅ 2026-10-22 已落地；按 `docs/api-surface.txt` 基线 41 条）
   engine/     四契约：RunSpec→BacktestRequest / SignalSpec→SignalWeight /
               ResultSpec→BacktestResponse / EngineRunner + MarketRouter（✅ 2026-10-22 已落地；v0.9.0 后按 `docs/api-surface.txt` 基线 210 条）
@@ -40,7 +40,7 @@ verified-by: 代码-文档对齐审计（2026-11-11：§2 导出面计数按 `do
 
 | 包 | 职责 | 不该做什么 |
 |---|---|---|
-| `domain/` | 跨边界值对象（信号 / 订单 / 组合 / 因子名册 / 回测结果）+ `domain/market` 的兼容别名 | 不做计算、不读配置；**部署配置形状不进来**（[`adr/0002`](adr/0002-config-族的边界处置.md)：零引用的 5 个 `*Config` 已删；ADR 里 core-only 的 2 个例外已由 CT-06-B（2026-11-10）收口——`StrategyConfig` 删除、`ExecutionConfig` 迁回 core，ADR 正文不追改） |
+| `domain/` | 跨边界值对象（信号 / 订单 / 组合 / 因子名册 / 回测结果）；**不再含 `domain/market` 的别名**（6 个根别名已由 CT-06-ALIAS-EXIT（2026-11-11）删除，改用 `market.*`；未发版，见 `CHANGELOG.md` `[Unreleased]`） | 不做计算、不读配置；**部署配置形状不进来**（[`adr/0002`](adr/0002-config-族的边界处置.md)：零引用的 5 个 `*Config` 已删；ADR 里 core-only 的 2 个例外已由 CT-06-B（2026-11-10）收口——`StrategyConfig` 删除、`ExecutionConfig` 迁回 core，ADR 正文不追改） |
 | `domain/market/` | 行情值对象 + 频率/时间语义词表 + `Provider` 接口 | 不做计算；`OHLCV`/`Fundamental` 的字段集与 core `docs/SPEC.md` 互锁（加字段 = core 侧红），见 `docs/API.md` §4 |
 | `engine/` | 回测四契约 + 路由接口 + **三类哨兵 + abi 常量**（同一包、`package contracts`） | 不含引擎实现；不把哨兵 / abi 拆成独立包（[`adr/0003`](adr/0003-哨兵与-abi-不独立成包.md)：拆了没有调用点能少 import 一个包） |
 | `dataprotocol/` | 数据面共享协议：`UnifiedDataPoint`（七字段，含 `VisibleAt`）+ `DataType*` 取值集 + 去重坐标 | 零 I/O、零时钟（无构造器，`IngestTime` 由调用方注入）；不放聚合器 / 端口；不重复 `TimeSemantics`（住 `domain/market`）；迁移期 core / data 的副本由各自单删除（见 `docs/API.md` §5.5） |

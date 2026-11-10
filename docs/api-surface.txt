@@ -54,7 +54,6 @@ domain/DirectionClose Direction
 domain/DirectionHold Direction
 domain/DirectionLong Direction
 domain/DirectionShort Direction
-domain/Dividend = market.Dividend
 domain/FactorContractLiabilityRatio FactorType
 domain/FactorGrossMarginTrend FactorType
 domain/FactorGrowth FactorType
@@ -73,16 +72,11 @@ domain/FactorSourceSupplyChain = "supply_chain"
 domain/FactorType string
 domain/FactorValue FactorType
 domain/FactorVolatility FactorType
-domain/Fundamental = market.Fundamental
-domain/IndexDaily = market.IndexDaily
 domain/MacroSeries struct{Indicator string; Freq string; ObsDate time.Time; Value float64; Unit string; Source string; AsOf time.Time}
 domain/MarketActivity struct{Symbol string; TradeDate time.Time; TurnoverRate *float64; TurnoverRateF *float64; VolumeRatio *float64; Source string; AsOf time.Time}
 domain/MarketRegime struct{Trend string; Volatility string; Sentiment float64; Timestamp time.Time}
-domain/OHLCV = market.OHLCV
 domain/ParseFactorType(string) (FactorType, bool)
 domain/PortfolioValue struct{Date time.Time; TotalValue float64; Cash float64; Positions float64}
-domain/Split = market.Split
-domain/Stock = market.Stock
 domain/Trade struct{ID string; Symbol string; Direction Direction; Quantity float64; Price float64; Commission float64; TransferFee float64; StampTax float64; Timestamp time.Time; PendingQty float64; FilledQty float64}
 domain/WalkForwardParams struct{TrainDays int; TestDays int; StepDays int; MinTrainDays int}
 domain/WalkForwardReport struct{StrategyID string; Universe string; Windows []*WalkForwardResult; AvgTestSharpe float64; AvgTestReturn float64; AvgTestMaxDD float64; AvgDegradation float64; PassRate float64; OverallPass bool; StdTestSharpe float64; StdDegradation float64; OverfitScore float64; ProbNoOverfit float64; StabilityScore float64}

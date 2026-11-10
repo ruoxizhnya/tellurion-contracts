@@ -1,6 +1,6 @@
 # tellurion-contracts
 
-> module: `github.com/ruoxizhnya/tellurion-contracts` ｜ 状态：**S1 落码已完成（QT-05 ③-①，2026-10-22：`fees` / `domain/market` / `domain` / `engine/` 四个包，当时 429 个导出符号）／已发版至 `v0.6.0`（2026-10-24：QT-40 X1a 新增 `dataprotocol/` 包，447→465，**`main` 与 tag 已于 2026-10-25 推远端**；此前 `v0.5.0` 同日：QT-22 `version_hash` canonical 六项，443→447；`v0.4.0` 同日：QT-20 参数投递入口 + QT-41b ④ 编译/资产四哨兵，439→443；2026-10-23 一天四版：`v0.1.0` S2-b 首版 → `v0.1.1` 把 `conformance/` 语料打进 tag → `v0.2.0` 429→435 → `v0.3.0` 435→439，QT-10 三类执行错误哨兵）**
+> module: `github.com/ruoxizhnya/tellurion-contracts` ｜ 状态：**S1 落码已完成（QT-05 ③-①，2026-10-22：`fees` / `domain/market` / `domain` / `engine/` 四个包，当时 429 个导出符号）／已发版至 `v0.9.0`（2026-11-07，CT-05；`main` 与 tag 已于 2026-11-08 推远端）／`main` 上另有**未发版**的 CT-06-B（2026-11-10）与 CT-06-ALIAS-EXIT（2026-11-11）两笔破坏性导出面收缩，将随下一个 MINOR `v0.10.0` 发版（见兼容矩阵 `main` 行）**（此前 `v0.6.0`（2026-10-24）：QT-40 X1a 新增 `dataprotocol/` 包，447→465，**`main` 与 tag 已于 2026-10-25 推远端**；此前 `v0.5.0` 同日：QT-22 `version_hash` canonical 六项，443→447；`v0.4.0` 同日：QT-20 参数投递入口 + QT-41b ④ 编译/资产四哨兵，439→443；2026-10-23 一天四版：`v0.1.0` S2-b 首版 → `v0.1.1` 把 `conformance/` 语料打进 tag → `v0.2.0` 429→435 → `v0.3.0` 435→439，QT-10 三类执行错误哨兵）**
 
 跨仓唯一缝隙：**port 接口 · DTO/值对象（含 domain）· 四个引擎契约 · 哨兵错误 · abi 常量**。所有跨边界的东西只能住这里。
 
@@ -10,7 +10,7 @@
 |---|---|
 | `fees/` | **已落地的库包**：A 股费率模型的数据形状（常量 / 档位 / 结构体 / 纯校验）。导出面见 `docs/API.md` §4，边界裁决见 §8 #3 |
 | `domain/market/` | **已落地的库包**：行情值对象（`OHLCV` / `Stock` / `Fundamental` / `IndexDaily` …）+ 频率 / 时间语义词表（PIT 红线）+ `Provider` 接口。46 个导出符号见 `docs/API.md` §4；`OHLCV`/`Fundamental` 的字段集与 core 的 `docs/SPEC.md` 互锁 |
-| `domain/` | **已落地的库包**：信号 / 订单 / 持仓 / 组合 / 公司行为引擎 / 因子名册 / 回测结果 176 个导出符号（`docs/API.md` §4）。含 `domain/market` 的兼容别名；5 个零引用部署配置按 [`adr/0002`](docs/adr/0002-config-族的边界处置.md) 不迁 |
+| `domain/` | **已落地的库包**：信号 / 订单 / 回测结果 / 因子名册 / 市场状态 34 个导出符号（`docs/API.md` §4；CT-06-B 迁回 core-only 根名后）。**不含** `domain/market` 的别名——`OHLCV` / `Stock` / `IndexDaily` / `Split` / `Dividend` / `Fundamental` 六个根别名已由 CT-06-ALIAS-EXIT（2026-11-11）删除，改用 `market.*`；5 个零引用部署配置按 [`adr/0002`](docs/adr/0002-config-族的边界处置.md) 不迁 |
 | `engine/` | **已落地的库包**：四契约（`BacktestRequest` / `BacktestResponse` / `SignalWeight` / `EngineRunner`）+ 内核路由 + 成交口径 + canonical/provenance hash + 三类哨兵 + abi 常量，共 194 个导出符号。**目录名 `engine/`、包名仍是 `contracts`**（调用点前缀不变） |
 | `docs/` | 本仓文档：台账 / 边界 / 决策 / 归档 —— 从这里进：`docs/README.md` |
 | `docs/API.md` | 导出面清单（符号 × 稳定性 × 错误语义）；登记区由 CI 核对 |
@@ -90,7 +90,7 @@ go run ./tools/check_pr_body          # 仅 PR 事件用（stdin 传 PR 正文�
 | `v0.3` | 已发版（2026-10-23） | 已切 `v0.3.0`（core `go.mod` 2026-10-24 实测） | 已切 `v0.3.0`（agent `go.mod` 2026-10-24 实测；`replace tellurion` 在册不改） |
 | `v0.2` | 已发版（2026-10-23） | `v0.2.0`（QT-62 wasm 腿随同批切 pin；QT-16 契约腿同批收编） | `v0.2.0`（`replace tellurion` 在册期间与 core 同批升） |
 | `v0.1` | 已发版（2026-10-23） | `v0.1.1`（QT-07 ⑤ 切 pin；`v0.1.0` 为 S2-b 首版） | `v0.1.1`（同批切；`replace tellurion` 在册期间与 core 同批升） |
-| `main`（未发版） | 开发基线，**不做兼容承诺** | 已切 `v0.9.0` | 已切 `v0.9.0` |
+| `main`（未发版） | 开发基线，**不做兼容承诺**。已累积两笔未发版的破坏性导出面收缩：CT-06-B（2026-11-10，60 个 core-only 根名迁回 `tellurion:pkg/domain` + 若干 0 使用方删除）与 CT-06-ALIAS-EXIT（2026-11-11，删除 6 个 market 根别名）；按 0.x 规则将随下一个 MINOR `v0.10.0` 发版（届时需打 tag 并 push） | 已切 `v0.9.0` | 已切 `v0.9.0` |
 <!-- matrix:end -->
 
 首个版本 `v0.1.0` 已于 **2026-10-23** 打在 `main` 上并 push（QT-07 ③-S2-a）；`v0.1.1` 同日发出，唯一目的（PATCH 级，导出面零变化）是把 `conformance/` 语料**打进 tag** —— `v0.1.0` 打在语料落地之前，下游按它取语料必然落空。0.x 阶段按上面的规则允许 breaking，但每一处都在 `CHANGELOG.md` 留了账。使用方一律 `require` 兼容矩阵里最新那一行（今天 `v0.9.0`），**不写 `replace`**（ADR-D31 / D29 §9 C1）。

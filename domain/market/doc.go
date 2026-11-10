@@ -2,16 +2,11 @@
 // trading system.
 //
 // This sub-package was introduced by S7-P3-4 (ODR-043 D3 "soft layering")
-// as the canonical home for market-data types. The legacy `domain`
-// package (core 的 `tellurion:pkg/domain`，QT-05 ③-① 迁入本仓的 `domain/`)
-// re-exports these types as type aliases, so
-// existing code referencing `domain.OHLCV` continues to compile
-// unchanged. New code SHOULD prefer the `market.OHLCV` spelling.
-//
-// Soft layering means the two packages coexist (no big-bang rename):
-//   - market.OHLCV  — canonical definition (this package)
-//   - domain.OHLCV  — type alias (= market.OHLCV), backward compat
-//
-// Both spellings refer to the SAME type; they are interchangeable in
-// assignments, function signatures, and type assertions.
+// as the canonical home for market-data types. From 2026-10-22 to
+// 2026-11-11 the root `domain` package re-exported them as type aliases
+// (`domain.OHLCV` = `market.OHLCV`). **CT-06-ALIAS-EXIT (2026-11-11)
+// deleted those aliases** (unreleased; ships in the next minor v0.10.0):
+// `OHLCV` / `Stock` / `IndexDaily` / `Split` / `Dividend` /
+// `Fundamental` are now spelled `market.X` only, and consumers must
+// import this package directly.
 package market

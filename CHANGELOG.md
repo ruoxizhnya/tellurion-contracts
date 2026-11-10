@@ -7,6 +7,16 @@
 
 ## [Unreleased]
 
+### 破坏性（CT-06-ALIAS-EXIT，2026-11-11）
+
+- **破坏性：`domain.OHLCV` / `domain.Stock` / `domain.IndexDaily` / `domain.Split` / `domain.Dividend` / `domain.Fundamental`（6 个 type alias）→ 删除；改用 `domain/market.OHLCV` / `.Stock` / `.IndexDaily` / `.Split` / `.Dividend` / `.Fundamental`（同一实体，只需改前缀）。**
+  依据：11 仓重跑（2026-11-11）实测六名经**根包别名**的真实编译残留 = **0**（dot-import 0、本地再别名 0；`"OHLCV"` 之类字符串字面量不依赖类型别名，不构成阻塞）。
+  先修后删：`tellurion-agent` 的 6 处非归档引用同日改指 `market.*` / core 的 `domain.Portfolio`（`tellurion-agent:a6e7d02`）；`tellurion-data` 早已改 `market.Fundamental`。
+  - **代码面**：`domain/types.go` 删别名块与 `market` import（只剩 `Direction` 族 + `MarketRegime`）；`domain/market_alias_test.go` 整文件删除；`domain/types_test.go` 删随别名走的 OHLCV / Stock 用例（实体在 `domain/market/types_test.go` 仍有覆盖）；`domain/market/doc.go` 改说明。
+  - **登记面**：`docs/API.md` §4 删 6 行、§6 两处改写、§6.1 加「CT-06-ALIAS-EXIT 已执行」块；`docs/api-surface.txt` 由 `check_surface_freeze -update` 重生成（`git diff --numstat` = 0 / −6，恰好是 6 行别名指纹）。
+  - **实测**：`check_api_surface` → 387 符号 / 登记 387；`check_surface_freeze` → 380 行 = 380；`check_contract_shape` / `check_release_matrix` 均 0；`go build ./...` / `go vet ./...` / `go test ./... -count=1` 全 0。
+  - **下游影响**：`tellurion` / `tellurion-agent` / `tellurion-data` 仍 pin `v0.9.0`，因已不使用六名仍可编译；升 pin 需远端 tag，另单。0.x 规则允许 breaking（删符号 = MINOR），本条随下一个 MINOR 发版。
+
 ### 破坏性（CT-06-B，2026-11-10）
 
 - **破坏性：`domain/` 根包里 63 个「只有 core 一个编译使用方」的登记符号 → 删除本仓导出，实类型迁入 `tellurion:pkg/domain`；另 3 个 0 使用方形状（`Sector` / `StockSector` / `StockIndustry`）与 `StrategyConfig` 直接删除、不在 core 重建。**
@@ -19,7 +29,7 @@
     `IndustryVitality` / `ETFConstituent` / `FundamentalsDetailRow` / `ExecutionConfig` / `DefaultExecutionConfig`。
   - **删除且不重建**：`StrategyConfig`；`Sector` / `StockSector` / `StockIndustry`（`domain/sector.go` 整文件）；
     `IndexConstituent` / `FundamentalData` 两个**根别名**（实体仍在 `domain/market/`）。
-  - **保留**：6 个 market 别名（`Fundamental` 仍被 `tellurion-data` 直接使用）；`FactorMarketActivity`（`FactorType` 名册成员）；
+  - **保留**：6 个 market 别名（`Fundamental` 仍被 `tellurion-data` 直接使用；已于 2026-11-11 由 CT-06-ALIAS-EXIT 全部删除，见上条）；`FactorMarketActivity`（`FactorType` 名册成员）；
     `MacroSeries` / `MarketActivity`（core + `tellurion-data`）；`BuiltinFactorHypotheses`（core + agent）。
   - **实测**：`go run ./tools/check_api_surface` → 391 符号 / 登记 391（改前 457）；冻结基线
     `git diff --numstat docs/api-surface.txt` → 0 / −63（447 → 384 行）；`docs/API.md` §4 删 66 条失效登记行。
