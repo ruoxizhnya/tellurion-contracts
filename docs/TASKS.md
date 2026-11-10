@@ -12,12 +12,7 @@ verified-by: CT-06-ALIAS-EXIT 收口（2026-11-11：删除 `domain/` 根包 6 �
 
 ## 一、未做 / 挂起 / 外部依赖
 
-### CT-06-ALIAS-EXIT · 6 个 `market` 别名删除 [P2] ✅（2026-11-11 收口，已归档）
-
-- **收口**：六个别名已从 `domain/` 根包删除（`OHLCV` / `Stock` / `IndexDaily` / `Split` / `Dividend` / `Fundamental`），改用 `domain/market.*`。删除前 11 仓重跑实测**经根包别名的真实残留 = 0**（dot-import 0、本地再别名 0）；先修后删：`tellurion-agent:a6e7d02` 清 6 处非归档引用，`tellurion-data` 的 `market.Fundamental` 早已就位。
-- **护栏**：本仓 `go build/vet/test ./... -count=1` 与 `gofmt -l .` 全绿；`check_api_surface`（387/387）、`check_surface_freeze`（380 = 380）、`check_contract_shape`、`check_release_matrix` 全 0。
-- **未发版**：本轮不 push、不打 tag，改动记 `CHANGELOG.md` 的 `[Unreleased]`；下游三仓仍 pin `v0.9.0`（不再使用六名，仍可编译），升 pin 另单。
-- **原文归档**：执行手册（删除清单 / 四道护栏 / pin 升级顺序 / 删除前复核）与逐条实测输出见 [`docs/archive/tasks-archive-2026-11.md`](archive/tasks-archive-2026-11.md) 末节「CT-06-ALIAS-EXIT 收口」。
+> 本仓当前**无开放项**。最近一笔收口 `CT-06-ALIAS-EXIT`（2026-11-11：删除 6 个 `domain` 根别名，未发版）的原文与实测输出在 [`docs/archive/tasks-archive-2026-11.md`](archive/tasks-archive-2026-11.md) 末节，索引见该文件顶部表。
 
 ## 二、跨仓指针（不在本仓，勿双写）
 
