@@ -1,5 +1,7 @@
 # tellurion-contracts
 
+> 5 分钟了解本服务：[SERVICE.md](SERVICE.md)
+
 > module: `github.com/ruoxizhnya/tellurion-contracts` ｜ 状态：**S1 落码已完成（QT-05 ③-①，2026-10-22：`fees` / `domain/market` / `domain` / `engine/` 四个包，当时 429 个导出符号）／已发版至 `v0.10.0`（2026-11-11，CT-06-A / CT-06-B / CT-06-ALIAS-EXIT 三笔破坏性导出面收缩 + `risk/` 同步 scope 契约纯加法，导出面 387）**（此前 `v0.9.0`（2026-11-07）：CT-05 新增 `broker/` 包，427→458，`main` 与 tag 已于 2026-11-08 推远端；`v0.6.0`（2026-10-24）：QT-40 X1a 新增 `dataprotocol/` 包，447→465，`main` 与 tag 已于 2026-10-25 推远端；`v0.5.0` 同日：QT-22 `version_hash` canonical 六项，443→447；`v0.4.0` 同日：QT-20 参数投递入口 + QT-41b ④ 编译/资产四哨兵，439→443；2026-10-23 一天四版：`v0.1.0` S2-b 首版 → `v0.1.1` 把 `conformance/` 语料打进 tag → `v0.2.0` 429→435 → `v0.3.0` 435→439，QT-10 三类执行错误哨兵）**
 
 跨仓唯一缝隙：**port 接口 · DTO/值对象（含 domain）· 四个引擎契约 · 哨兵错误 · abi 常量**。所有跨边界的东西只能住这里。
