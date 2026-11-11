@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+（无待发版条目。）
+
+## [v0.10.0] - 2026-11-11
+
+MINOR 发版：三笔未发版的破坏性导出面收缩（CT-06-A / CT-06-B / CT-06-ALIAS-EXIT）一并发出，
+另含 `risk/` 同步 scope 契约的纯加法。发版时导出面按 `check_api_surface` 实测为 387 个符号。
+
 ### 破坏性（CT-06-ALIAS-EXIT，2026-11-11）
 
 - **破坏性：`domain.OHLCV` / `domain.Stock` / `domain.IndexDaily` / `domain.Split` / `domain.Dividend` / `domain.Fundamental`（6 个 type alias）→ 删除；改用 `domain/market.OHLCV` / `.Stock` / `.IndexDaily` / `.Split` / `.Dividend` / `.Fundamental`（同一实体，只需改前缀）。**
@@ -15,7 +22,7 @@
   - **代码面**：`domain/types.go` 删别名块与 `market` import（只剩 `Direction` 族 + `MarketRegime`）；`domain/market_alias_test.go` 整文件删除；`domain/types_test.go` 删随别名走的 OHLCV / Stock 用例（实体在 `domain/market/types_test.go` 仍有覆盖）；`domain/market/doc.go` 改说明。
   - **登记面**：`docs/API.md` §4 删 6 行、§6 两处改写、§6.1 加「CT-06-ALIAS-EXIT 已执行」块；`docs/api-surface.txt` 由 `check_surface_freeze -update` 重生成（`git diff --numstat` = 0 / −6，恰好是 6 行别名指纹）。
   - **实测**：`check_api_surface` → 387 符号 / 登记 387；`check_surface_freeze` → 380 行 = 380；`check_contract_shape` / `check_release_matrix` 均 0；`go build ./...` / `go vet ./...` / `go test ./... -count=1` 全 0。
-  - **下游影响**：`tellurion` / `tellurion-agent` / `tellurion-data` 仍 pin `v0.9.0`，因已不使用六名仍可编译；升 pin 需远端 tag，另单。0.x 规则允许 breaking（删符号 = MINOR），本条随下一个 MINOR 发版。
+  - **下游影响**：`tellurion` / `tellurion-agent` / `tellurion-data` 仍 pin `v0.9.0`，因已不使用六名仍可编译；升 pin 归随 `v0.10.0` 发版后的 pin 链单（data → agent → core 顺序）。0.x 规则允许 breaking（删符号 = MINOR），本条随 `v0.10.0` 发出。
 
 ### 破坏性（CT-06-B，2026-11-10）
 
@@ -37,14 +44,14 @@
   - **下游影响**：core 侧调用点已同批切至 `tellurion/pkg/domain`（core 仓同笔 commit）。core 当前仍 pin `v0.9.0`，
     在 bump 到含本条目的版本前，core `internal/repoguard/contract_identity_test.go` 的腿 C 以「版本滞后」白名单
     临时登记这批同名类型；**bump 后必须删除，反向棘轮会判红**。0.x 版本规则允许 breaking（删符号 = MINOR），
-    本条随下一个 MINOR 发版。
+    本条随 `v0.10.0` 发出。
 
 ### 破坏性（CT-06-A，2026-11-09）
 
 - **破坏性：`domain.BuiltinHypothesisFor`（func）— 删除 → 由唯一使用方 `tellurion-agent` 本地私有实现 `builtinHypothesisFor` 承接。**
   依据：11 仓重跑 + Go AST 复核，该符号只有 `tellurion-agent` 一个编译使用方，不满足准入规则 C4（≥2 使用方）。
   内置表 `domain.BuiltinFactorHypotheses` 仍有 core + agent 两个使用方，**保留不迁**。
-  0.x 版本规则允许 breaking（删符号 = MINOR），本条随下一个 MINOR 发版；`docs/API.md` §4/§6.1 与
+  0.x 版本规则允许 breaking（删符号 = MINOR），本条随 `v0.10.0` 发出；`docs/API.md` §4/§6.1 与
   `docs/api-surface.txt` 已同步。
 
 ### 新增（risk 契约，2026-11-11）
@@ -58,8 +65,7 @@
     未知 scope / type ⇒ `ErrInvalidScope` / `ErrInvalidRuleType`。
 - **边界不变**：`ForScope` 的 fallback 选择、`params` 的冻结词典严格解码仍属服务策略（CT-03 ④）；
   本包只做结构判定，不做 decode / 默认值 / 进程内索引。
-- **下游影响**：纯加法、无编译破坏，**不需要即时升 pin**；`tellurion-risk` / core 可在下一个
-  MINOR（建议 `v0.10.0`）发版后选用。`docs/API.md` §4 与 `docs/api-surface.txt` 已同步。
+- **下游影响**：纯加法、无编译破坏，**不需要即时升 pin**；`tellurion-risk` / core 可在 `v0.10.0` 发版后选用。`docs/API.md` §4 与 `docs/api-surface.txt` 已同步。
 
 ## [v0.9.0] - 2026-11-07
 
