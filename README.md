@@ -81,7 +81,7 @@ go run ./tools/check_pr_body          # 仅 PR 事件用（stdin 传 PR 正文�
 <!-- matrix:begin -->
 | 契约版本 | 状态 | 支持的 core（`tellurion`） | 支持的 agent（`tellurion-agent`） |
 |---|---|---|---|
-| `v0.10` | 已发版（2026-11-11，CT-06-A + CT-06-B + CT-06-ALIAS-EXIT 三笔破坏性导出面收缩 + `risk/` 同步 scope 契约；导出面 387）。**破坏性**：删 6 个 market 根别名、60 个 core-only 根名迁回 `tellurion:pkg/domain`、删 `domain.BuiltinHypothesisFor` | 未切（仍 `v0.9.0`；pin 链 data → agent → core 升后回写） | 未切（仍 `v0.9.0`；同上） |
+| `v0.10` | 已发版（2026-11-11，CT-06-A + CT-06-B + CT-06-ALIAS-EXIT 三笔破坏性导出面收缩 + `risk/` 同步 scope 契约；导出面 387）。**破坏性**：删 6 个 market 根别名、60 个 core-only 根名迁回 `tellurion:pkg/domain`、删 `domain.BuiltinHypothesisFor`。pin 链实测：data `ac7e04f` / agent `8c8e822` / broker `c00d9b1` / orchestration `b45a44d` / strategy `f4750b7` 已切；core 已升 pin 但被两处既存测试红阻断（`b368c87` 仅本地） | 未切（`go.mod` 已升 `v0.10.0`，本地 `b368c87` **未 push**：`cmd/analysis` compose 覆盖腿与 `pkg/backtest` QT-21 腿红，待裁） | 已切 `v0.10.0`（2026-11-11，`8c8e822`；`go.mod` 实测） |
 | `v0.9` | 已发版（2026-11-07，CT-05；**tag `v0.9.0` 与 `main` 已于 2026-11-08 推远端**）。`broker` 消费方 `tellurion-broker` 今天 `go.mod` 无 contracts 依赖（按裁决 #9 本轮零 contracts）⇒ 未切是**有意**，不是欠账 | 已切 `v0.9.0`（2026-11-08，裁决 #6；`go.mod` 实测） | 已切 `v0.9.0`（2026-11-08，裁决 #6；`go.mod` 实测） |
 | `v0.8` | 已发版（2026-11-07，CT-04；**tag `v0.8.0` 与 `main` 已于 2026-11-08 推远端**）。`analytics` / `orchestration` 今天无 contracts 依赖（裁决 #9 延后到各自 G1/G3 接线），core 经 `v0.9.0` 已覆盖 `run/` 包 | 已覆盖（`v0.9.0` ⊃ `v0.8.0`；`run/` 包暂无调用点） | 已覆盖（`v0.9.0` ⊃ `v0.8.0`） |
 | `v0.7` | 已发版（2026-11-07，CT-03；**tag `v0.7.0` 与 `main` 已于 2026-11-08 推远端**）。`risk` 包由 core / agent 经 `v0.9.0` 消费；`tellurion-risk` 今天 `go.mod` 无 contracts 依赖 ⇒ 无可切 | 已覆盖（`v0.9.0` ⊃ `v0.7.0`；`risk/` 包暂无调用点） | 已覆盖（`v0.9.0` ⊃ `v0.7.0`） |
@@ -91,7 +91,7 @@ go run ./tools/check_pr_body          # 仅 PR 事件用（stdin 传 PR 正文�
 | `v0.3` | 已发版（2026-10-23） | 已切 `v0.3.0`（core `go.mod` 2026-10-24 实测） | 已切 `v0.3.0`（agent `go.mod` 2026-10-24 实测；`replace tellurion` 在册不改） |
 | `v0.2` | 已发版（2026-10-23） | `v0.2.0`（QT-62 wasm 腿随同批切 pin；QT-16 契约腿同批收编） | `v0.2.0`（`replace tellurion` 在册期间与 core 同批升） |
 | `v0.1` | 已发版（2026-10-23） | `v0.1.1`（QT-07 ⑤ 切 pin；`v0.1.0` 为 S2-b 首版） | `v0.1.1`（同批切；`replace tellurion` 在册期间与 core 同批升） |
-| `main`（未发版） | 开发基线，**不做兼容承诺**。`v0.10.0` 已发版，`main` 当前无累积未发版改动 | 已切 `v0.9.0`（pin 链在途，升 `v0.10.0` 后回写） | 已切 `v0.9.0`（同上） |
+| `main`（未发版） | 开发基线，**不做兼容承诺**。`v0.10.0` 已发版，`main` 当前无累积未发版改动（pin 链结果已回写 `v0.10` 行） | 见 `v0.10` 行（pin 已升、push 被测试红阻断） | 已切 `v0.10.0`（`8c8e822`） |
 <!-- matrix:end -->
 
 首个版本 `v0.1.0` 已于 **2026-10-23** 打在 `main` 上并 push（QT-07 ③-S2-a）；`v0.1.1` 同日发出，唯一目的（PATCH 级，导出面零变化）是把 `conformance/` 语料**打进 tag** —— `v0.1.0` 打在语料落地之前，下游按它取语料必然落空。0.x 阶段按上面的规则允许 breaking，但每一处都在 `CHANGELOG.md` 留了账。使用方一律 `require` 兼容矩阵里最新那一行（今天 `v0.10.0`），**不写 `replace`**（ADR-D31 / D29 §9 C1）。
