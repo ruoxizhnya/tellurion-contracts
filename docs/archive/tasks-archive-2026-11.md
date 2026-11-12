@@ -23,6 +23,8 @@
 | CT-05 | broker DTO（order intent / fill / account） | 2026-11-09 | —（原文未记） | [原文](#CT-05) |
 | CT-06 | `domain/` core-only 根名的回收（重跑：119 根名） | 2026-11-10 | —（原文未记） | [原文](#CT-06) |
 | CT-06-ALIAS-EXIT | 删除 `domain/` 根包 6 个 `market` 类型别名 | 2026-11-11 | `3a3b9de`（`v0.10.0` 发版，tag `v0.10.0` → `3a3b9de`）、`ad70456`（矩阵回写） | 本文件末节「CT-06-ALIAS-EXIT 收口」 |
+| X-DEP-BUMP-CONSUMERS | 消费方依赖抬升（本仓为契约生产方，无 kit/pgx 依赖；只补 govulncheck 门 + go-version） | 2026-11-12 | 见本条 | [施工记录](#X-DEP-BUMP-CONSUMERS) |
+| X-CI-RACE-STATICCHECK | CI 补 `-race` 与 `staticcheck`（含 1 条恒假比较 SA4023） | 2026-11-12 | 见本条 | [施工记录](#X-CI-RACE-STATICCHECK) |
 
 ---
 
@@ -469,3 +471,25 @@
 - **其余仓存量 push**：`tellurion-docs`（`4ca12a9`）、`tellurion-ui`（`d1fe18c`，vitest 540/540）。
 - **core 两处阻断的处置（主任裁 A：只改测试）**：① `docker-compose.e2e.yml` 删 data-service 是已合并的有意改动（`8fd415d`，限流为 data 仓固定档、不读该 env），`TestE2EComposeOverride_*` 改为只断言 analysis-service 覆盖生效 + 显式断言 data-service 缺席；② `docs/TASKS.md` 瘦身把 QT-21 移入归档后，`TestQT04_ConclusionInterlock_*` 改为按「活卷 ∪ `docs/archive/*.md`」检索、不变量（结论必须见于台账或归档）保留。两处均判为**测试滞后**，未改产物与台账；core 全量 `go test ./... -count=1` 全绿后才 push。
 
+
+---
+
+<a id="X-DEP-BUMP-CONSUMERS"></a>
+### X-DEP-BUMP-CONSUMERS · 消费方依赖抬升（本仓部分，跨仓伞 `tellurion:X-DEP-BUMP-CONSUMERS`）
+
+> **施工记录（2026-11-12）**：
+> - **本仓定位**：契约**生产方**，`go.mod` 无 `tellurion-kit` / `pgx` 依赖，只有 `testify` 与间接依赖；因此没有 pin 需要抬升，本腿只补 `govulncheck` 门与 CI 的 `go-version`。
+> - **CI**：`go-version` `1.25 → 1.26.11`（`staticcheck v0.8.2` 与 `govulncheck` 的工具链要求 `go >= 1.26.0`）；`Vet` 之后新增 `Govulncheck` 步。
+> - **`go` directive 未动（`go 1.25`）**：本仓无 kit 依赖，不需要随 kit v0.5.0 抬 directive；1.26 工具链构建 `go 1.25` 模块合法。
+> - **验收（真实输出）**：`govulncheck ./...` → `No vulnerabilities found`，EXIT=0；`gofmt -l .` 空；`go build/vet/test ./... -count=1` 全 EXIT=0（六个工具包 + 各域包 `ok`）。
+> - **破坏验证（如实）**：本仓无 pin 可降，**未做降版复红**；该腿的复红证据在 data / strategy 腿（同一伞下的消费仓）。本仓只保证门本身在当前树上真跑并给出 EXIT=0。
+
+<a id="X-CI-RACE-STATICCHECK"></a>
+### X-CI-RACE-STATICCHECK · CI 补 `-race` 与 `staticcheck`（本仓部分，跨仓伞 `tellurion:X-CI-RACE-STATICCHECK`）
+
+> **施工记录（2026-11-12）**：
+> - **改了什么**：`.github/workflows/ci.yml` 在 `Test` 之后新增 `Test（-race）` 与 `Staticcheck`（`honnef.co/go/tools/cmd/staticcheck@v0.8.2`）两步；`govulncheck` 门在同批落地。
+> - **补门前分诊（存量 1 条，未加 `staticcheck.conf` 基线排除）**：`domain/market/types_test.go:325` SA4023 —— `var p Provider = nilProvider{}` 后 `if p == nil` 是恒假比较（接口装具体值后恒非 nil），原断言永远不成立、也不可能变红。改为断言动态类型 `p.(nilProvider)`，语义（`nilProvider` 满足 `Provider`）不变且真的可判；**不是**放宽/删除断言。
+> - **验收（真实输出）**：`gofmt -l .` 空；`go build/vet ./...` EXIT=0；`staticcheck ./...` EXIT=0；`go test ./... -count=1` 全 `ok`；`go run ./tools/check_api_surface` 等四个导出面/版本纪律护栏保持绿（本次未改导出面）。
+> - **`-race` 本地覆盖（Docker 容器，非仅 CI）**：`docker run --rm -v <repo>:/w -w /w golang:1.26 sh -c "go test -race ./... -count=1"` → 全部有测试的包 `ok`、EXIT=0。
+> - **边界**：只动本仓 CI 与一条测试断言；不触 `docs/api-surface.txt` 与版本矩阵。
