@@ -25,6 +25,7 @@
 | CT-06-ALIAS-EXIT | 删除 `domain/` 根包 6 个 `market` 类型别名 | 2026-11-11 | `3a3b9de`（`v0.10.0` 发版，tag `v0.10.0` → `3a3b9de`）、`ad70456`（矩阵回写） | 本文件末节「CT-06-ALIAS-EXIT 收口」 |
 | X-DEP-BUMP-CONSUMERS | 消费方依赖抬升（本仓为契约生产方，无 kit/pgx 依赖；只补 govulncheck 门 + go-version） | 2026-11-12 | 见本条 | [施工记录](#X-DEP-BUMP-CONSUMERS) |
 | X-CI-RACE-STATICCHECK | CI 补 `-race` 与 `staticcheck`（含 1 条恒假比较 SA4023） | 2026-11-12 | 见本条 | [施工记录](#X-CI-RACE-STATICCHECK) |
+| X-LOW-CLEANUP（contracts 腿） | `fees` 包删指向已删包的死示例注释 | 2026-11-12 | 见本条 | [施工记录](#X-LOW-CLEANUP-contracts) |
 
 ---
 
@@ -493,3 +494,16 @@
 > - **验收（真实输出）**：`gofmt -l .` 空；`go build/vet ./...` EXIT=0；`staticcheck ./...` EXIT=0；`go test ./... -count=1` 全 `ok`；`go run ./tools/check_api_surface` 等四个导出面/版本纪律护栏保持绿（本次未改导出面）。
 > - **`-race` 本地覆盖（Docker 容器，非仅 CI）**：`docker run --rm -v <repo>:/w -w /w golang:1.26 sh -c "go test -race ./... -count=1"` → 全部有测试的包 `ok`、EXIT=0。
 > - **边界**：只动本仓 CI 与一条测试断言；不触 `docs/api-surface.txt` 与版本矩阵。
+
+---
+
+<a id="X-LOW-CLEANUP-contracts"></a>
+### X-LOW-CLEANUP（contracts 腿）· `fees` 包的死示例注释（跨仓伞 `tellurion:X-LOW-CLEANUP`）
+
+> **施工记录（2026-11-12）**：
+> - **原文取证**：ODR-069 W2-F7 只有一句「contracts fees 死示例注释」；按 `fees/` 全量读注释定位到 `fees/ashare.go` 三处引用 `tellurion:pkg/live`（`MockTrader` / `mock_trader.go`）。
+> - **为什么是死的**：core 仓 `pkg/live` 目录与 `mock_trader.go` **均已不存在**（`Get-ChildItem pkg` 无 `live`；递归搜 `*mock_trader*` 无命中）。包注释里的「算术住在 … `pkg/live/mock_trader.go`」与 `DefaultAShareFees` 的示例 `trader := live.NewMockTrader(cfg)` 都是指向已删包的死引用，照着抄会编译失败。
+> - **订正**：包注释改为只引仍存在的 `tellurion:pkg/backtest/tracker`（回测）与 `tellurion:pkg/backtest/execution`（撮合，两处均实测存在且确为费用算术所在）；`DefaultAShareFees` 示例删掉 `live.NewMockTrader` 一行、只留 `cfg := fees.DefaultAShareFees()`；`ApplyDefaults` 的历史说明标注 `retired`，明确那是已退役实现的做法。
+> - **不改的东西**：`AShareFees` 字段、默认值、`ApplyDefaults` 行为、导出面与 `docs/api-surface.txt` 一律不动；历史 CHANGELOG / 决策记录 / 本归档旧条目里的 `pkg/live` 是历史记录，**不追改**。
+> - **验收（真实执行）**：`gofmt -l .` 空；`go build/vet ./...` EXIT=0；`go test ./... -count=1` 全 `ok`（含四个导出面/版本纪律护栏）。
+> - **边界**：只改 `fees/ashare.go` 注释。

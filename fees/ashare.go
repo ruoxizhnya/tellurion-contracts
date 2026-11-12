@@ -2,7 +2,7 @@
 //
 // 2026-10-22 自 `tellurion:pkg/fees` 迁入（QT-05 ③-①，sha256 对拍后只改注释：跨仓路径 + Validate 注释与实现不符之处；代码行零差异）。
 // **算钱不在本仓**：成交额 × 费率、最低佣金兜底那套算术住在
-// `tellurion:pkg/backtest/tracker`（回测）与 `tellurion:pkg/live/mock_trader.go`（纸交易）。
+// `tellurion:pkg/backtest/tracker`（回测）与 `tellurion:pkg/backtest/execution`（撮合）。
 // 本包只回答「费率是多少、哪一天适用哪一档、这组值合不合法」。
 //
 // 来历：Sprint 6 P1-22 (ODR-013)
@@ -188,11 +188,10 @@ type AShareFees struct {
 // DefaultAShareFees returns the regulatory default fee
 // schedule. Use it as the zero value when constructing the
 // trade-cost consumers from scratch — those constructors live in
-// core (`tellurion:pkg/live` 的 MockTrader、`tellurion:pkg/backtest/execution`),
+// core (`tellurion:pkg/backtest/tracker` 与 `tellurion:pkg/backtest/execution`)，
 // 本仓只给默认值，不给实现：
 //
 //	cfg := fees.DefaultAShareFees()
-//	trader := live.NewMockTrader(cfg) // core 侧
 func DefaultAShareFees() AShareFees {
 	return AShareFees{
 		CommissionRate:  DefaultCommissionRate,
@@ -205,7 +204,7 @@ func DefaultAShareFees() AShareFees {
 
 // ApplyDefaults fills any zero-valued field with the package
 // default. This is the migration shim for callers that
-// previously set their own defaults (e.g. core's MockTrader used to
+// previously set their own defaults (e.g. core's retired MockTrader used to
 // do `if cfg.CommissionRate <= 0 { cfg.CommissionRate = 0.0003 }`).
 //
 // Negative rates are NOT zeroed — those are caller bugs and
