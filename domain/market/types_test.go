@@ -322,7 +322,9 @@ func (nilProvider) GetIndexConstituents(ctx context.Context, indexCode string) (
 
 func TestProvider_IsInterface(t *testing.T) {
 	var p Provider = nilProvider{}
-	if p == nil {
-		t.Fatal("nilProvider should satisfy Provider interface")
+	// 接口值装进具体类型后恒非 nil，原 `if p == nil` 是恒假比较（SA4023）；
+	// 这里改断言动态类型，语义不变且真的可判。
+	if _, ok := p.(nilProvider); !ok {
+		t.Fatalf("nilProvider should satisfy Provider, got %T", p)
 	}
 }
