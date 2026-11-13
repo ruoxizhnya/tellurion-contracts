@@ -26,6 +26,7 @@
 | X-DEP-BUMP-CONSUMERS | 消费方依赖抬升（本仓为契约生产方，无 kit/pgx 依赖；只补 govulncheck 门 + go-version） | 2026-11-12 | 见本条 | [施工记录](#X-DEP-BUMP-CONSUMERS) |
 | X-CI-RACE-STATICCHECK | CI 补 `-race` 与 `staticcheck`（含 1 条恒假比较 SA4023） | 2026-11-12 | 见本条 | [施工记录](#X-CI-RACE-STATICCHECK) |
 | X-LOW-CLEANUP（contracts 腿） | `fees` 包删指向已删包的死示例注释 | 2026-11-12 | 见本条 | [施工记录](#X-LOW-CLEANUP-contracts) |
+| X-OPENAPI-INGEST | core/agent 新端点进「统一 OpenAPI」（作废：主任裁决 A，维持 core 唯一真相） | 2026-11-12 | —（原文未记） | [原文](#X-OPENAPI-INGEST) |
 
 ---
 
@@ -507,3 +508,21 @@
 > - **不改的东西**：`AShareFees` 字段、默认值、`ApplyDefaults` 行为、导出面与 `docs/api-surface.txt` 一律不动；历史 CHANGELOG / 决策记录 / 本归档旧条目里的 `pkg/live` 是历史记录，**不追改**。
 > - **验收（真实执行）**：`gofmt -l .` 空；`go build/vet ./...` EXIT=0；`go test ./... -count=1` 全 `ok`（含四个导出面/版本纪律护栏）。
 > - **边界**：只改 `fees/ashare.go` 注释。
+
+---
+
+## 2026-11-13 归档：X-OPENAPI-INGEST（作废，主任裁决 A）
+
+<a id="X-OPENAPI-INGEST"></a>
+### X-OPENAPI-INGEST · core / agent 新 HTTP 端点进「统一 OpenAPI」[P2] ❌ 作废（2026-11-12，主任裁决 A；不计完成）
+
+> 由 2026-11-12 跨仓核对派工产生：core / agent 归档均写「contracts 仓统一收口 openapi」。经实测本仓无 openapi 文件且成文边界指向 core，报主任裁决；结论 **A：维持 core 唯一真相，本仓零 spec**。本单只留裁决记录。
+
+- **① 目标**：把 `tellurion:cmd/analysis` 的 `GET /api/signals`、`/api/factor-analytics/*`（4 条）、`GET /api/review/pending`、`GET /api/listing-windows/status`，与 `tellurion-agent:cmd/ai` 的 `POST /api/explore/runs/{runID}/steer`、`.../attempts/{seq}/ask`、`.../attempts/{seq}/mark`、`POST /api/pipeline/adoption`、`GET /api/pipeline/calibration` 的请求体 / 响应 / 状态码，同步进「统一 openapi」。
+- **② 上下文（前提证伪）**：本仓 `origin/main`（2026-11-12，HEAD `4fdcb53`）`git ls-files` 与本机 `*.yaml/*.yml/*.json` 实测**没有任何 openapi 文件**；`docs/ARCHITECTURE.md:81`「跨进程协议是 OpenAPI，归 core」、`docs/API.md:766`「`dto/` 是 core openapi 的生成物，禁手改」、`tellurion:docs/design/qt-decoupling/repo-inventory.md:152`（2026-10-20 补裁）「`docs/openapi.yaml` 归 core」三条成文边界一致指向 core；`tellurion:docs/openapi.yaml:1511-1515` 还明确「agent 反代族本文件不再复制 schema，唯一完整定义在 `tellurion-agent:docs/api-schema.md`」。core / agent 归档的「contracts 收口 openapi」尚未在本仓落成任何文件或 ADR。
+- **③ 裁决（A，2026-11-12）**：维持 `tellurion:docs/openapi.yaml` 唯一真相，本仓零 spec、只登记指针。理由：本仓成文边界三处（见 ②）一致指向 core；若在本仓聚合，会与 core 既有 `paths` 形成双真相，且必须同批要求 core 停止复制 agent 段（`tellurion:docs/openapi.yaml:1511-1515` 现行口径）——属独立架构决策，不在本次「补端点」范围内。
+- **④ 约束与非目标**：本单不落任何 spec；不改 core / agent 文件；形状一律以实现为准，文档不得反向迁就实现；不在本单顺手扩到其余端点。
+- **⑤ 验收（作废口径）**：不产出 spec、不跑契约对拍；本仓 `go build/vet/test` 与四条护栏保持绿即可。**核对附注（2026-11-12 实测，已派回各仓修正，本仓不代改）**：`tellurion-agent:docs/api-schema.md:217-223` 把 `GET /api/pipeline/calibration` 的 `entries[]` 写成 snake_case，但实现直接序列化 `aistore.AdoptionDecision`（`pkg/aistore/adoption.go:19-32`，无 json tag）⇒ 实际键为 `ID` / `ProposalID` / `Actor` / `Intervention` / `Adopted` / `ClaimedConfidence` / `IsHoldout` / `OutcomeHit` / `ResultRef` / `CreatedAt` / `ResolvedAt`；`tellurion:docs/openapi.yaml:3903-3905` 把 `as_of` 标 `format: date`，实现是 `*time.Time`（`internal/listingseed/loader.go:74`）⇒ 实际为 RFC3339 date-time；core openapi 的 `GET /api/signals` 与三条 factor 读面漏记 `500`。
+- **⑥ 边界 / 重开条件**：仅本仓文档、无代码改动；重开条件 = 主任另立 ADR 裁决 B（本仓收编为聚合）并明确 core 停止复制 agent 段，届时另立新单，不复用本单。
+
+> **归档注记（2026-11-13）**：原文逐字移入；活跃层不再保留该条。
