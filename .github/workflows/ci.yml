@@ -68,8 +68,18 @@ jobs:
         run: |
           printf '%s' "$PR_BODY" | go run ./tools/check_pr_body
 
-      - name: Test
-        run: go test ./... -count=1
+      # CT-COVERAGE-FLOOR：覆盖率门（X-COVERAGE-FLOOR 本仓腿）。
+      # 阈值 = 2026-11-13 本机全量实测 79.3% - 5 点 = 74%（先测后设，不猜数）。
+      # 执法者 = `go tool cover`（语句加权）；空壳测试抬覆盖不被接受。
+      - name: Test（覆盖率门 ≥ 74%）
+        run: |
+          go test ./... -count=1 -coverprofile=coverage.out
+          total="$(go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/,"",$3); print $3}')"
+          echo "total coverage: ${total}%"
+          if awk -v t="$total" 'BEGIN { exit !(t+0 < 74) }'; then
+            echo "覆盖率 ${total}% 低于阈值 74%（2026-11-13 实测 79.3% - 5 点）"
+            exit 1
+          fi
 
       # X-CI-RACE-STATICCHECK：竞态门。ubuntu-latest 自带 gcc，cgo 可用。
       - name: Test（-race）

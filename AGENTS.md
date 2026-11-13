@@ -27,7 +27,8 @@ go test ./conformance                 # 跨仓契约语料的自检腿（QT-09 �
 - PR 正文模板（`.github/PULL_REQUEST_TEMPLATE.md`）的四段必填项由 `tools/check_pr_body` 在 `pull_request` 事件里核对，其他事件显式跳过。
 - 若某一步需要别的仓的源码目录才过，那是**边界画错了**——停下来修边界，**不要**加 `replace ../xxx` 绕过。
 - 本机同时改多个仓时可用 `go.work` 联调，但**它不入库**（`.gitignore` 已挡）。
-- CI（`.github/workflows/ci.yml`，单 job `go`）：`gofmt` → `go build` → `go vet` → `govulncheck@latest ./...`（依赖漏洞门，X-DEP-BUMP-CONSUMERS）→ 四条 `tools/check_*` 护栏 + PR 正文核对 → `go test ./... -count=1` → `go test -race ./... -count=1`（竞态门，X-CI-RACE-STATICCHECK）→ `staticcheck@v0.8.2 ./...`（`go run`，版本已钉）。
+- CI（`.github/workflows/ci.yml`，单 job `go`）：`gofmt` → `go build` → `go vet` → `govulncheck@latest ./...`（依赖漏洞门，X-DEP-BUMP-CONSUMERS）→ 四条 `tools/check_*` 护栏 + PR 正文核对 → `go test ./... -count=1 -coverprofile=coverage.out` + 覆盖率门（CT-COVERAGE-FLOOR）→ `go test -race ./... -count=1`（竞态门，X-CI-RACE-STATICCHECK）→ `staticcheck@v0.8.2 ./...`（`go run`，版本已钉）。
+- 覆盖率门阈值 **74%**（语句加权，`go tool cover -func` 的 `total`）：来源 = 2026-11-13 本机全量实测 `79.3%` 减 5 点，先测后设、不猜数（跨仓口径见 `tellurion:docs/TASKS.md` → `X-COVERAGE-FLOOR`）。低于阈值 CI `exit 1`；**不许**用空壳测试抬覆盖。破坏验证基线：移除 `tools/check_release_matrix/main_test.go` ⇒ `69.3%` 门红，还原 ⇒ `79.3%` 绿。
 - **私有化前提**：本仓一旦被设为 private，构建与全部 CI 环境必须配 `GOPRIVATE=github.com/ruoxizhnya/*` **加** git 凭证（PAT / SSH），否则 `go get` 走公共 proxy 必然拉不到（风险注见 `tellurion:docs/design/qt-decoupling/repo-inventory.md` §1.1/§5；现状 12 仓全 public）。细则与发版流程在 `README.md`「拉取前提」「发版流程」。
 
 ## 3. 边界（硬约束）

@@ -27,6 +27,7 @@
 | X-CI-RACE-STATICCHECK | CI 补 `-race` 与 `staticcheck`（含 1 条恒假比较 SA4023） | 2026-11-12 | 见本条 | [施工记录](#X-CI-RACE-STATICCHECK) |
 | X-LOW-CLEANUP（contracts 腿） | `fees` 包删指向已删包的死示例注释 | 2026-11-12 | 见本条 | [施工记录](#X-LOW-CLEANUP-contracts) |
 | X-OPENAPI-INGEST | core/agent 新端点进「统一 OpenAPI」（作废：主任裁决 A，维持 core 唯一真相） | 2026-11-12 | —（原文未记） | [原文](#X-OPENAPI-INGEST) |
+| CT-COVERAGE-FLOOR | 契约仓覆盖率门（实测 79.3% → 门 74%） | 2026-11-13 | 见本条施工记录 | [施工记录](#2026-11-13-收口) |
 
 ---
 
@@ -526,3 +527,20 @@
 - **⑥ 边界 / 重开条件**：仅本仓文档、无代码改动；重开条件 = 主任另立 ADR 裁决 B（本仓收编为聚合）并明确 core 停止复制 agent 段，届时另立新单，不复用本单。
 
 > **归档注记（2026-11-13）**：原文逐字移入；活跃层不再保留该条。
+
+---
+
+## 2026-11-13 收口
+
+### CT-COVERAGE-FLOOR · 契约仓覆盖率门（把自述的 75% 变成有承接者的门）[P2] ✅（2026-11-13）
+
+> 档 4（测试）· 来源：03-testing P2-2 · 顺序 4-9 · 依赖：core 伞 `X-COVERAGE-FLOOR`
+
+- **① 目标**：本仓覆盖率门不再只是文档自述，而是 CI 里能红的门。
+- **② 上下文**：本仓 TASKS 自述"75% 门槛无承接者"；CI 已有 test / race / staticcheck，但没有覆盖率门禁。
+- **③ 要求**：① 先在本机跑全套件测出实际覆盖率（贴真实输出）；② 设门 = 实测 - 5 点（取整）；③ 写入 CI 与 `AGENTS.md`，说明阈值来源。
+- **④ 约束与非目标**：不靠空壳测试抬覆盖；不引入新工具链；不阻塞其他仓。
+- **⑤ 验收**：CI 使用新阈值；删除一个有实质断言的测试文件 ⇒ 门红；还原 ⇒ 绿。
+- **⑥ 边界**：本仓 CI + `AGENTS.md`。
+
+**施工记录（2026-11-13）**：本机全量实测 `go test ./... -count=1 -coverprofile` + `go tool cover -func` ⇒ `total: 79.3%`；门取整后减 5 点 = **74%**。`.github/workflows/ci.yml` 的 `Test` 步改为「Test（覆盖率门 ≥ 74%）」：跑带 profile 的全套件、解析 total、低于 74 即 `exit 1`；`-race` 与 `staticcheck` 步保留不变。`AGENTS.md` §2 补该门的位置、阈值与来源。破坏验证真做真还原：临时移除 `tools/check_release_matrix/main_test.go` ⇒ 实测 `69.3%`、`GATE RED`、`EXIT=1`；`git checkout` 还原后复跑 `79.3%`、`GATE GREEN`、`EXIT=0`（首个候选 `run/run_test.go` 只掉 0.1 点，不足以触门，已如实弃用并改用覆盖面更大的 `check_release_matrix` 用例）。
